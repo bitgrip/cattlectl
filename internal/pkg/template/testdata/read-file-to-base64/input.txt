@@ -1,0 +1,1 @@
+{{read .file_name1 | base64}}

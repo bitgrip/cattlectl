@@ -1,0 +1,20 @@
+---
+api_version: v1.0
+kind: Cluster
+metadata:
+  name: test-cluster
+projects:
+  - metadata:
+      name: {{template "full_project_name" .}}
+{{/*
+
+Create a fully qualified project name.
+
+*/}}
+{{- define "full_project_name" -}}
+{{- if eq .stage "" -}}
+  {{- print  .project_name -}}
+{{- else -}}
+  {{- printf "%s-%s" .project_name .stage -}}
+{{- end -}}
+{{- end -}}
