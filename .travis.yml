@@ -14,7 +14,8 @@ deploy:
   provider: releases
   api_key: $GITHUB_API_KEY
   file:
-    - build/cattlectl-*.tar.gz
+    - build/cattlectl-${TRAVIS_TAG:-0.0.0-dev}-linux.tar.gz
+    - build/cattlectl-${TRAVIS_TAG:-0.0.0-dev}-darwin.tar.gz
   skip_cleanup: true
   on:
     repo: bitgrip/cattlectl
