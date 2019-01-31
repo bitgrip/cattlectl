@@ -7,13 +7,14 @@ install: true
 script:
   - go test -v -mod=vendor ./...
   - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=${TRAVIS_TAG:-0.0.0-dev} -d -s -w -extldflags \"-static\"" -a -tags netgo -installsuffix netgo -mod=vendor -o build/linux/cattlectl
+  - tar czpvf build/cattlectl-${TRAVIS_TAG:-0.0.0-dev}-linux.tar.gz build/linux/
   - CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=${TRAVIS_TAG:-0.0.0-dev} -s -w" -a -tags netgo -installsuffix netgo -mod=vendor -o build/darwin/cattlectl
+  - tar czpvf build/cattlectl-${TRAVIS_TAG:-0.0.0-dev}-darwin.tar.gz build/darwin/
 deploy:
   provider: releases
   api_key: $GITHUB_API_KEY
   file:
-    - build/linux/cattlectl
-    - build/darwin/cattlectl
+    - build/cattlectl-*.tar.gz
   skip_cleanup: true
   on:
     repo: bitgrip/cattlectl
