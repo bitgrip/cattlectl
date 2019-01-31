@@ -1,23 +1,19 @@
 language: go
 go:
-- 1.11.x
+  - 1.11.x
 env:
-- GO111MODULE=on
+  - GO111MODULE=on
 install: true
 script:
-- go test -v -mod=vendor ./...
-- CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=${TRAVIS_TAG:-0.0.0-dev}
-  -d -s -w -extldflags \"-static\"" -a -tags netgo -installsuffix netgo -mod=vendor
-  -o build/linux/cattlectl
-- CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=${TRAVIS_TAG:-0.0.0-dev}
-  -s -w" -a -tags netgo -installsuffix netgo -mod=vendor -o build/darwin/cattlectl
+  - go test -v -mod=vendor ./...
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=${TRAVIS_TAG:-0.0.0-dev} -d -s -w -extldflags \"-static\"" -a -tags netgo -installsuffix netgo -mod=vendor -o build/linux/cattlectl
+  - CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=${TRAVIS_TAG:-0.0.0-dev} -s -w" -a -tags netgo -installsuffix netgo -mod=vendor -o build/darwin/cattlectl
 deploy:
   provider: releases
-  api_key:
-    secure: t6Mq/aoMNsaViRsp1K5eeJ6humrQyxuT2GeUQjxkYNFRuo6putHNA+u+MZyE0kqwrNLwlmzqdJarJPWynh5/+MqLAMTUiTSj81gU/Fwb62IV6bJqKKwiCbZLX9k3d2dqwWLIW6N6IGo1ui46ZwAU2QfO84+rivJ2vgwu35Kl9VRl9LL4/qNtWKx/qegsyBFzCTj5WUfBhDyHa0UwPGqM4a8kDkEpBLYFaiTJIdwokQ8FdK8mE9x0UEb36v7mUbwsEjUCvEsE7nFDMw6gGwxZke9RfQ8Y4VelqoKBdu3ACougrT+Dc5xuX9p5dDR1ZLbgqs2leBpRqaHF4Iht7MxUz1rY3dMbMHSAIXJFI0b7v6U/ym2APqhMcldWadjZUVYXcUW75FW+48ErkU+7v1vd9v6cXgvTr+gh/4t27barqR7bZ47nPCweok5JuQY5UlGX04zQgbxp/0dLhJXOdVaWjO42HPbnMcM0XmE4ttcltxy3XHI76mVr8C67byYv3zkdlT32WmWjcaLiKSprFW9igimjfA3590PJEnW+h1+PiMfxFNZrqU3Eb211UZ+KzHemazO5wOmBiKRV1+fQwhsofaFzN0Oeh6GCNPl8lTiHRHogKuop0hl55NoaEGJvI6Q/YEq2zojyqR+BELkDSLy/Onai5qBEr3JgHHYH41c/7NE=
+  api_key: $GITHUB_API_KEY
   file:
-  - build/linux/cattlectl
-  - build/darwin/cattlectl
+    - build/linux/cattlectl
+    - build/darwin/cattlectl
   skip_cleanup: true
   on:
     repo: bitgrip/cattlectl
