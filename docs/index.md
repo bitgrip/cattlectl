@@ -1,7 +1,7 @@
 cattlectl - gain control over your ranch
 ========================================
 
-![your ranche](doc/header.jpg)
+![your ranche](header.jpg)
 
 [Rancher](https://rancher.com/) is a great platform to have a central configuration management over all your clusters and projects.<br>
 It comes with an out of the box deployment mechanic for [helm charts](https://github.com/helm/helm). These charts are flavored with two extra files to have a pretty UI for creating and upgrading apps based on this charts.<br>
@@ -70,5 +70,5 @@ cattlectl apply
 Finding more informations
 -------------------------
 
-* [ProjectDescriptor data model](doc/project_descriptor.md)
-* [cattlectl CLI documentation](doc/cattlectl.md)
+* [ProjectDescriptor data model](project_descriptor.md)
+* [cattlectl CLI documentation](cattlectl.md)
