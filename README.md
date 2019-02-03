@@ -1,7 +1,7 @@
 cattlectl
 =========
 
-[![Build Status](https://travis-ci.com/bitgrip/cattlectl.svg?branch=master)](https://drone8.rancher.io/bitgrip/cattlectl)
+[![Build Status](https://travis-ci.com/bitgrip/cattlectl.svg?branch=master)](https://travis-ci.com/bitgrip/cattlectl)
 
 [![Docker Pulls](https://img.shields.io/docker/stars/bitgrip/cattlectl.svg)](https://store.docker.com/community/images/bitgrip/cattlectl)
 [![Docker Pulls](https://img.shields.io/docker/pulls/bitgrip/cattlectl.svg)](https://store.docker.com/community/images/bitgrip/cattlectl)
