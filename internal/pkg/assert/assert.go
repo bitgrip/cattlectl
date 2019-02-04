@@ -47,6 +47,9 @@ func NotOk(tb testing.TB, err error, expecteError string) {
 		fmt.Printf("\033[31m%s:%d: missing error\033[39m\n\n", filepath.Base(file), line)
 		tb.FailNow()
 	}
+	if "" != expecteError {
+		Equals(tb, expecteError, err.Error())
+	}
 }
 
 // equals fails the test if exp is not equal to act.

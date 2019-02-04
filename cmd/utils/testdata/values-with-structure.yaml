@@ -1,0 +1,4 @@
+storage_class:
+  azure:
+    provisioner: kubernetes.io/azure-disk
+    volume_binding_mode: Immediate

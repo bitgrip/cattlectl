@@ -60,7 +60,7 @@ func TestCreateClient_ManagementClientFails(t *testing.T) {
 
 	// Act
 	_, err := NewClient(clientConfig)
-	assert.NotOk(t, err, "create cluster client")
+	assert.NotOk(t, err, "Failed to create management client, Test-Error")
 
 	// Assert
 }
