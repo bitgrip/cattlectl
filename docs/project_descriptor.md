@@ -6,37 +6,72 @@ ProjectDescriptor Structur:
 
 ### Toplevel ProjectDescriptor
 
-| Field               | Description                                                     |
-|---------------------|-----------------------------------------------------------------|
-| __api_version__     | The __\<major\>.\<minor\>__ version used for this descriptor.   |
-| __kind__            | The kind of descriptor in this file                             |
-| __metadata__        | Metainformation about this descriptor e.g.: name and cluster_id |
-| __apps__            | List of rancher apps to be deployed to this project             |
-| __namespaces__      | List of namespaces to be part of this project                   |
-| __storage_classes__ | List of storage classes required for this project               |
+| Field                  | Description                                                           |
+|------------------------|-----------------------------------------------------------------------|
+| __api_version__        | The __\<major\>.\<minor\>__ version used for this descriptor.         |
+| __kind__               | The kind of descriptor in this file (`Project`)                       |
+| __metadata__           | Metainformation about this descriptor e.g.: name and cluster_name     |
+| __namespaces__         | List of namespaces to be part of this project                         |
+| __resources__          | List of resources to be part of this project                          |
+| __storage_classes__    | List of storage classes on cluster level required for this project    |
+| __persistent_volumes__ | List of persistent volumes on cluster level required for this project |
+| __apps__               | List of rancher apps to be deployed to this project                   |
 
 ### metadata
 
-| Field           | Description                                                                 |
-|-----------------|-----------------------------------------------------------------------------|
-| __name__        | The name of the project                                                     |
-| __rancher_url__ | The URL to reach the rancher (placed from cattleclt configuration)          |
-| __access_key__  | The access key to access rancher with (placed from cattleclt configuration) |
-| __secret_key__  | The secret key to access rancher with (placed from cattleclt configuration) |
-| __cluster_id__  | The ID of the cluster the project is part of                                |
+* In the descriptor only `name` should be set.
+* All other fields are read from configuration or rancher
 
-#### apps
-
-| Field         | Description                                           |
-|---------------|-------------------------------------------------------|
-| __name__      | The name of the app/deployment                        |
-| __catalog__   | The catalog to find the rancher chart in              |
-| __template__  | The name of the rancher chart to be used              |
-| __version__   | The version of the rancher chart                      |
-| __namespace__ | The namespace to deploy the app in                    |
-| __answers__   | The answers to the rancher questions as key-value map |
+| Field            | Description                                                                              |
+|------------------|------------------------------------------------------------------------------------------|
+| __name__         | The name of the project **REQUIRED**                                                     |
+| __id__           | Rancher internal ID of this project (**read from rancher**)                              |
+| __rancher_url__  | The URL to reach the rancher (**placed from cattleclt configuration**)                   |
+| __access_key__   | The access key to access rancher with (**placed from cattleclt configuration**)          |
+| __secret_key__   | The secret key to access rancher with (**placed from cattleclt configuration**)          |
+| __token_key__    | The token key to access rancher with (**placed from cattleclt configuration**)           |
+| __cluster_name__ | The name of the cluster the project is part of (**placed from cattleclt configuration**) |
+| __cluster_id__   | The ID of the cluster the project is part of (**read from rancher**)                     |
 
 #### namespaces
+
+| Field    | Description               |
+|----------|---------------------------|
+| __name__ | The name of the namespace |
+
+#### resources
+
+| Field                 | Description                          |
+|-----------------------|--------------------------------------|
+| __certificates__      | Array of certificates to deploy      |
+| __config_maps__       | Array of config maps to deploy       |
+| __docker_credential__ | Array of docker credential to deploy |
+| __secrets__           | Array of secrets to deploy           |
+
+#### certificate
+
+| Field         | Description                                                           |
+|---------------|-----------------------------------------------------------------------|
+| __name__      | The name of the certificate resource                                  |
+| __key__       | Private key to the certificate                                        |
+| __certs__     | One string with all certs                                             |
+| __namespace__ | if empty the certificate is deployed to all namespaces of the project |
+
+#### config_map
+
+| Field         | Description                                                           |
+|---------------|-----------------------------------------------------------------------|
+| __name__      | The name of the config map                                            |
+| __data__      | map[string]string structure representing the config map payload       |
+| __namespace__ | if empty the certificate is deployed to all namespaces of the project |
+
+#### docker_credential
+
+| Field    | Description               |
+|----------|---------------------------|
+| __name__ | The name of the namespace |
+
+#### secret
 
 | Field    | Description               |
 |----------|---------------------------|
@@ -64,6 +99,17 @@ ProjectDescriptor Structur:
 | __access_modes__  | List of access modes (string array)                                     |
 | __capacity__      | The capacity of the persistent volumes to create                        |
 | __nodes__         | For local persistent volumes the ist of nodes to bound (string array).  |
+
+#### apps
+
+| Field         | Description                                           |
+|---------------|-------------------------------------------------------|
+| __name__      | The name of the app/deployment                        |
+| __catalog__   | The catalog to find the rancher chart in              |
+| __template__  | The name of the rancher chart to be used              |
+| __version__   | The version of the rancher chart                      |
+| __namespace__ | The namespace to deploy the app in                    |
+| __answers__   | The answers to the rancher questions as key-value map |
 
 Example:
 --------

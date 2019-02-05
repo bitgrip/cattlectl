@@ -70,5 +70,6 @@ cattlectl apply
 Finding more informations
 -------------------------
 
+* [Descriptor templates](descriptor_templates.md)
 * [ProjectDescriptor data model](project_descriptor.md)
 * [cattlectl CLI documentation](cattlectl.md)
