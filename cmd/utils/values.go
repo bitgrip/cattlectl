@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
@@ -34,6 +35,7 @@ func LoadValues(valuesFile string) (map[string]interface{}, error) {
 	valuesConfig := viper.New()
 	valuesConfig.SetConfigFile(valuesFile)
 	valuesConfig.AutomaticEnv()
+	valuesConfig.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	valuesConfig.ReadInConfig()
 	for _, name := range viper.GetStringSlice("env_value_keys") {
 		valuesConfig.BindEnv(name)

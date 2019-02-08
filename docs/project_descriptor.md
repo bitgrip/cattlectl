@@ -143,38 +143,29 @@ Example:
 api_version: v1.0
 kind: Project
 metadata:
-  name: {{template "full_project_name" .}}
-  rancher_url: https://ui.rancher.server
-  access_key: token-12345
-  secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  token_key: token-12345:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  cluster_id: j-4444
+  name: my-wordpress-blog
 namespaces:
-  - name: {{template "full_project_name" .}}-web
+  - name: my-wordpress-blog-web
 storage_classes:
-  - name: {{template "full_project_name" .}}-local-mariadb
+  - name: my-wordpress-blog-local-mariadb
     provisioner: kubernetes.io/no-provisioner
     reclaim_policy: Delete
     volume_bind_mode: WaitForFirstConsumer
-    create_persistent_volumes: {{.use_local_volumes}}
-    persistent_volume_groups:
-      - name: {{template "full_project_name" .}}-mariadb
-        type: local
-        path: /var/data/{{template "full_project_name" .}}-mariadb
-        capacity: "3Gi"
-        access_modes:
-          - "ReadWriteOnce"
-        create_script: ssh ${node} sudo mkdir -p ${path}
-        nodes:
-          - node-1
-          - node-2
-          - node-3
+persistent_volumes:
+  - name: my-wordpress-blog-mariadb-node-1
+    type: local
+    node: node-1
+    path: /var/data/my-wordpress-blog-mariadb
+    capacity: "3Gi"
+    access_modes:
+      - "ReadWriteOnce"
+    create_script: ssh ${node} sudo mkdir -p ${path}
 apps:
 - name: editorial-namespace
   catalog: library
   chart: wordpress
   version: "2.1.10"
-  namespace: {{template "full_project_name" .}}-web
+  namespace: my-wordpress-blog-web
   answers:
     wordpressUsername: user
     wordpressPassword: ""
@@ -184,20 +175,7 @@ apps:
     mariadb.db.user: wordpress
     mariadb.master.persistence.enabled: 'true'
     mariadb.master.persistence.size: 8Gi
-    mariadb.master.persistence.storageClass: "{{template "full_project_name" .}}-local-mariadb"
+    mariadb.master.persistence.storageClass: "my-wordpress-blog-local-mariadb"
     ingress.enabled: false
     serviceType: ClusterIP
-    license: {{ read .license_file | base64}}
-{{/*
-
-Create a fully qualified project name.
-
-*/}}
-{{- define "full_project_name" -}}
-  {{- if eq .stage "" -}}
-    {{- print  .project_name -}}
-  {{- else -}}
-    {{- printf "%s-%s" .project_name .stage -}}
-  {{- end -}}
-{{- end -}}
 ```

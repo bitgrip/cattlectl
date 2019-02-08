@@ -1,0 +1,39 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+namespaces:
+  - name: {{ .project_name }}-web
+storage_classes:
+  - name: {{ .project_name }}-local-mariadb
+    provisioner: kubernetes.io/no-provisioner
+    reclaim_policy: Delete
+    volume_bind_mode: WaitForFirstConsumer
+persistent_volumes:
+  - name: {{ .project_name }}-mariadb-node-1
+    type: local
+    node: node-1
+    path: /var/data/{{ .project_name }}-mariadb
+    capacity: "3Gi"
+    access_modes:
+      - "ReadWriteOnce"
+    create_script: ssh ${node} sudo mkdir -p ${path}
+apps:
+- name: editorial-namespace
+  catalog: library
+  chart: wordpress
+  version: "2.1.10"
+  namespace: {{ .project_name }}-web
+  answers:
+    wordpressUsername: user
+    wordpressPassword: ""
+    wordpressEmail: user@example.com
+    mariadb.enabled: true
+    mariadb.db.name: wordpress
+    mariadb.db.user: wordpress
+    mariadb.master.persistence.enabled: 'true'
+    mariadb.master.persistence.size: 8Gi
+    mariadb.master.persistence.storageClass: "{{ .project_name }}-local-mariadb"
+    ingress.enabled: false
+    serviceType: ClusterIP

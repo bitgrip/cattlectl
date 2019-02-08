@@ -23,6 +23,31 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+func TestComplexValuesStructure(t *testing.T) {
+	const valuesFile = "testdata/values-with-structure.yaml"
+	os.Setenv("STORAGE_CLASS_AZURE_VOLUME_BINDING_MODE", "changed-bind-mode")
+
+	expected := make(map[string]interface{}, 0)
+	fileContent, err := ioutil.ReadFile(valuesFile)
+	assert.Ok(t, err)
+	err = yaml.Unmarshal(fileContent, &expected)
+	assert.Ok(t, err)
+	expectedChild := expected["storage_class"].(map[interface{}]interface{})
+	expectedChild = expectedChild["azure"].(map[interface{}]interface{})
+	expectedChild["volume_binding_mode"] = "changed-bind-mode"
+
+	actual, err := LoadValues(valuesFile)
+	assert.Ok(t, err)
+
+	//needed to clean the data structures between viper and yaml.Unmashal
+	structureFromViper, _ := yaml.Marshal(actual)
+	actual = make(map[string]interface{}, 0)
+	yaml.Unmarshal(structureFromViper, &actual)
+
+	assert.Ok(t, err)
+	assert.Equals(t, expected, actual)
+}
+
 func TestPlainValuesStructure(t *testing.T) {
 	const valuesFile = "testdata/values.yaml"
 
