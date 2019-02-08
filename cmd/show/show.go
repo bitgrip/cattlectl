@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bitgrip/cattlectl/cmd/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -39,16 +39,6 @@ var (
 )
 var (
 	newProjectParser = project.NewPrettyParser
-	loadValues       = func() map[string]interface{} {
-		valuesConfig := viper.New()
-		valuesConfig.SetConfigFile(valuesFile)
-		valuesConfig.AutomaticEnv()
-		valuesConfig.ReadInConfig()
-		for _, name := range viper.GetStringSlice("env_value_keys") {
-			valuesConfig.BindEnv(name)
-		}
-		return valuesConfig.AllSettings()
-	}
 )
 
 func BaseCommand(config config.Config, init func()) *cobra.Command {
@@ -59,7 +49,10 @@ func BaseCommand(config config.Config, init func()) *cobra.Command {
 
 func show(cmd *cobra.Command, args []string) {
 	initCommand()
-	values := loadValues()
+	values, err := utils.LoadValues(valuesFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if project, err := newProjectParser(showFile).Parse(values); err != nil {
 		log.Fatal(err)
 	} else if out, err := yaml.Marshal(project); err != nil {

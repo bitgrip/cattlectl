@@ -1,0 +1,2 @@
+project_name: my-wordpress-blog
+key_withCamelCase_name: will be 'key_withcamelcase_name' in the template context

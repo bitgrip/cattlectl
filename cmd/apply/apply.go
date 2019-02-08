@@ -15,12 +15,12 @@
 package apply
 
 import (
+	"github.com/bitgrip/cattlectl/cmd/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -40,16 +40,6 @@ var (
 var (
 	doApply          = ctl.ApplyProject
 	newProjectParser = project.NewParser
-	loadValues       = func() map[string]interface{} {
-		valuesConfig := viper.New()
-		valuesConfig.SetConfigFile(valuesFile)
-		valuesConfig.AutomaticEnv()
-		valuesConfig.ReadInConfig()
-		for _, name := range viper.GetStringSlice("env_value_keys") {
-			valuesConfig.BindEnv(name)
-		}
-		return valuesConfig.AllSettings()
-	}
 )
 
 func BaseCommand(config config.Config, init func()) *cobra.Command {
@@ -60,7 +50,11 @@ func BaseCommand(config config.Config, init func()) *cobra.Command {
 
 func apply(cmd *cobra.Command, args []string) {
 	initCommand()
-	values := loadValues()
+	values, err := utils.LoadValues(valuesFile)
+	if err != nil {
+		logrus.WithField("apply_file", applyFile).
+			Fatal(err)
+	}
 	logrus.WithFields(values).Debug("Read descriptor with values")
 	if project, err := newProjectParser(applyFile).Parse(values); err != nil {
 		logrus.WithFields(values).

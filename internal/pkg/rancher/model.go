@@ -113,6 +113,7 @@ type PersistentVolumeGroup struct {
 
 type PersistentVolume struct {
 	Name             string
+	Type             string
 	Path             string
 	Node             string
 	StorageClassName string   `yaml:"storage_class_name"`
