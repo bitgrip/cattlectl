@@ -55,11 +55,12 @@ func TestErrorOnParsingClusterDescriptor(t *testing.T) {
 }
 
 func TestParseValidProjectDescriptor(t *testing.T) {
+	testName := "valid-project"
 	//Arrange
 	parser := NewParser("testdata/valid-project/project.yaml")
 
 	values := make(map[string]interface{})
-	if data, err := ioutil.ReadFile("testdata/valid-project/values.yaml"); err != nil {
+	if data, err := ioutil.ReadFile(fmt.Sprintf("testdata/%s/values.yaml", testName)); err != nil {
 		log.Fatal(err)
 	} else if err := yaml.Unmarshal(data, &values); err != nil {
 		log.Fatal(err)
@@ -70,28 +71,7 @@ func TestParseValidProjectDescriptor(t *testing.T) {
 
 	//Verify
 	assert.Ok(t, err)
-	assert.Equals(t, "v1.0", project.APIVersion)
-	assert.Equals(t, "Project", project.Kind)
-	assert.Equals(t, "https://ui.rancher.server", project.Metadata.RancherURL)
-	assert.Equals(t, "token-12345", project.Metadata.AccessKey)
-	assert.Equals(t, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", project.Metadata.SecretKey)
-	assert.Equals(t, "token-12345:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", project.Metadata.TokenKey)
-	assert.Equals(t, "my-wordpress-dev", project.Metadata.Name)
-	assert.Equals(t, "j-4444", project.Metadata.ClusterID)
-	assert.Equals(t, 1, len(project.Namespaces))
-	assert.Equals(t, "my-wordpress-dev-web", project.Namespaces[0].Name)
-	assert.Equals(t, 1, len(project.StorageClasses))
-	assert.Equals(t, "my-wordpress-dev-local-mariadb", project.StorageClasses[0].Name)
-	assert.Equals(t, "kubernetes.io/no-provisioner", project.StorageClasses[0].Provisioner)
-	assert.Equals(t, "Delete", project.StorageClasses[0].ReclaimPolicy)
-	assert.Equals(t, true, project.StorageClasses[0].CreatePersistentVolumes)
-	assert.Equals(t, "WaitForFirstConsumer", project.StorageClasses[0].VolumeBindMode)
-	assert.Equals(t, 1, len(project.StorageClasses[0].PersistentVolumeGroups))
-	assert.Equals(t, "my-wordpress-dev-mariadb", project.StorageClasses[0].PersistentVolumeGroups[0].Name)
-	assert.Equals(t, "local", project.StorageClasses[0].PersistentVolumeGroups[0].Type)
-	assert.Equals(t, []string{"ReadWriteOnce"}, project.StorageClasses[0].PersistentVolumeGroups[0].AccessModes)
-	assert.Equals(t, "3Gi", project.StorageClasses[0].PersistentVolumeGroups[0].Capacity)
-	assert.Equals(t, "/var/data/my-wordpress-dev-mariadb", project.StorageClasses[0].PersistentVolumeGroups[0].Path)
-	assert.Equals(t, []string{"node-1", "node-2", "node-3"}, project.StorageClasses[0].PersistentVolumeGroups[0].Nodes)
-	assert.Equals(t, "ssh ${node} sudo mkdir -p ${path}", project.StorageClasses[0].PersistentVolumeGroups[0].CreateScript)
+	actual, err := yaml.Marshal(project)
+	assert.Ok(t, err)
+	assert.AssertGoldenFile(t, testName, actual)
 }

@@ -1,0 +1,97 @@
+api_version: v1.0
+kind: Project
+metadata:
+  name: my-wordpress-dev
+  rancher_url: https://ui.rancher.server
+  access_key: token-12345
+  secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  token_key: token-12345:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  cluster_id: j-4444
+namespaces:
+- name: my-wordpress-dev-web
+resources:
+  certificates:
+  - name: wts-test
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+  - name: wts-test-2
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+    namespace: editorial
+  config_maps:
+  - name: wts-test
+    data:
+      abc: def
+      bca: fed
+  docker_credentials:
+  - name: my-registry
+    registries:
+    - name: my.private.registry
+      password: my-docker-registry-password
+      username: my-docker-registry-user
+  secrets:
+  - name: wts-test
+    data:
+      abc: def
+      bca: fed
+storage_classes:
+- name: my-wordpress-dev-local-mariadb
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+  create_persistent_volumes: true
+  persistent_volume_groups:
+  - name: my-wordpress-dev-mariadb
+    type: local
+    path: /var/data/my-wordpress-dev-mariadb
+    create_script: ssh ${node} sudo mkdir -p ${path}
+    access_modes:
+    - ReadWriteOnce
+    capacity: 3Gi
+    nodes:
+    - node-1
+    - node-2
+    - node-3
+apps:
+- name: editorial-namespace
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: my-wordpress-dev-web
+  answers:
+    ingress.enabled: "false"
+    license: dGVzdC1kYXRhCg==
+    mariadb.db.name: wordpress
+    mariadb.db.user: wordpress
+    mariadb.enabled: "true"
+    mariadb.master.persistence.enabled: "true"
+    mariadb.master.persistence.size: 8Gi
+    mariadb.master.persistence.storageClass: my-wordpress-dev-local-mariadb
+    serviceType: ClusterIP
+    wordpressEmail: user@example.com
+    wordpressPassword: ""
+    wordpressUsername: user

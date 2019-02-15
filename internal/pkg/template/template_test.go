@@ -15,7 +15,6 @@
 package template
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,8 +22,6 @@ import (
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
 )
-
-var update = flag.Bool("update", false, "update .golden files")
 
 func TestGoldenFileTestCases(t *testing.T) {
 	testdirs, err := ioutil.ReadDir("testdata")
@@ -54,7 +51,7 @@ func runTestCase(testName string, truncated bool, t *testing.T) {
 	actual, err := BuildTemplate(templateData, values, truncated)
 	assert.Ok(t, err)
 	golden := fmt.Sprintf("%s-%v.golden", testName, truncated)
-	if *update {
+	if *assert.Update {
 		ioutil.WriteFile(golden, actual, 0644)
 	}
 	expected, err := ioutil.ReadFile(golden)
