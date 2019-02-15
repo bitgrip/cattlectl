@@ -71,20 +71,6 @@ func (converger projectConverger) Converge() error {
 		if err := converger.applyStorageClass(storageClass); err != nil {
 			return err
 		}
-		if !storageClass.CreatePersistentVolumes {
-			continue
-		}
-		for _, persitentVolumeGroup := range storageClass.PersistentVolumeGroups {
-			logrus.WithField("persistent_volume_group_name", persitentVolumeGroup.Name).
-				Warn("Deprecated PersistentVolumeGroup - use top level persistent_volume")
-			if err := converger.applyPersistentVolumeGroup(storageClass, persitentVolumeGroup); err != nil {
-				logrus.WithFields(logrus.Fields{
-					"persistent_volume_group_name": persitentVolumeGroup.Name,
-					"error":                        err,
-				}).Warn("Fail create persistent volume group")
-				return err
-			}
-		}
 	}
 	for _, persistentVolume := range converger.project.PersistentVolumes {
 		if err := converger.applyPersistentVolume(persistentVolume); err != nil {
@@ -228,38 +214,6 @@ func (converger projectConverger) applySecret(secret rancher.ConfigMap) error {
 	}
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func (converger projectConverger) applyPersistentVolumeGroup(storageClass rancher.StorageClass, persistentVolumeGroup rancher.PersistentVolumeGroup) error {
-	for i, node := range persistentVolumeGroup.Nodes {
-		persistentVolume := rancher.PersistentVolume{
-			Name:             fmt.Sprintf("%s-%v-%s", persistentVolumeGroup.Name, i, node),
-			Node:             node,
-			Path:             strings.Replace(persistentVolumeGroup.Path, "${index}", fmt.Sprint(i), -1),
-			Capacity:         persistentVolumeGroup.Capacity,
-			AccessModes:      persistentVolumeGroup.AccessModes,
-			StorageClassName: storageClass.Name,
-		}
-		if hasVolume, err := converger.client.HasPersistentVolume(persistentVolume); hasVolume {
-			continue
-		} else if err != nil {
-			return fmt.Errorf("Failed to check for local volume, %v", err)
-		}
-		err := converger.client.CreatePersistentVolume(persistentVolume)
-		if err != nil {
-			return err
-		}
-		createScript := persistentVolumeGroup.CreateScript
-		createScript = strings.Replace(createScript, "${node}", node, -1)
-		createScript = strings.Replace(createScript, "${path}", persistentVolume.Path, -1)
-		logrus.Info(
-			"Make sure host directory exists by running:\n",
-			strings.Repeat("-", len(createScript)+4), "\n",
-			strings.Repeat(" ", 4), createScript, "\n",
-			strings.Repeat("-", len(createScript)+4),
-		)
 	}
 	return nil
 }

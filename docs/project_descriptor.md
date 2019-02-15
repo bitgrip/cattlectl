@@ -89,28 +89,14 @@ ProjectDescriptor Structur:
 
 #### storage classes
 
-| Field                         | Description                                                           |
-|-------------------------------|-----------------------------------------------------------------------|
-| __name__                      | The name of the storage class                                         |
-| __provisioner__               | The provisioner used by this storage class                            |
-| __reclaim_policy__            | The reclaim policy of this storage class                              |
-| __volume_bind_mode__          | The volume bind mode of this storage class                            |
-| __parameters__                | key value map of parameters                                           |
-| __mount_options__             | array of options to mount the volumes of this storage class           |
-| __create_persistent_volumes__ | If persistent volumes should be precreated for this storage class     |
-| __persistent_volume_groups__  | The list of persistent volume groups to create for this storage class |
-
-#### persistent volume group
-
-| Field             | Description                                                             |
-|-------------------|-------------------------------------------------------------------------|
-| __name__          | The name of the persistent volume group                                 |
-| __type__          | The Type of the persistent volume group (__only "local" is supportet__) |
-| __path__          | For local persistent volumes the path pattern to use                    |
-| __create_script__ | For log informations the hint how to create the required directories.   |
-| __access_modes__  | List of access modes (string array)                                     |
-| __capacity__      | The capacity of the persistent volumes to create                        |
-| __nodes__         | For local persistent volumes the ist of nodes to bound (string array).  |
+| Field                | Description                                                 |
+|----------------------|-------------------------------------------------------------|
+| __name__             | The name of the storage class                               |
+| __provisioner__      | The provisioner used by this storage class                  |
+| __reclaim_policy__   | The reclaim policy of this storage class                    |
+| __volume_bind_mode__ | The volume bind mode of this storage class                  |
+| __parameters__       | key value map of parameters                                 |
+| __mount_options__    | array of options to mount the volumes of this storage class |
 
 #### persistent volume
 
