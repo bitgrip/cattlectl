@@ -91,24 +91,12 @@ type RegistryCredential struct {
 }
 
 type StorageClass struct {
-	Name                    string
-	Provisioner             string
-	ReclaimPolicy           string                  `yaml:"reclaim_policy"`
-	VolumeBindMode          string                  `yaml:"volume_bind_mode"`
-	Parameters              map[string]string       `yaml:"parameters,omitempty"`
-	MountOptions            []string                `yaml:"mount_options,omitempty"`
-	CreatePersistentVolumes bool                    `yaml:"create_persistent_volumes,omitempty"`
-	PersistentVolumeGroups  []PersistentVolumeGroup `yaml:"persistent_volume_groups,omitempty"`
-}
-
-type PersistentVolumeGroup struct {
-	Name         string
-	Type         string
-	Path         string
-	CreateScript string   `yaml:"create_script"`
-	AccessModes  []string `yaml:"access_modes"`
-	Capacity     string
-	Nodes        []string
+	Name           string
+	Provisioner    string
+	ReclaimPolicy  string            `yaml:"reclaim_policy"`
+	VolumeBindMode string            `yaml:"volume_bind_mode"`
+	Parameters     map[string]string `yaml:"parameters,omitempty"`
+	MountOptions   []string          `yaml:"mount_options,omitempty"`
 }
 
 type PersistentVolume struct {

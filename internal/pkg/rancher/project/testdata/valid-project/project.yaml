@@ -55,13 +55,6 @@ resources:
       abc: def
       bca: fed
     namespaceId: ksb-nightly3-editorial
-  docker_credential:
-  - name: wts
-    registries:
-    - name: docker.bitgrip.berlin
-      username: abc
-      password: def
-    namespace: ksb-nightly3-editorial (optional)
   secrets:
   - name: wts-test
     data:

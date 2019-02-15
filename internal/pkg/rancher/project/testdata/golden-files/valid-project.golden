@@ -63,19 +63,6 @@ storage_classes:
   provisioner: kubernetes.io/no-provisioner
   reclaim_policy: Delete
   volume_bind_mode: WaitForFirstConsumer
-  create_persistent_volumes: true
-  persistent_volume_groups:
-  - name: my-wordpress-dev-mariadb
-    type: local
-    path: /var/data/my-wordpress-dev-mariadb
-    create_script: ssh ${node} sudo mkdir -p ${path}
-    access_modes:
-    - ReadWriteOnce
-    capacity: 3Gi
-    nodes:
-    - node-1
-    - node-2
-    - node-3
 apps:
 - name: editorial-namespace
   catalog: library
