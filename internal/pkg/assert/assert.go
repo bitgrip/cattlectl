@@ -15,12 +15,26 @@
 package assert
 
 import (
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
 )
+
+var Update = flag.Bool("update", false, "update .golden files")
+
+func AssertGoldenFile(tb testing.TB, testName string, actual []byte) {
+	golden := fmt.Sprintf("testdata/golden-files/%s.golden", testName)
+	if *Update {
+		ioutil.WriteFile(golden, actual, 0644)
+	}
+	expected, err := ioutil.ReadFile(golden)
+	Ok(tb, err)
+	Equals(tb, string(expected), string(actual))
+}
 
 // assert fails the test if the condition is false.
 func Assert(tb testing.TB, condition bool, msg string, v ...interface{}) {

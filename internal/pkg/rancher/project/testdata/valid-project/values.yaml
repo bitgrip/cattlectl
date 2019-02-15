@@ -3,3 +3,5 @@ stage: dev
 license_file: testdata/valid-project/license.file
 expected_license_file_value: dGVzdC1kYXRhCg==
 use_local_volumes: true
+docker_user: my-docker-registry-user
+docker_password: my-docker-registry-password

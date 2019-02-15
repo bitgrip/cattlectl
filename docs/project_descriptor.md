@@ -41,12 +41,12 @@ ProjectDescriptor Structur:
 
 #### resources
 
-| Field                 | Description                          |
-|-----------------------|--------------------------------------|
-| __certificates__      | Array of certificates to deploy      |
-| __config_maps__       | Array of config maps to deploy       |
-| __docker_credential__ | Array of docker credential to deploy |
-| __secrets__           | Array of secrets to deploy           |
+| Field                  | Description                          |
+|------------------------|--------------------------------------|
+| __certificates__       | Array of certificates to deploy      |
+| __config_maps__        | Array of config maps to deploy       |
+| __docker_credentials__ | Array of docker credential to deploy |
+| __secrets__            | Array of secrets to deploy           |
 
 #### certificate
 

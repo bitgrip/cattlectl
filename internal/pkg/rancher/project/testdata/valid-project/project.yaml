@@ -43,6 +43,12 @@ resources:
         ...
       -----END CERTIFICATE-----
     namespace: editorial
+  docker_credentials:
+  - name: 	my-registry
+    registries:
+    - name: my.private.registry
+      username: {{ .docker_user }}
+      password: {{ .docker_password }}
   config_maps:
   - name: wts-test
     data:

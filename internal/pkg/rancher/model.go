@@ -61,7 +61,7 @@ type Namespace struct {
 type Resources struct {
 	Certificates      []Certificate      `yaml:"certificates,omitempty"`
 	ConfigMaps        []ConfigMap        `yaml:"config_maps,omitempty"`
-	DockerCredentials []DockerCredential `yaml:"docker_credential,omitempty"`
+	DockerCredentials []DockerCredential `yaml:"docker_credentials,omitempty"`
 	Secrets           []ConfigMap        `yaml:"secrets,omitempty"`
 }
 
