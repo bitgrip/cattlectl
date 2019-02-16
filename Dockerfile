@@ -27,6 +27,16 @@ go build \
 
 # STEP 2 package the result image
 FROM scratch
+
+ARG SOURCE_COMMIT=unknown
+
+LABEL org.label-schema.schema-version = "1.0" \
+    org.label-schema.name="bitgrip/cattlectl" \
+    org.label-schema.vendor="Bitgrip GmbH" \
+    org.label-schema.license="Apache 2.0" \
+    org.label-schema.vcs-url="https://github.com/bitgrip/cattlectl.git" \
+    org.label-schema.vcs-ref=$SOURCE_COMMIT
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/bin/cattlectl /bin/cattlectl
