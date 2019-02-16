@@ -5,5 +5,4 @@
 echo "Build hook running"
 docker build --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
              --build-arg VCS_REF=$SOURCE_COMMIT \
-             --squash \
              -t $IMAGE_NAME .
