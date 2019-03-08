@@ -1,2 +1,5 @@
 project_name: my-wordpress-blog
-key_withCamelCase_name: will be 'key_withcamelcase_name' in the template context
+wordpress:
+  username: 'my-wordpress-user'
+  password: 'a-simple-password-to-be-changed'
+  email: 'info@my-wordpress-blog'
