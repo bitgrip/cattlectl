@@ -162,7 +162,7 @@ func (client *rancherClient) SetProject(projectName, projectId string) error {
 }
 
 func (client *rancherClient) CreateProject(projectName string) (string, error) {
-	client.logger.Info("Create new project")
+	client.logger.WithField("project_name", projectName).Info("Create new project")
 	pattern := &managementClient.Project{
 		ClusterID: client.clusterId,
 		Name:      projectName,
