@@ -32,6 +32,13 @@ ProjectDescriptor Structur:
 | __token_key__    | The token key to access rancher with (**placed from cattleclt configuration**)           |
 | __cluster_name__ | The name of the cluster the project is part of (**placed from cattleclt configuration**) |
 | __cluster_id__   | The ID of the cluster the project is part of (**read from rancher**)                     |
+| __includes__     | A list of includes containing project descriptors **OPTIONAL**                           |
+
+#### include
+
+| Field    | Description                                |
+|----------|--------------------------------------------|
+| __file__ | The file (relative of absolute) to include |
 
 #### namespaces
 
