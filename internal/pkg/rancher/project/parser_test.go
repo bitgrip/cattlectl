@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -42,13 +44,20 @@ func TestErrorOnParsingClusterDescriptor(t *testing.T) {
 		},
 	}
 	for _, testCase := range cases {
-		parser := NewParser(fmt.Sprintf("testdata/input/%s", testCase["file"]))
+
+		projectFile := fmt.Sprintf("testdata/input/%s", testCase["file"])
+		fileContent, err := ioutil.ReadFile(projectFile)
+		assert.Ok(t, err)
 		values := make(map[string]interface{})
 		values["project_name"] = "test-project"
 		values["stage"] = "test-stage"
+		projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(projectFile), false)
+		assert.Ok(t, err)
+
+		parser := NewProjectParser(projectFile, projectData, &model.Project{}, values)
 
 		//Act
-		_, err := parser.Parse(values)
+		err = parser.Parse()
 
 		//Assert
 		assert.NotOk(t, err, fmt.Sprintf("Invalid descriptor: %s", testCase[kindKey]))
@@ -59,17 +68,22 @@ func TestErrorOnParsingClusterDescriptor(t *testing.T) {
 func TestParseValidProjectDescriptor(t *testing.T) {
 	testName := "valid-project"
 	//Arrange
-	parser := NewParser("testdata/valid-project/project.yaml")
-
+	projectFile := "testdata/valid-project/project.yaml"
+	fileContent, err := ioutil.ReadFile(projectFile)
+	assert.Ok(t, err)
 	values := make(map[string]interface{})
 	if data, err := ioutil.ReadFile(fmt.Sprintf("testdata/%s/values.yaml", testName)); err != nil {
 		log.Fatal(err)
 	} else if err := yaml.Unmarshal(data, &values); err != nil {
 		log.Fatal(err)
 	}
+	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(projectFile), false)
+	assert.Ok(t, err)
+	project := model.Project{}
+	parser := NewProjectParser(projectFile, projectData, &project, values)
 
 	//Act
-	project, err := parser.Parse(values)
+	err = parser.Parse()
 
 	//Verify
 	assert.Ok(t, err)
@@ -90,17 +104,22 @@ func TestWithGoldenFile(t *testing.T) {
 
 func runTestWithGoldenFile(t *testing.T, testName string) {
 	//Arrange
-	parser := NewParser(fmt.Sprintf("testdata/%s/project.yaml", testName))
-
+	projectFile := fmt.Sprintf("testdata/%s/project.yaml", testName)
+	fileContent, err := ioutil.ReadFile(projectFile)
+	assert.Ok(t, err)
 	values := make(map[string]interface{})
 	if data, err := ioutil.ReadFile(fmt.Sprintf("testdata/%s/values.yaml", testName)); err != nil {
 		logrus.Info("No values found - use empty")
 	} else if err := yaml.Unmarshal(data, &values); err != nil {
 		log.Fatal(err)
 	}
+	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(projectFile), false)
+	assert.Ok(t, err)
+	project := model.Project{}
+	parser := NewProjectParser(projectFile, projectData, &project, values)
 
 	//Act
-	project, err := parser.Parse(values)
+	err = parser.Parse()
 
 	//Verify
 	assert.Ok(t, err)
@@ -109,8 +128,8 @@ func runTestWithGoldenFile(t *testing.T, testName string) {
 	assert.AssertGoldenFile(t, testName, actual)
 }
 
-func readTestdata(t *testing.T, testdataFile string) rancher.Project {
-	project := rancher.Project{}
+func readTestdata(t *testing.T, testdataFile string) model.Project {
+	project := model.Project{}
 	fileContent, err := ioutil.ReadFile("testdata/" + testdataFile)
 	assert.Ok(t, err)
 

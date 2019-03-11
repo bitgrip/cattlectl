@@ -34,6 +34,7 @@ func CreateTestClients(tb testing.TB) *TestClients {
 	testClients.ClusterClient.PersistentVolume = CreatePersistentVolumeOperationsStub(tb)
 	testClients.ManagementClient.Project = CreateProjectOperationsStub(tb)
 	testClients.ProjectClient.App = CreateAppOperationsStub(tb)
+	testClients.ProjectClient.Job = CreateJobOperationsStub(tb)
 	return testClients
 }
 

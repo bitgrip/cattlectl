@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rancher
+package project
 
 import (
 	"io/ioutil"
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -26,16 +27,16 @@ func TestMergeProjects(t *testing.T) {
 	testName := "simple-include"
 	child := readTestdataProject(t, "include/simple/child.yaml")
 	parent := readTestdataProject(t, "include/simple/parent.yaml")
-	merged, err := MergeProject(child, parent)
+	err := MergeProject(child, &parent)
 	assert.Ok(t, err)
 
-	actual, err := yaml.Marshal(merged)
+	actual, err := yaml.Marshal(parent)
 	assert.Ok(t, err)
 	assert.AssertGoldenFile(t, testName, actual)
 }
 
-func readTestdataProject(t *testing.T, testdataFile string) Project {
-	project := Project{}
+func readTestdataProject(t *testing.T, testdataFile string) projectModel.Project {
+	project := projectModel.Project{}
 	fileContent, err := ioutil.ReadFile("testdata/" + testdataFile)
 	assert.Ok(t, err)
 

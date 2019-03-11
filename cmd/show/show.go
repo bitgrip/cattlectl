@@ -15,14 +15,17 @@
 package show
 
 import (
-	"fmt"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"github.com/bitgrip/cattlectl/cmd/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
+	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
+	"github.com/bitgrip/cattlectl/internal/pkg/template"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var (
@@ -38,7 +41,7 @@ var (
 	initCommand func()
 )
 var (
-	newProjectParser = project.NewPrettyParser
+	newProjectParser = project.NewPrettyProjectParser
 )
 
 func BaseCommand(config config.Config, init func()) *cobra.Command {
@@ -53,12 +56,19 @@ func show(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if project, err := newProjectParser(showFile).Parse(values); err != nil {
+	fileContent, err := ioutil.ReadFile(showFile)
+	if err != nil {
+		logrus.WithField("show_file", showFile).
+			Fatal(err)
+	}
+	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(showFile), false)
+	if err != nil {
+		logrus.WithField("show_file", showFile).
+			Fatal(err)
+	}
+	err = ctl.ParseAndPrintDescriptor(showFile, projectData, values, rootConfig)
+	if err != nil {
 		log.Fatal(err)
-	} else if out, err := yaml.Marshal(project); err != nil {
-		log.Fatal(err)
-	} else {
-		fmt.Println(string(out))
 	}
 }
 

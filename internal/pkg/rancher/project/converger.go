@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,13 +27,13 @@ var (
 	newRancherClient = rancher.NewClient
 )
 
-// Converger is a object which can converge github.com/bitgrip/cattlectl/internal/pkg/rancher.Project
+// Converger is a object which can converge github.com/bitgrip/cattlectl/internal/pkg/projectModel.Project
 type Converger interface {
 	Converge() error
 }
 
-// NewConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/rancher.Project
-func NewConverger(project rancher.Project) Converger {
+// NewProjectConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.Project
+func NewProjectConverger(project projectModel.Project) Converger {
 	client, err := newRancherClient(rancher.ClientConfig{
 		RancherURL: project.Metadata.RancherURL,
 		AccessKey:  project.Metadata.AccessKey,
@@ -48,7 +49,7 @@ func NewConverger(project rancher.Project) Converger {
 }
 
 type projectConverger struct {
-	project rancher.Project
+	project projectModel.Project
 	client  rancher.Client
 }
 
@@ -117,7 +118,7 @@ func (converger projectConverger) applyProject() error {
 	return converger.client.SetProject(converger.project.Metadata.Name, projectID)
 }
 
-func (converger projectConverger) applyNamespace(namespace rancher.Namespace) error {
+func (converger projectConverger) applyNamespace(namespace projectModel.Namespace) error {
 	if hasNamespace, err := converger.client.HasNamespace(namespace); hasNamespace {
 		return nil
 	} else if err != nil {
@@ -151,7 +152,7 @@ func (converger projectConverger) applyResources() error {
 	return nil
 }
 
-func (converger projectConverger) applyCertificate(certificate rancher.Certificate) error {
+func (converger projectConverger) applyCertificate(certificate projectModel.Certificate) error {
 	if hasCertificate, err := converger.client.HasCertificate(certificate); hasCertificate {
 		logrus.WithField("certificate", certificate.Name).Debug("Skip change existing certificate")
 		return nil
@@ -165,7 +166,7 @@ func (converger projectConverger) applyCertificate(certificate rancher.Certifica
 	return nil
 }
 
-func (converger projectConverger) applyConfigMap(configMap rancher.ConfigMap) error {
+func (converger projectConverger) applyConfigMap(configMap projectModel.ConfigMap) error {
 	if hasConfigMap, err := converger.client.HasConfigMap(configMap); hasConfigMap {
 		logrus.WithField("configMap", configMap.Name).Debug("Skip change existing configMap")
 		return nil
@@ -179,7 +180,7 @@ func (converger projectConverger) applyConfigMap(configMap rancher.ConfigMap) er
 	return nil
 }
 
-func (converger projectConverger) applyDockerCredential(dockerCredential rancher.DockerCredential) error {
+func (converger projectConverger) applyDockerCredential(dockerCredential projectModel.DockerCredential) error {
 	if hasDockerCredential, err := converger.client.HasDockerCredential(dockerCredential); hasDockerCredential {
 		logrus.WithField("dockerCredential", dockerCredential.Name).Debug("Skip change existing dockerCredential")
 		return nil
@@ -193,7 +194,7 @@ func (converger projectConverger) applyDockerCredential(dockerCredential rancher
 	return nil
 }
 
-func (converger projectConverger) applySecret(secret rancher.ConfigMap) error {
+func (converger projectConverger) applySecret(secret projectModel.ConfigMap) error {
 	var hasSecret bool
 	var err error
 	if secret.Namespace == "" {
@@ -218,7 +219,7 @@ func (converger projectConverger) applySecret(secret rancher.ConfigMap) error {
 	return nil
 }
 
-func (converger projectConverger) applyPersistentVolume(persistentVolume rancher.PersistentVolume) error {
+func (converger projectConverger) applyPersistentVolume(persistentVolume projectModel.PersistentVolume) error {
 	if hasVolume, err := converger.client.HasPersistentVolume(persistentVolume); hasVolume {
 		logrus.WithField("persistent_volume", persistentVolume.Name).Debug("Skip change existing persistent volume")
 		return nil
@@ -241,7 +242,7 @@ func (converger projectConverger) applyPersistentVolume(persistentVolume rancher
 	return nil
 }
 
-func (converger projectConverger) applyStorageClass(storageClass rancher.StorageClass) error {
+func (converger projectConverger) applyStorageClass(storageClass projectModel.StorageClass) error {
 	if hasStorageClass, err := converger.client.HasStorageClass(storageClass); hasStorageClass {
 		logrus.WithField("storage_class", storageClass.Name).Debug("Skip change existing storage class")
 		return nil
@@ -255,7 +256,7 @@ func (converger projectConverger) applyStorageClass(storageClass rancher.Storage
 	return nil
 }
 
-func (converger projectConverger) applyApp(app rancher.App) error {
+func (converger projectConverger) applyApp(app projectModel.App) error {
 	if hasApp, err := converger.client.HasApp(app); hasApp {
 		return converger.client.UpgradeApp(app)
 	} else if err == nil {

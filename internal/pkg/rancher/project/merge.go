@@ -12,32 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rancher
+package project
 
 import (
-	"github.com/imdario/mergo"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 )
 
 // MergeProject merge two projects.
 // the result represents the parent + all fields of child
 // which have no equivalent Name in parent
-func MergeProject(child Project, parent Project) (Project, error) {
-	var dst Project
-	if err := mergo.Merge(&dst, parent); err != nil {
-		return parent, err
-	}
-	dst.Namespaces = mergeNamespaces(child.Namespaces, dst.Namespaces)
-	dst.Resources.Certificates = mergeCertificates(child.Resources.Certificates, parent.Resources.Certificates)
-	dst.Resources.ConfigMaps = mergeConfigMaps(child.Resources.ConfigMaps, parent.Resources.ConfigMaps)
-	dst.Resources.DockerCredentials = mergeDockerCredentials(child.Resources.DockerCredentials, parent.Resources.DockerCredentials)
-	dst.Resources.Secrets = mergeConfigMaps(child.Resources.Secrets, parent.Resources.Secrets)
-	dst.StorageClasses = mergeStorageClasses(child.StorageClasses, parent.StorageClasses)
-	dst.PersistentVolumes = mergePersistentVolumes(child.PersistentVolumes, parent.PersistentVolumes)
-	dst.Apps = mergeApps(child.Apps, parent.Apps)
-	return dst, nil
+func MergeProject(child projectModel.Project, parent *projectModel.Project) error {
+	parent.Namespaces = mergeNamespaces(child.Namespaces, parent.Namespaces)
+	parent.Resources.Certificates = mergeCertificates(child.Resources.Certificates, parent.Resources.Certificates)
+	parent.Resources.ConfigMaps = mergeConfigMaps(child.Resources.ConfigMaps, parent.Resources.ConfigMaps)
+	parent.Resources.DockerCredentials = mergeDockerCredentials(child.Resources.DockerCredentials, parent.Resources.DockerCredentials)
+	parent.Resources.Secrets = mergeConfigMaps(child.Resources.Secrets, parent.Resources.Secrets)
+	parent.StorageClasses = mergeStorageClasses(child.StorageClasses, parent.StorageClasses)
+	parent.PersistentVolumes = mergePersistentVolumes(child.PersistentVolumes, parent.PersistentVolumes)
+	parent.Apps = mergeApps(child.Apps, parent.Apps)
+	return nil
 }
 
-func mergeNamespaces(childNamespaces, parentNamespaces []Namespace) []Namespace {
+func mergeNamespaces(childNamespaces, parentNamespaces []projectModel.Namespace) []projectModel.Namespace {
 	dst := parentNamespaces
 CHILD_LOOP:
 	for _, childNamespace := range childNamespaces {
@@ -51,7 +47,7 @@ CHILD_LOOP:
 	return dst
 }
 
-func mergeCertificates(childCertificates, parentCertificates []Certificate) []Certificate {
+func mergeCertificates(childCertificates, parentCertificates []projectModel.Certificate) []projectModel.Certificate {
 	dst := parentCertificates
 CHILD_LOOP:
 	for _, childCertificate := range childCertificates {
@@ -65,7 +61,7 @@ CHILD_LOOP:
 	return dst
 }
 
-func mergeConfigMaps(childConfigMaps, parentConfigMaps []ConfigMap) []ConfigMap {
+func mergeConfigMaps(childConfigMaps, parentConfigMaps []projectModel.ConfigMap) []projectModel.ConfigMap {
 	dst := parentConfigMaps
 CHILD_LOOP:
 	for _, childConfigMap := range childConfigMaps {
@@ -79,7 +75,7 @@ CHILD_LOOP:
 	return dst
 }
 
-func mergeDockerCredentials(childDockerCredentials, parentDockerCredentials []DockerCredential) []DockerCredential {
+func mergeDockerCredentials(childDockerCredentials, parentDockerCredentials []projectModel.DockerCredential) []projectModel.DockerCredential {
 	dst := parentDockerCredentials
 CHILD_LOOP:
 	for _, childDockerCredential := range childDockerCredentials {
@@ -93,7 +89,7 @@ CHILD_LOOP:
 	return dst
 }
 
-func mergeStorageClasses(childStorageClasses, parentStorageClasses []StorageClass) []StorageClass {
+func mergeStorageClasses(childStorageClasses, parentStorageClasses []projectModel.StorageClass) []projectModel.StorageClass {
 	dst := parentStorageClasses
 CHILD_LOOP:
 	for _, childStorageClass := range childStorageClasses {
@@ -107,7 +103,7 @@ CHILD_LOOP:
 	return dst
 }
 
-func mergePersistentVolumes(childPersistentVolumes, parentPersistentVolumes []PersistentVolume) []PersistentVolume {
+func mergePersistentVolumes(childPersistentVolumes, parentPersistentVolumes []projectModel.PersistentVolume) []projectModel.PersistentVolume {
 	dst := parentPersistentVolumes
 CHILD_LOOP:
 	for _, childPersistentVolume := range childPersistentVolumes {
@@ -121,7 +117,7 @@ CHILD_LOOP:
 	return dst
 }
 
-func mergeApps(childApps, parentApps []App) []App {
+func mergeApps(childApps, parentApps []projectModel.App) []projectModel.App {
 	dst := parentApps
 CHILD_LOOP:
 	for _, childApp := range childApps {

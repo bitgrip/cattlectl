@@ -15,10 +15,14 @@
 package apply
 
 import (
+	"io/ioutil"
+	"path/filepath"
+
 	"github.com/bitgrip/cattlectl/cmd/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
+	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -38,8 +42,9 @@ var (
 
 // used services
 var (
-	doApply          = ctl.ApplyProject
-	newProjectParser = project.NewParser
+	doApply           = ctl.ApplyProject
+	doApplyDescriptor = ctl.ApplyDescriptor
+	newProjectParser  = project.NewProjectParser
 )
 
 func BaseCommand(config config.Config, init func()) *cobra.Command {
@@ -56,17 +61,22 @@ func apply(cmd *cobra.Command, args []string) {
 			Fatal(err)
 	}
 	logrus.WithFields(values).Debug("Read descriptor with values")
-	if project, err := newProjectParser(applyFile).Parse(values); err != nil {
+	fileContent, err := ioutil.ReadFile(applyFile)
+	if err != nil {
+		logrus.WithField("apply_file", applyFile).
+			Fatal(err)
+	}
+	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(applyFile), false)
+	if err != nil {
+		logrus.WithField("apply_file", applyFile).
+			Fatal(err)
+	}
+
+	err = doApplyDescriptor(applyFile, projectData, values, rootConfig)
+	if err != nil {
 		logrus.WithFields(values).
 			WithField("apply_file", applyFile).
 			Fatal(err)
-	} else {
-		err := doApply(project, rootConfig)
-		if err != nil {
-			logrus.WithFields(values).
-				WithField("apply_file", applyFile).
-				Fatal(err)
-		}
 	}
 }
 

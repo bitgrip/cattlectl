@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
 	clusterClient "github.com/rancher/types/client/cluster/v3"
@@ -38,7 +39,7 @@ func TestHasNamespace_NamespaceExisting(t *testing.T) {
 	var (
 		actualListOpts *types.ListOpts
 		clientConfig   = ClientConfig{}
-		namespace      = Namespace{
+		namespace      = projectModel.Namespace{
 			Name: namespaceName,
 		}
 		testClients = stubs.CreateTestClients(t)
@@ -59,10 +60,11 @@ func TestHasNamespace_NamespaceExisting(t *testing.T) {
 	testClients.ClusterClient.Namespace = namespaceOperationsStub
 
 	client := rancherClient{
-		clientConfig:  clientConfig,
-		projectId:     projectId,
-		clusterClient: testClients.ClusterClient,
-		logger:        logrus.WithField("test", true),
+		clientConfig:   clientConfig,
+		projectId:      projectId,
+		clusterClient:  testClients.ClusterClient,
+		namespaceCache: make(map[string]clusterClient.Namespace),
+		logger:         logrus.WithField("test", true),
 	}
 	//Act
 	result, err := client.HasNamespace(namespace)
@@ -87,7 +89,7 @@ func TestHasNamespace_NamespaceNotExisting(t *testing.T) {
 	var (
 		actualListOpts *types.ListOpts
 		clientConfig   = ClientConfig{}
-		namespace      = Namespace{
+		namespace      = projectModel.Namespace{
 			Name: namespaceName,
 		}
 		testClients = stubs.CreateTestClients(t)
@@ -132,7 +134,7 @@ func TestCreateNamespace(t *testing.T) {
 	var (
 		actualOpts   *clusterClient.Namespace
 		clientConfig = ClientConfig{}
-		namespace    = Namespace{
+		namespace    = projectModel.Namespace{
 			Name: namespaceName,
 		}
 		testClients = stubs.CreateTestClients(t)

@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.7
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/rancher/norman v0.0.0-20190129215722-196df5ed9da3
@@ -28,6 +29,7 @@ require (
 	golang.org/x/sys v0.0.0-20190129075346-302c3dd5f1cc // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/apimachinery v0.0.0-20190126155707-0e6dcdd1b5ce // indirect
+	k8s.io/apimachinery v0.0.0-20190126155707-0e6dcdd1b5ce
 	k8s.io/klog v0.1.0 // indirect
+	sigs.k8s.io/yaml v1.1.0 // indirect
 )

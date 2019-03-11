@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
 	projectClient "github.com/rancher/types/client/project/v3"
@@ -38,7 +39,7 @@ func TestHasApp_AppExisting(t *testing.T) {
 	var (
 		actualListOpts *types.ListOpts
 		clientConfig   = ClientConfig{}
-		app            = App{
+		app            = projectModel.App{
 			Name: appName,
 		}
 		testClients = stubs.CreateTestClients(t)
@@ -87,7 +88,7 @@ func TestHasApp_AppNotExisting(t *testing.T) {
 	var (
 		actualListOpts *types.ListOpts
 		clientConfig   = ClientConfig{}
-		app            = App{
+		app            = projectModel.App{
 			Name: appName,
 		}
 		testClients = stubs.CreateTestClients(t)
@@ -137,7 +138,7 @@ func TestCreateApp(t *testing.T) {
 		answers      = map[string]string{"first_key": "first_value"}
 		actualOpts   *projectClient.App
 		clientConfig = ClientConfig{}
-		app          = App{
+		app          = projectModel.App{
 			Name:      appName,
 			Catalog:   catalog,
 			Chart:     chart,
@@ -197,7 +198,7 @@ func TestUpgradeApp(t *testing.T) {
 		actualOpts   *projectClient.App
 		actualInput  *projectClient.AppUpgradeConfig
 		clientConfig = ClientConfig{}
-		app          = App{
+		app          = projectModel.App{
 			Name:      appName,
 			Catalog:   catalog,
 			Chart:     chart,

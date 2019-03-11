@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"strings"
 
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/clientbase"
 	"github.com/rancher/norman/types"
 	clusterClient "github.com/rancher/types/client/cluster/v3"
@@ -33,25 +34,28 @@ type Client interface {
 	HasProjectWithName(name string) (bool, string, error)
 	SetProject(projectName, projectId string) error
 	CreateProject(projectName string) (string, error)
-	HasNamespace(namespace Namespace) (bool, error)
-	CreateNamespace(namespace Namespace) error
-	HasCertificate(certificate Certificate) (bool, error)
-	CreateCertificate(certificate Certificate) error
-	HasConfigMap(configMap ConfigMap) (bool, error)
-	CreateConfigMap(configMap ConfigMap) error
-	HasDockerCredential(dockerCredential DockerCredential) (bool, error)
-	CreateDockerCredential(dockerCredential DockerCredential) error
-	HasSecret(secret ConfigMap) (bool, error)
-	CreateSecret(secret ConfigMap) error
-	HasNamespacedSecret(secret ConfigMap) (bool, error)
-	CreateNamespacedSecret(secret ConfigMap) error
-	HasStorageClass(storageClass StorageClass) (bool, error)
-	CreateStorageClass(storageClass StorageClass) error
-	HasPersistentVolume(persistentVolume PersistentVolume) (bool, error)
-	CreatePersistentVolume(persistentVolume PersistentVolume) error
-	HasApp(app App) (bool, error)
-	UpgradeApp(app App) error
-	CreateApp(app App) error
+	HasNamespace(namespace projectModel.Namespace) (bool, error)
+	CreateNamespace(namespace projectModel.Namespace) error
+	HasCertificate(certificate projectModel.Certificate) (bool, error)
+	CreateCertificate(certificate projectModel.Certificate) error
+	HasConfigMap(configMap projectModel.ConfigMap) (bool, error)
+	CreateConfigMap(configMap projectModel.ConfigMap) error
+	HasDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error)
+	CreateDockerCredential(dockerCredential projectModel.DockerCredential) error
+	HasSecret(secret projectModel.ConfigMap) (bool, error)
+	CreateSecret(secret projectModel.ConfigMap) error
+	HasNamespacedSecret(secret projectModel.ConfigMap) (bool, error)
+	CreateNamespacedSecret(secret projectModel.ConfigMap) error
+	HasStorageClass(storageClass projectModel.StorageClass) (bool, error)
+	CreateStorageClass(storageClass projectModel.StorageClass) error
+	HasPersistentVolume(persistentVolume projectModel.PersistentVolume) (bool, error)
+	CreatePersistentVolume(persistentVolume projectModel.PersistentVolume) error
+	HasApp(app projectModel.App) (bool, error)
+	UpgradeApp(app projectModel.App) error
+	CreateApp(app projectModel.App) error
+	// Workload
+	HasJob(namespace string, job projectModel.Job) (bool, error)
+	CreateJob(namespace string, job projectModel.Job) error
 }
 
 type ClientConfig struct {
@@ -75,6 +79,7 @@ func NewClient(clientConfig ClientConfig) (Client, error) {
 		clientConfig:     clientConfig,
 		managementClient: managementClient,
 		appCache:         make(map[string]projectClient.App),
+		namespaceCache:   make(map[string]clusterClient.Namespace),
 		logger:           logrus.WithFields(logrus.Fields{}),
 	}, nil
 }
@@ -87,6 +92,7 @@ type rancherClient struct {
 	managementClient *managementClient.Client
 	projectClient    *projectClient.Client
 	appCache         map[string]projectClient.App
+	namespaceCache   map[string]clusterClient.Namespace
 	logger           *logrus.Entry
 }
 
@@ -176,7 +182,10 @@ func (client *rancherClient) CreateProject(projectName string) (string, error) {
 	return createdProject.ID, nil
 }
 
-func (client *rancherClient) HasNamespace(namespace Namespace) (bool, error) {
+func (client *rancherClient) HasNamespace(namespace projectModel.Namespace) (bool, error) {
+	if _, exists := client.namespaceCache[namespace.Name]; exists {
+		return true, nil
+	}
 	collection, err := client.clusterClient.Namespace.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -189,6 +198,7 @@ func (client *rancherClient) HasNamespace(namespace Namespace) (bool, error) {
 	}
 	for _, item := range collection.Data {
 		if item.Name == namespace.Name {
+			client.namespaceCache[item.Name] = item
 			return true, nil
 		}
 	}
@@ -196,7 +206,7 @@ func (client *rancherClient) HasNamespace(namespace Namespace) (bool, error) {
 	return false, nil
 }
 
-func (client *rancherClient) CreateNamespace(namespace Namespace) error {
+func (client *rancherClient) CreateNamespace(namespace projectModel.Namespace) error {
 	client.logger.WithField("namespace_name", namespace.Name).Info("Create new namespace")
 	newNamespace := &clusterClient.Namespace{
 		Name:      namespace.Name,
@@ -207,7 +217,18 @@ func (client *rancherClient) CreateNamespace(namespace Namespace) error {
 	return err
 }
 
-func (client *rancherClient) HasCertificate(certificate Certificate) (bool, error) {
+func (client *rancherClient) getNamespaceID(namespace string) (string, error) {
+	hasNamespace, err := client.HasNamespace(projectModel.Namespace{Name: namespace})
+	if err != nil {
+		return "", err
+	}
+	if hasNamespace {
+		return client.namespaceCache[namespace].ID, nil
+	}
+	return "", fmt.Errorf("Namespace not existing %v", namespace)
+}
+
+func (client *rancherClient) HasCertificate(certificate projectModel.Certificate) (bool, error) {
 	collection, err := client.projectClient.Certificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -227,7 +248,7 @@ func (client *rancherClient) HasCertificate(certificate Certificate) (bool, erro
 	return false, nil
 }
 
-func (client *rancherClient) CreateCertificate(certificate Certificate) error {
+func (client *rancherClient) CreateCertificate(certificate projectModel.Certificate) error {
 	client.logger.WithField("certificate_name", certificate.Name).Info("Create new certificate")
 	newCertificate := &projectClient.Certificate{
 		Name:        certificate.Name,
@@ -241,7 +262,7 @@ func (client *rancherClient) CreateCertificate(certificate Certificate) error {
 	return err
 }
 
-func (client *rancherClient) HasConfigMap(configMap ConfigMap) (bool, error) {
+func (client *rancherClient) HasConfigMap(configMap projectModel.ConfigMap) (bool, error) {
 	collection, err := client.projectClient.ConfigMap.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -261,7 +282,7 @@ func (client *rancherClient) HasConfigMap(configMap ConfigMap) (bool, error) {
 	return false, nil
 }
 
-func (client *rancherClient) CreateConfigMap(configMap ConfigMap) error {
+func (client *rancherClient) CreateConfigMap(configMap projectModel.ConfigMap) error {
 	client.logger.WithField("config_map_name", configMap.Name).Info("Create new ConfigMap")
 	newConfigMap := &projectClient.ConfigMap{
 		Name:        configMap.Name,
@@ -274,7 +295,7 @@ func (client *rancherClient) CreateConfigMap(configMap ConfigMap) error {
 	return err
 }
 
-func (client *rancherClient) HasDockerCredential(dockerCredential DockerCredential) (bool, error) {
+func (client *rancherClient) HasDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error) {
 	collection, err := client.projectClient.DockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -294,7 +315,7 @@ func (client *rancherClient) HasDockerCredential(dockerCredential DockerCredenti
 	return false, nil
 }
 
-func (client *rancherClient) CreateDockerCredential(dockerCredential DockerCredential) error {
+func (client *rancherClient) CreateDockerCredential(dockerCredential projectModel.DockerCredential) error {
 	client.logger.WithField("docker_credential_name", dockerCredential.Name).Info("Create new DockerCredential")
 
 	registries := make(map[string]projectClient.RegistryCredential)
@@ -316,7 +337,7 @@ func (client *rancherClient) CreateDockerCredential(dockerCredential DockerCrede
 	return err
 }
 
-func (client *rancherClient) HasSecret(secret ConfigMap) (bool, error) {
+func (client *rancherClient) HasSecret(secret projectModel.ConfigMap) (bool, error) {
 	collection, err := client.projectClient.Secret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -337,7 +358,7 @@ func (client *rancherClient) HasSecret(secret ConfigMap) (bool, error) {
 	return false, nil
 }
 
-func (client *rancherClient) CreateSecret(secret ConfigMap) error {
+func (client *rancherClient) CreateSecret(secret projectModel.ConfigMap) error {
 	client.logger.WithField("secret_name", secret.Name).Info("Create new Secret")
 	newSecret := &projectClient.Secret{
 		Name:      secret.Name,
@@ -349,7 +370,7 @@ func (client *rancherClient) CreateSecret(secret ConfigMap) error {
 	return err
 }
 
-func (client *rancherClient) HasNamespacedSecret(secret ConfigMap) (bool, error) {
+func (client *rancherClient) HasNamespacedSecret(secret projectModel.ConfigMap) (bool, error) {
 	collection, err := client.projectClient.NamespacedSecret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system":      "false",
@@ -371,7 +392,7 @@ func (client *rancherClient) HasNamespacedSecret(secret ConfigMap) (bool, error)
 	return false, nil
 }
 
-func (client *rancherClient) CreateNamespacedSecret(secret ConfigMap) error {
+func (client *rancherClient) CreateNamespacedSecret(secret projectModel.ConfigMap) error {
 	client.logger.WithField("secret_name", secret.Name).Info("Create new Secret")
 	newSecret := &projectClient.NamespacedSecret{
 		Name:        secret.Name,
@@ -384,7 +405,7 @@ func (client *rancherClient) CreateNamespacedSecret(secret ConfigMap) error {
 	return err
 }
 
-func (client *rancherClient) HasStorageClass(storageClass StorageClass) (bool, error) {
+func (client *rancherClient) HasStorageClass(storageClass projectModel.StorageClass) (bool, error) {
 	collection, err := client.clusterClient.StorageClass.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -404,7 +425,7 @@ func (client *rancherClient) HasStorageClass(storageClass StorageClass) (bool, e
 	return false, nil
 }
 
-func (client *rancherClient) CreateStorageClass(storageClass StorageClass) error {
+func (client *rancherClient) CreateStorageClass(storageClass projectModel.StorageClass) error {
 	client.logger.WithField("storage_class_name", storageClass.Name).Info("Create new storage class")
 	newStorageClass := &clusterClient.StorageClass{
 		Name:              storageClass.Name,
@@ -419,7 +440,7 @@ func (client *rancherClient) CreateStorageClass(storageClass StorageClass) error
 	return err
 }
 
-func (client *rancherClient) HasPersistentVolume(persistentVolume PersistentVolume) (bool, error) {
+func (client *rancherClient) HasPersistentVolume(persistentVolume projectModel.PersistentVolume) (bool, error) {
 	collection, err := client.clusterClient.PersistentVolume.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system": "false",
@@ -439,7 +460,7 @@ func (client *rancherClient) HasPersistentVolume(persistentVolume PersistentVolu
 	return false, nil
 }
 
-func (client *rancherClient) CreatePersistentVolume(persistentVolume PersistentVolume) error {
+func (client *rancherClient) CreatePersistentVolume(persistentVolume projectModel.PersistentVolume) error {
 	client.logger.WithField("local_volume_name", persistentVolume.Name).Info("Create new persistent volume")
 	newPersistentVolume := &clusterClient.PersistentVolume{
 		Name:                          persistentVolume.Name,
@@ -471,7 +492,7 @@ func (client *rancherClient) CreatePersistentVolume(persistentVolume PersistentV
 	return err
 }
 
-func (client *rancherClient) HasApp(app App) (bool, error) {
+func (client *rancherClient) HasApp(app projectModel.App) (bool, error) {
 	collection, err := client.projectClient.App.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": app.Name,
@@ -491,7 +512,7 @@ func (client *rancherClient) HasApp(app App) (bool, error) {
 	return false, nil
 }
 
-func (client *rancherClient) UpgradeApp(app App) error {
+func (client *rancherClient) UpgradeApp(app projectModel.App) error {
 	var installedApp projectClient.App
 	if item, exists := client.appCache[app.Name]; exists {
 		client.logger.WithField("app_name", app.Name).Trace("Use Cache")
@@ -532,7 +553,7 @@ func (client *rancherClient) UpgradeApp(app App) error {
 	return client.projectClient.App.ActionUpgrade(&installedApp, au)
 }
 
-func (client *rancherClient) CreateApp(app App) error {
+func (client *rancherClient) CreateApp(app projectModel.App) error {
 	client.logger.WithField("app_name", app.Name).Info("Create new app")
 	pattern := &projectClient.App{
 		Name:            app.Name,
@@ -541,6 +562,46 @@ func (client *rancherClient) CreateApp(app App) error {
 		Answers:         app.Answers,
 	}
 	_, err := client.projectClient.App.Create(pattern)
+	return err
+}
+
+func (client *rancherClient) HasJob(namespace string, job projectModel.Job) (bool, error) {
+	namespaceID, err := client.getNamespaceID(namespace)
+	if err != nil {
+		client.logger.WithError(err).WithField("job_name", job.Name).WithField("namespace", namespace).Error("Failed to read job list")
+		return false, fmt.Errorf("Failed to read job list, %v", err)
+	}
+	collection, err := client.projectClient.Job.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        job.Name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).WithField("job_name", job.Name).WithField("namespaceId", namespaceID).Error("Failed to read job list")
+		return false, fmt.Errorf("Failed to read job list, %v", err)
+	}
+	for _, item := range collection.Data {
+		if item.Name == job.Name {
+			return true, nil
+		}
+	}
+	client.logger.WithField("job_name", job.Name).WithField("namespaceId", namespaceID).Debug("Job not found")
+	return false, nil
+}
+
+func (client *rancherClient) CreateJob(namespace string, job projectModel.Job) error {
+	client.logger.WithField("job_name", job.Name).Info("Create new job")
+	namespaceId, err := client.getNamespaceID(namespace)
+	if err != nil {
+		return err
+	}
+	pattern, err := projectModel.ConvertJobToProjectAPI(job)
+	if err != nil {
+		return err
+	}
+	pattern.NamespaceId = namespaceId
+	_, err = client.projectClient.Job.Create(&pattern)
 	return err
 }
 

@@ -25,9 +25,11 @@ import (
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var Update = flag.Bool("update", false, "update .golden files")
+var typeOfBytes = reflect.TypeOf([]byte(nil))
 
 func AssertGoldenFile(tb testing.TB, testName string, actual []byte) {
 	golden := fmt.Sprintf("testdata/golden-files/%s.golden", testName)
@@ -74,16 +76,70 @@ func Equals(tb testing.TB, exp, act interface{}) {
 	if !reflect.DeepEqual(exp, act) {
 		_, file, line, _ := runtime.Caller(1)
 
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(fmt.Sprint(act), fmt.Sprint(exp), true)
 		fmt.Printf(
 			"\033[31m%s:%d:\ndiff:\033[39m\n\n\t%s\n\n",
 			filepath.Base(file),
 			line,
-			strings.Replace(dmp.DiffPrettyText(diffs), "\n", "\n\t", -1),
+			strings.Replace(buildDiff(exp, act), "\n", "\n\t", -1),
 		)
 		tb.FailNow()
 	}
+}
+
+func buildDiff(exp, act interface{}) string {
+	fmt.Println(reflect.TypeOf(exp))
+	dmp := diffmatchpatch.New()
+	diffs := dmp.DiffMain(buildCompareString(act), buildCompareString(exp), true)
+	return dmp.DiffPrettyText(diffs)
+}
+func buildCompareString(input interface{}) string {
+	result := buildCompareStringForType(input)
+	if result == "" {
+		return fmt.Sprint(input)
+	}
+	return result
+}
+
+func buildCompareStringForType(input interface{}) string {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+	v := reflect.ValueOf(input)
+	switch v.Kind() {
+	case reflect.Struct:
+		fmt.Println(input)
+		result, err := yaml.Marshal(input)
+		if err != nil {
+			return fmt.Sprint(input)
+		}
+		return string(result)
+	case reflect.Ptr:
+		if v.IsNil() {
+			return "nil ptr"
+		}
+		return buildCompareString(v.Elem())
+	case reflect.Bool:
+		return fmt.Sprintf("%t", v.Bool())
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fmt.Sprintf("%d", v.Int())
+	case reflect.Float32, reflect.Float64:
+		return fmt.Sprintf("%f", v.Float())
+	case reflect.Slice:
+		if v.Type() == typeOfBytes {
+			return buildCompareString(string(input.([]byte)))
+		}
+		result, err := yaml.Marshal(input)
+		if err != nil {
+			return fmt.Sprint(input)
+		}
+		return string(result)
+	case reflect.String:
+		return input.(string)
+	}
+	return fmt.Sprint(input)
 }
 
 func FailInStub(tb testing.TB, stubStacks int, msg string, v ...interface{}) {

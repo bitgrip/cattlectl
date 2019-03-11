@@ -39,28 +39,28 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, baseDir s
 	if err != nil {
 		return []byte{}, err
 	}
-	projectTemplate := template.New("data-template")
-	projectTemplate.Funcs(template.FuncMap{
+	descriptorTemplate := template.New("data-template")
+	descriptorTemplate.Funcs(template.FuncMap{
 		"read":   readFunc(absBaseDir),
 		"indent": indent,
 		"toYaml": toYaml,
 	})
 	if truncated {
-		projectTemplate.Funcs(template.FuncMap{
+		descriptorTemplate.Funcs(template.FuncMap{
 			"base64": toTruncatedBase64,
 		})
 	} else {
-		projectTemplate.Funcs(template.FuncMap{
+		descriptorTemplate.Funcs(template.FuncMap{
 			"base64": toBase64,
 		})
 	}
-	projectTemplate, err = projectTemplate.Parse(string(templateData))
+	descriptorTemplate, err = descriptorTemplate.Parse(string(templateData))
 	if err != nil {
 		return []byte{}, err
 	}
-	projectTemplate = projectTemplate.Option("missingkey=error")
+	descriptorTemplate = descriptorTemplate.Option("missingkey=error")
 	var templateBuffer bytes.Buffer
-	if err := projectTemplate.Execute(&templateBuffer, values); err != nil {
+	if err := descriptorTemplate.Execute(&templateBuffer, values); err != nil {
 		return []byte{}, err
 	}
 

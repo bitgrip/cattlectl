@@ -1,0 +1,352 @@
+---
+api_version: v1.1
+kind: CronJob
+metadata:
+  project_name: test-project
+spec:
+  activeDeadlineSeconds: 123
+  annotations:
+    bitgrip.de/test-annotation: "annotaition-value"
+  automountServiceAccountToken: true
+  containers:
+  - allowPrivilegeEscalation: true
+    command: [ "perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)" ]
+    environment:
+      TEST_VAR: test value
+    environmentFrom: null
+    image: perl
+    imagePullPolicy: Always
+    initContainer: true
+    livenessProbe: null
+    name: pi
+    ports: null
+    postStart:
+      command:
+      - "echo"
+      - "post start"
+    preStop:
+      host: "localhost"
+      port: 1234
+      scheme: https
+    privileged: true
+    procMount: Default
+    readOnly: true
+    runAsGroup: 1001
+    runAsNonRoot: true
+    stdin: true
+    stdinOnce: true
+    tty: true
+    terminationMessagePath: /tmp/term-log
+    terminationMessagePolicy: FallbackToLogsOnError
+    volumeDevices:
+    - devicePath: /data
+      name: data
+    volumeMounts:
+    - mountPath: /run/secrets/admin-passwords
+      mountPropagation: HostToContainer
+      name: admin-passwords
+      readOnly: true
+      subPath: /data
+    workingDir: /data
+  dnsConfig:
+    nameservers:
+    - 1.2.3.4
+    options:
+    - name: ndots
+      value: "2"
+    - name: edns0
+    searches:
+    - ns1.svc.cluster.local
+    - my.dns.search.suffix
+  dnsPolicy: "None"
+  hostAliases:
+  - hostnames:
+    - test-host
+    ip: 127.0.0.1
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostname: "test-hostname"
+  imagePullSecrets:
+  - name: bitgrip-registry
+  labels:
+    bitgrip.de/test-label: "label-value"
+  name: workload-name
+  priority: 123
+  priorityClassName: high-priority
+  restartPolicy: Never
+  runAsGroup: 1001
+  runAsNonRoot: true
+  schedulerName: default-scheduler
+  scheduling:
+    node:
+      nodeId: test-node
+      preferred:
+      - bitgrip.de/node-label = test-node-label
+      requireAll:
+      - bitgrip.de/node-label = test-node-label
+      requireAny:
+      - bitgrip.de/node-label = test-node-label
+    priority: 1
+    priorityClassName: high-priority
+    scheduler: default-scheduler
+    tolerate:
+    - effect: PreferNoSchedule
+      key: taint-key
+      operator: Equal
+      tolerationSeconds: 1
+      value: taint-value
+  selector:
+    matchExpressions:
+    - key: bitgrip.de/test-label
+      operator: In
+      values:
+        - label-value
+    matchLabels:
+      bitgrip.de/test-label: "label-value"
+  serviceAccountName: test-service-account
+  shareProcessNamespace: true
+  subdomain: test
+  volumes:
+  - name: awsElasticBlockStore-volume
+    awsElasticBlockStore:
+      fsType: todo
+      partition: 1
+      readOnly: true
+      volumeID: todo
+  - name: azureDisk-volume
+    azureDisk:
+      cachingMode: todo
+      diskURI: todo
+      diskName: todo
+      fsType: todo
+      kind: todo
+      readOnly: true
+  - name: azureFile-volume
+    azureFile:
+      readOnly: true
+      secretName: todo
+      shareName: todo
+  - name: cephfs-volume
+    cephfs:
+      monitors:
+      - todo
+      path: todo
+      readOnly: true
+      secretFile: todo
+      secretRef:
+        name: todo
+      user: todo
+  - name: cinder-volume
+    cinder:
+      fsType: todo
+      readOnly: true
+      secretRef:
+        name: todo
+      volumeID: todo
+  - name: configMap-volume
+    configMap:
+      defaultMode: 664
+      items:
+      - key: todo
+        path: todo
+      name: todo
+      optional: true
+  - name: downwardAPI-volume
+    downwardAPI:
+      defaultMode: 664
+      items:
+      - fieldRef:
+          apiVersion: 1.0.0
+          fieldPath: /data
+        mode: 664
+        path: /data
+        resourceFieldRef:
+          containerName: todo
+          divisor: todo
+          resource: todo
+  - name: emptyDir-volume
+    emptyDir:
+      medium: todo
+      sizeLimit: todo
+  - name: fc-volume
+    fc:
+      fsType: todo
+      lun: 123
+      readOnly: true
+      targetWWNs:
+      - todo
+      wwids:
+      - todo
+  - name: flexVolume-volume
+    flexVolume:
+      driver: todo
+      fsType: todo
+      options:
+        todo: todo
+      readOnly: true
+      secretRef:
+        name: todo
+  - name: flocker-volume
+    flocker:
+      datasetName: todo
+      datasetUUID: todo
+  - name: gcePersistentDisk-volume
+    gcePersistentDisk:
+      fsType: todo
+      pdName: todo
+      partition: 1
+      readOnly: true
+  - name: gitRepo-volume
+    gitRepo:
+      directory: /data
+      repository: todo
+      revision: g110477a
+  - name: glusterfs-volume
+    glusterfs:
+      endpoints: todo
+      path: /data
+      readOnly: true
+  - name: hostPath-volume
+    hostPath:
+      kind: todo
+      path: /data
+  - name: iscsi-volume
+    iscsi:
+      chapAuthDiscovery: true
+      fsType: todo
+      iqn: todo
+      iscsiInterface: todo
+      initiatorName: todo
+      lun: 123
+      portals:
+      - todo
+      readOnly: true
+      secretRef:
+        name: todo
+      chapAuthSession: true
+      targetPortal: todo
+  - name: nfs-volume
+    nfs:
+      path: todo
+      readOnly: true
+      server: todo
+  - name: persistentVolumeClaim-volume
+    persistentVolumeClaim:
+      persistentVolumeClaimId: todo
+      readOnly: true
+  - name: photonPersistentDisk-volume
+    photonPersistentDisk:
+      fsType: todo
+      pdID: todo
+  - name: portworxVolume-volume
+    portworxVolume:
+      fsType: todo
+      readOnly: true
+      volumeID: todo
+  - name: projected-volume
+    projected:
+      defaultMode: 664
+      sources:
+      - configMap:
+          items:
+          - key: todo
+            path: todo
+          name: todo
+          optional: true
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: 1.0.0
+              fieldPath: /data
+            mode: 664
+            path: /data
+            resourceFieldRef:
+              containerName: todo
+              divisor: todo
+              resource: todo
+      - secret:
+          items:
+          - key: admin_password
+            path: admin-password-path
+          name: admint-password-secret
+          optional: true
+      - serviceAccountToken:
+          audience: todo
+          expirationSeconds: 60
+          path: /data
+  - name: quobyte-volume
+    quobyte:
+      group: todo
+      readOnly: true
+      registry: todo
+      user: todo
+      volume: todo
+  - name: rbd-volume
+    rbd:
+      monitors:
+      - todo
+      fsType: todo
+      keyring: todo
+      image: todo
+      pool: todo
+      user: todo
+      readOnly: true
+      secretRef:
+        name: todo
+  - name: scaleIO-volume
+    scaleIO:
+      fsType: todo
+      gateway: todo
+      protectionDomain: todo
+      readOnly: true
+      sslEnabled: true
+      secretRef:
+        name: todo
+      storageMode: todo
+      storagePool: todo
+      system: todo
+      volumeName: todo
+  - name: secret-volume
+    secret:
+      defaultMode: 664
+      items:
+      - key: admin_password
+        path: admin-password-path
+      optional: true
+      secretName: admin-passwords
+  - name: storageos-volume
+    storageos:
+      fsType: todo
+      readOnly: true
+      secretRef:
+        name: todo
+      volumeName: todo
+      volumeNamespace: todo
+  - name: vsphereVolume-volume
+    vsphereVolume:
+    fsType: todo
+    storagePolicyID: todo
+    storagePolicyName: todo
+    volumePath: todo
+  workloadAnnotations:
+    bitgrip.de/test-annotation: "annotaition-value"
+  workloadLabels:
+    bitgrip.de/test-label: "label-value"
+  cronJobConfig:
+    concurrencyPolicy: todo
+    failedJobsHistoryLimit: 123
+    jobAnnotations:
+      bitgrip.de/test-annotation: "annotaition-value"
+    jobConfig:
+      activeDeadlineSeconds: 123
+      backoffLimit: 1
+      completions: 1
+      manualSelector: true
+      parallelism: 1
+    jobLabels:
+      bitgrip.de/test-label: "label-value"
+    schedule: 15 * * * *
+    startingDeadlineSeconds: 60
+    SuccessfulJobsHistoryLimit: 123
+    suspend: true
