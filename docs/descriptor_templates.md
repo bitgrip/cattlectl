@@ -42,6 +42,8 @@ Build in functions
 |read|read the content of a file| `{{ read some-content.txt }}`|
 |indent|indent each line with X YAML indents |`{{ read .tls_cert_key_file | indent 3}}`|
 |base64|encodes the content as base 64|`{{ read .license_file | base64}}`|
+|toYaml|inserts the complete yaml branch or array of the specified value|`{{ toYaml .my_value }}`|
+
 
 Corresponding environment variables
 -----------------------------------
