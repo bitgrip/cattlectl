@@ -22,6 +22,8 @@ import (
 	"log"
 	"strings"
 	"text/template"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 /*
@@ -36,6 +38,7 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, truncated
 	projectTemplate.Funcs(template.FuncMap{
 		"read":   read,
 		"indent": indent,
+		"toYaml": toYaml,
 	})
 	if truncated {
 		projectTemplate.Funcs(template.FuncMap{
@@ -95,4 +98,13 @@ func indent(indents int, data interface{}) string {
 	}
 	result := strings.TrimSpace(strings.Join(strings.Split(toIndent, "\n"), "\n"+prefix))
 	return prefix + result
+}
+
+func toYaml(data interface{}) (string, error) {
+	marshalledYaml, err := yaml.Marshal(data)
+	if err != nil {
+		// Swallow errors inside of a template.
+		return "", err
+	}
+	return string(marshalledYaml), nil
 }
