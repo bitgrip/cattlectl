@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -33,10 +34,14 @@ templateData - The data to build the template from
 values       - The values to use for execution of the template
 trancated    - If base64 content has to be truncated
 */
-func BuildTemplate(templateData []byte, values map[string]interface{}, truncated bool) ([]byte, error) {
+func BuildTemplate(templateData []byte, values map[string]interface{}, baseDir string, truncated bool) ([]byte, error) {
+	absBaseDir, err := filepath.Abs(baseDir)
+	if err != nil {
+		return []byte{}, err
+	}
 	projectTemplate := template.New("data-template")
 	projectTemplate.Funcs(template.FuncMap{
-		"read":   read,
+		"read":   readFunc(absBaseDir),
 		"indent": indent,
 		"toYaml": toYaml,
 	})
@@ -49,7 +54,7 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, truncated
 			"base64": toBase64,
 		})
 	}
-	projectTemplate, err := projectTemplate.Parse(string(templateData))
+	projectTemplate, err = projectTemplate.Parse(string(templateData))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -63,12 +68,20 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, truncated
 
 }
 
-func read(fileName string) []byte {
-	fileContent, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		log.Fatal(err)
+func readFunc(baseDir string) func(fileName string) []byte {
+	return func(fileName string) []byte {
+		var absFileName string
+		if filepath.IsAbs(fileName) {
+			absFileName = fileName
+		} else {
+			absFileName = filepath.Clean(fmt.Sprintf("%s/%s", baseDir, fileName))
+		}
+		fileContent, err := ioutil.ReadFile(absFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return fileContent
 	}
-	return fileContent
 }
 
 func toBase64(data interface{}) string {

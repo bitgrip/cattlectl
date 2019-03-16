@@ -21,7 +21,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 var Update = flag.Bool("update", false, "update .golden files")
@@ -70,7 +73,15 @@ func NotOk(tb testing.TB, err error, expecteError string) {
 func Equals(tb testing.TB, exp, act interface{}) {
 	if !reflect.DeepEqual(exp, act) {
 		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\033[39m\n\n", filepath.Base(file), line, exp, act)
+
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(fmt.Sprint(act), fmt.Sprint(exp), true)
+		fmt.Printf(
+			"\033[31m%s:%d:\ndiff:\033[39m\n\n\t%s\n\n",
+			filepath.Base(file),
+			line,
+			strings.Replace(dmp.DiffPrettyText(diffs), "\n", "\n\t", -1),
+		)
 		tb.FailNow()
 	}
 }

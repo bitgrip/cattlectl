@@ -1,0 +1,100 @@
+api_version: v1.0
+kind: Project
+metadata:
+  name: include-parent
+  includes:
+  - file: child.yaml
+namespaces:
+- name: parent-namespace
+- name: child-namespace
+resources:
+  certificates:
+  - name: parent-cert
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+  - name: child-cert
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+    namespace: child-namespace
+  config_maps:
+  - name: parent-config-map
+    data:
+      abc: def
+      bca: fed
+  - name: child-config-map
+    data:
+      abc: def
+      bca: fed
+  docker_credentials:
+  - name: parent-registry
+    registries:
+    - name: parent.private.registry
+      password: parent-docker-registry-password
+      username: parent-docker-registry-user
+  - name: child-registry
+    registries:
+    - name: child.private.registry
+      password: child-docker-registry-password
+      username: child-docker-registry-user
+  secrets:
+  - name: parent-secret
+    data:
+      abc: def
+      bca: fed
+  - name: child-secret
+    data:
+      abc: def
+      bca: fed
+storage_classes:
+- name: parent-storage-classe
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+- name: child-storage-classe
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+persistent_volumes:
+  - name: parent-persistent-volume
+    storage_class_name: parent-storage-classe
+  - name: child-persistent-volume
+    storage_class_name: child-storage-classe
+apps:
+- name: parent-app
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: parent-namespace
+  answers:
+    ingress.enabled: "false"
+- name: child-app
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: parent-namespace
+  answers:
+    ingress.enabled: "false"

@@ -21,6 +21,8 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -74,4 +76,45 @@ func TestParseValidProjectDescriptor(t *testing.T) {
 	actual, err := yaml.Marshal(project)
 	assert.Ok(t, err)
 	assert.AssertGoldenFile(t, testName, actual)
+}
+
+func TestWithGoldenFile(t *testing.T) {
+	tests := []string{
+		"simple-include",
+		"cycle-include",
+	}
+	for _, test := range tests {
+		runTestWithGoldenFile(t, test)
+	}
+}
+
+func runTestWithGoldenFile(t *testing.T, testName string) {
+	//Arrange
+	parser := NewParser(fmt.Sprintf("testdata/%s/project.yaml", testName))
+
+	values := make(map[string]interface{})
+	if data, err := ioutil.ReadFile(fmt.Sprintf("testdata/%s/values.yaml", testName)); err != nil {
+		logrus.Info("No values found - use empty")
+	} else if err := yaml.Unmarshal(data, &values); err != nil {
+		log.Fatal(err)
+	}
+
+	//Act
+	project, err := parser.Parse(values)
+
+	//Verify
+	assert.Ok(t, err)
+	actual, err := yaml.Marshal(project)
+	assert.Ok(t, err)
+	assert.AssertGoldenFile(t, testName, actual)
+}
+
+func readTestdata(t *testing.T, testdataFile string) rancher.Project {
+	project := rancher.Project{}
+	fileContent, err := ioutil.ReadFile("testdata/" + testdataFile)
+	assert.Ok(t, err)
+
+	err = yaml.Unmarshal(fileContent, &project)
+	assert.Ok(t, err)
+	return project
 }

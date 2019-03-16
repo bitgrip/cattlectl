@@ -60,7 +60,7 @@ func runTestCase(testName string, truncated bool, t *testing.T) {
 		"my_array_value":  []string{"a1", "a2", "a3"},
 		"my_struct_value": testStruct{testInnerStruct{"value1", "value2"}, "value3"},
 	}
-	actual, err := BuildTemplate(templateData, values, truncated)
+	actual, err := BuildTemplate(templateData, values, ".", truncated)
 	assert.Ok(t, err)
 	golden := fmt.Sprintf("%s-%v.golden", testName, truncated)
 	if *assert.Update {

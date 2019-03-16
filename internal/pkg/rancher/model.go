@@ -14,8 +14,9 @@
 
 package rancher
 
+// Cluster is WIP
 type Cluster struct {
-	ApiVersion        string `yaml:"api_version"`
+	APIVersion        string `yaml:"api_version"`
 	Kind              string
 	Metadata          ClusterMetadata
 	StorageClasses    []StorageClass     `yaml:"storage_classes,omitempty"`
@@ -23,15 +24,17 @@ type Cluster struct {
 	Projects          []Project
 }
 
+// ClusterMetadata is WIP
 type ClusterMetadata struct {
 	Name       string
 	ID         string `yaml:"id,omitempty"`
-	RancherUrl string `yaml:"rancher_url,omitempty"`
+	RancherURL string `yaml:"rancher_url,omitempty"`
 	AccessKey  string `yaml:"access_key,omitempty"`
 	SecretKey  string `yaml:"secret_key,omitempty"`
 	TokenKey   string `yaml:"token_key,omitempty"`
 }
 
+// Project is a subsection of a cluster
 type Project struct {
 	APIVersion        string `yaml:"api_version"`
 	Kind              string
@@ -43,21 +46,30 @@ type Project struct {
 	Apps              []App
 }
 
+// ProjectMetadata the meta informations about a Project
 type ProjectMetadata struct {
 	Name        string
-	ID          string `yaml:"id,omitempty"`
-	RancherURL  string `yaml:"rancher_url,omitempty"`
-	AccessKey   string `yaml:"access_key,omitempty"`
-	SecretKey   string `yaml:"secret_key,omitempty"`
-	TokenKey    string `yaml:"token_key,omitempty"`
-	ClusterName string `yaml:"cluster_name,omitempty"`
-	ClusterID   string `yaml:"cluster_id,omitempty"`
+	ID          string    `yaml:"id,omitempty"`
+	RancherURL  string    `yaml:"rancher_url,omitempty"`
+	AccessKey   string    `yaml:"access_key,omitempty"`
+	SecretKey   string    `yaml:"secret_key,omitempty"`
+	TokenKey    string    `yaml:"token_key,omitempty"`
+	ClusterName string    `yaml:"cluster_name,omitempty"`
+	ClusterID   string    `yaml:"cluster_id,omitempty"`
+	Includes    []Include `yaml:"includes,omitempty"`
 }
 
+// Include is used to merge multiple descriptors into one
+type Include struct {
+	File string `yaml:"file"`
+}
+
+// Namespace is a subsection of a Project and is represented in K8S as namespace
 type Namespace struct {
 	Name string
 }
 
+// Resources of a Project
 type Resources struct {
 	Certificates      []Certificate      `yaml:"certificates,omitempty"`
 	ConfigMaps        []ConfigMap        `yaml:"config_maps,omitempty"`
@@ -65,6 +77,7 @@ type Resources struct {
 	Secrets           []ConfigMap        `yaml:"secrets,omitempty"`
 }
 
+// Certificate TLS certs used e.g. for https endpoints
 type Certificate struct {
 	Name      string
 	Key       string
@@ -72,24 +85,28 @@ type Certificate struct {
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
+// ConfigMap data structure used for K8S configmaps and secrets
 type ConfigMap struct {
 	Name      string
 	Data      map[string]string
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
+//DockerCredential to access docker registries
 type DockerCredential struct {
 	Name       string               `yaml:"name,omitempty"`
 	Namespace  string               `yaml:"namespace,omitempty"`
 	Registries []RegistryCredential `yaml:"registries,omitempty"`
 }
 
+// RegistryCredential credentials of one docker registry
 type RegistryCredential struct {
 	Name     string `yaml:"name,omitempty"`
 	Password string `yaml:"password,omitempty"`
 	Username string `yaml:"username,omitempty"`
 }
 
+// StorageClass represent a K8S StorageClass
 type StorageClass struct {
 	Name           string
 	Provisioner    string
@@ -99,6 +116,7 @@ type StorageClass struct {
 	MountOptions   []string          `yaml:"mount_options,omitempty"`
 }
 
+// PersistentVolume represent a K8S PersistentVolume
 type PersistentVolume struct {
 	Name             string
 	Type             string
@@ -110,6 +128,7 @@ type PersistentVolume struct {
 	InitScript       string `yaml:"init_script"`
 }
 
+// App deployment using a Helm- or Rancher-Chart
 type App struct {
 	Name        string
 	Catalog     string
