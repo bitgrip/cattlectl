@@ -1,0 +1,1 @@
+{{toYaml .my_struct_value | indent 4 }}

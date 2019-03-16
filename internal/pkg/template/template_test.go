@@ -44,9 +44,21 @@ func runTestCase(testName string, truncated bool, t *testing.T) {
 
 	templateData, err := ioutil.ReadFile("input.txt")
 	assert.Ok(t, err)
+
+	// test structs for testing toYaml with structs
+	type testInnerStruct struct {
+		Key1 string
+		Key2 string
+	}
+	type testStruct struct {
+		Foo  testInnerStruct
+		Key3 string
+	}
 	values := map[string]interface{}{
-		"key1":       "value1",
-		"file_name1": "read-file1.txt",
+		"key1":            "value1",
+		"file_name1":      "read-file1.txt",
+		"my_array_value":  []string{"a1", "a2", "a3"},
+		"my_struct_value": testStruct{testInnerStruct{"value1", "value2"}, "value3"},
 	}
 	actual, err := BuildTemplate(templateData, values, truncated)
 	assert.Ok(t, err)
@@ -88,5 +100,14 @@ func TestErrorOnParsingClusterDescriptor(t *testing.T) {
 		//Assert
 		assert.Equals(t, test.expectedResult, result)
 	}
-
 }
+
+//func TestErrorWhenYamlDataIsWrong(t *testing.T) {
+//	invalidYaml, err := ioutil.ReadFile("testdata/invalid_yaml.yaml.zip")
+//Act
+//	result, err := toYaml(invalidYaml)
+
+//Assert
+//	assert.NotOk(t, err, "")
+//	assert.Equals(t, "", result)
+//}
