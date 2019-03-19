@@ -52,7 +52,12 @@ func (converger jobConverger) Converge() error {
 	}
 
 	if hasJob, err := converger.client.HasJob(converger.jobDescriptor.Metadata.Namespace, converger.jobDescriptor.Spec); hasJob {
-		return nil
+		logrus.WithFields(logrus.Fields{
+			"project_name": converger.jobDescriptor.Metadata.ProjectName,
+			"namespace":    converger.jobDescriptor.Metadata.Namespace,
+			"job_name":     converger.jobDescriptor.Spec.Name,
+		}).Warn("Job exists need to be removed manually")
+		return fmt.Errorf("Can not override existing job %v", converger.jobDescriptor.Spec.Name)
 	} else if err != nil {
 		return fmt.Errorf("Failed to check for namespace, %v", err)
 	}
