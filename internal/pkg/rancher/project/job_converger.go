@@ -80,11 +80,14 @@ func (converger jobConverger) initCluster() error {
 func (converger jobConverger) initProject() error {
 	if hasProject, projectID, err := converger.client.HasProjectWithName(converger.jobDescriptor.Metadata.ProjectName); hasProject {
 		if err = converger.client.SetProject(converger.jobDescriptor.Metadata.ProjectName, projectID); err != nil {
+			logrus.WithError(err).WithFields(logrus.Fields{"project_name": converger.jobDescriptor.Metadata.ProjectName}).Warn("Failed to init project")
 			return fmt.Errorf("Failed to init project, %v", err)
 		}
 		return nil
 	} else if err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{"project_name": converger.jobDescriptor.Metadata.ProjectName}).Warn("Failed to check for project")
 		return fmt.Errorf("Failed to check for project, %v", err)
 	}
+	logrus.WithFields(logrus.Fields{"project_name": converger.jobDescriptor.Metadata.ProjectName}).Warn("Failed to check for project")
 	return fmt.Errorf("Project not found")
 }
