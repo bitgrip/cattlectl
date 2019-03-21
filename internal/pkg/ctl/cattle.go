@@ -32,8 +32,10 @@ const (
 var (
 	newProjectConverger = project.NewProjectConverger
 	newJobConverger     = project.NewJobConverger
+	newCronJobConverger = project.NewCronJobConverger
 	newProjectParser    = project.NewProjectParser
 	newJobParser        = project.NewJobParser
+	newCronJobParser    = project.NewCronJobParser
 )
 
 func ApplyDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
@@ -50,7 +52,6 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyProject(project, config); err != nil {
 			return err
 		}
-		return nil
 	case JobKind:
 		jobDescriptor := projectModel.JobDescriptor{}
 		if err := newJobParser(file, data, &jobDescriptor, values).Parse(); err != nil {
@@ -59,9 +60,38 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyJob(jobDescriptor, config); err != nil {
 			return err
 		}
-		return nil
+	case CronJobKind:
+		cronJobDescriptor := projectModel.CronJobDescriptor{}
+		if err := newCronJobParser(file, data, &cronJobDescriptor, values).Parse(); err != nil {
+			return err
+		}
+		if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) error {
+	if config.RancherUrl() != "" {
+		cronJobDescriptor.Metadata.RancherURL = config.RancherUrl()
+	}
+	if config.AccessKey() != "" {
+		cronJobDescriptor.Metadata.AccessKey = config.AccessKey()
+	}
+	if config.SecretKey() != "" {
+		cronJobDescriptor.Metadata.SecretKey = config.SecretKey()
+	}
+	if config.TokenKey() != "" {
+		cronJobDescriptor.Metadata.TokenKey = config.TokenKey()
+	}
+	if config.ClusterName() != "" {
+		cronJobDescriptor.Metadata.ClusterName = config.ClusterName()
+	}
+	if config.ClusterId() != "" {
+		cronJobDescriptor.Metadata.ClusterID = config.ClusterId()
+	}
+	return newCronJobConverger(cronJobDescriptor).Converge()
 }
 
 func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) error {
@@ -139,11 +169,16 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 			return err
 		}
 		descriptor = jobDescriptor
+	case CronJobKind:
+		cronJobDescriptor := projectModel.CronJobDescriptor{}
+		if err = newCronJobParser(file, data, &cronJobDescriptor, values).Parse(); err != nil {
+			return err
+		}
 	}
 	out, err := yaml.Marshal(descriptor)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(out))
-	return nil
+	_, err = fmt.Println(string(out))
+	return err
 }

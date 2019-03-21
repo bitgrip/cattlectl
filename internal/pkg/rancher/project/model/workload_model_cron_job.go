@@ -46,8 +46,11 @@ type CronJobConfig struct {
 }
 
 func ConvertCronJobDescriptorToProjectAPI(descriptor CronJobDescriptor) (projectAPI.CronJob, error) {
+	return ConvertCronJobToProjectAPI(descriptor.Spec)
+}
+func ConvertCronJobToProjectAPI(cronJob CronJob) (projectAPI.CronJob, error) {
 	result := projectAPI.CronJob{}
-	transferContent, err := json.Marshal(descriptor.Spec)
+	transferContent, err := json.Marshal(cronJob)
 	if err != nil {
 		return result, err
 	}
