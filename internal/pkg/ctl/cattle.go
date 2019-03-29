@@ -24,18 +24,21 @@ import (
 )
 
 const (
-	ProjectKind = "Project"
-	JobKind     = "Job"
-	CronJobKind = "CronJob"
+	ProjectKind    = "Project"
+	JobKind        = "Job"
+	CronJobKind    = "CronJob"
+	DeploymentKind = "Deployment"
 )
 
 var (
-	newProjectConverger = project.NewProjectConverger
-	newJobConverger     = project.NewJobConverger
-	newCronJobConverger = project.NewCronJobConverger
-	newProjectParser    = project.NewProjectParser
-	newJobParser        = project.NewJobParser
-	newCronJobParser    = project.NewCronJobParser
+	newProjectConverger    = project.NewProjectConverger
+	newJobConverger        = project.NewJobConverger
+	newCronJobConverger    = project.NewCronJobConverger
+	newDeploymentConverger = project.NewDeploymentConverger
+	newProjectParser       = project.NewProjectParser
+	newJobParser           = project.NewJobParser
+	newCronJobParser       = project.NewCronJobParser
+	newDeploymentParser    = project.NewDeploymentParser
 )
 
 func ApplyDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
@@ -68,73 +71,35 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
 			return err
 		}
+	case DeploymentKind:
+		deploymentDescriptor := projectModel.DeploymentDescriptor{}
+		if err := newDeploymentParser(file, data, &deploymentDescriptor, values).Parse(); err != nil {
+			return err
+		}
+		if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) error {
-	if config.RancherUrl() != "" {
-		cronJobDescriptor.Metadata.RancherURL = config.RancherUrl()
-	}
-	if config.AccessKey() != "" {
-		cronJobDescriptor.Metadata.AccessKey = config.AccessKey()
-	}
-	if config.SecretKey() != "" {
-		cronJobDescriptor.Metadata.SecretKey = config.SecretKey()
-	}
-	if config.TokenKey() != "" {
-		cronJobDescriptor.Metadata.TokenKey = config.TokenKey()
-	}
-	if config.ClusterName() != "" {
-		cronJobDescriptor.Metadata.ClusterName = config.ClusterName()
-	}
-	if config.ClusterId() != "" {
-		cronJobDescriptor.Metadata.ClusterID = config.ClusterId()
-	}
+	fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
 	return newCronJobConverger(cronJobDescriptor).Converge()
 }
 
 func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) error {
-	if config.RancherUrl() != "" {
-		jobDescriptor.Metadata.RancherURL = config.RancherUrl()
-	}
-	if config.AccessKey() != "" {
-		jobDescriptor.Metadata.AccessKey = config.AccessKey()
-	}
-	if config.SecretKey() != "" {
-		jobDescriptor.Metadata.SecretKey = config.SecretKey()
-	}
-	if config.TokenKey() != "" {
-		jobDescriptor.Metadata.TokenKey = config.TokenKey()
-	}
-	if config.ClusterName() != "" {
-		jobDescriptor.Metadata.ClusterName = config.ClusterName()
-	}
-	if config.ClusterId() != "" {
-		jobDescriptor.Metadata.ClusterID = config.ClusterId()
-	}
+	fillWorkloadMetadata(&jobDescriptor.Metadata, config)
 	return newJobConverger(jobDescriptor).Converge()
 }
 
+func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) error {
+	fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
+	return newDeploymentConverger(deploymentDescriptor).Converge()
+}
+
 func ApplyProject(project projectModel.Project, config config.Config) error {
-	if config.RancherUrl() != "" {
-		project.Metadata.RancherURL = config.RancherUrl()
-	}
-	if config.AccessKey() != "" {
-		project.Metadata.AccessKey = config.AccessKey()
-	}
-	if config.SecretKey() != "" {
-		project.Metadata.SecretKey = config.SecretKey()
-	}
-	if config.TokenKey() != "" {
-		project.Metadata.TokenKey = config.TokenKey()
-	}
-	if config.ClusterName() != "" {
-		project.Metadata.ClusterName = config.ClusterName()
-	}
-	if config.ClusterId() != "" {
-		project.Metadata.ClusterID = config.ClusterId()
-	}
+	fillProjectMetadata(&project.Metadata, config)
 	return newProjectConverger(project).Converge()
 }
 
@@ -181,4 +146,46 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 	}
 	_, err = fmt.Println(string(out))
 	return err
+}
+
+func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) {
+	if config.RancherUrl() != "" {
+		metadata.RancherURL = config.RancherUrl()
+	}
+	if config.AccessKey() != "" {
+		metadata.AccessKey = config.AccessKey()
+	}
+	if config.SecretKey() != "" {
+		metadata.SecretKey = config.SecretKey()
+	}
+	if config.TokenKey() != "" {
+		metadata.TokenKey = config.TokenKey()
+	}
+	if config.ClusterName() != "" {
+		metadata.ClusterName = config.ClusterName()
+	}
+	if config.ClusterId() != "" {
+		metadata.ClusterID = config.ClusterId()
+	}
+}
+
+func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.Config) {
+	if config.RancherUrl() != "" {
+		metadata.RancherURL = config.RancherUrl()
+	}
+	if config.AccessKey() != "" {
+		metadata.AccessKey = config.AccessKey()
+	}
+	if config.SecretKey() != "" {
+		metadata.SecretKey = config.SecretKey()
+	}
+	if config.TokenKey() != "" {
+		metadata.TokenKey = config.TokenKey()
+	}
+	if config.ClusterName() != "" {
+		metadata.ClusterName = config.ClusterName()
+	}
+	if config.ClusterId() != "" {
+		metadata.ClusterID = config.ClusterId()
+	}
 }

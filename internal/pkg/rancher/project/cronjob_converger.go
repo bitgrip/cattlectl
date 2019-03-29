@@ -22,7 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// NewJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
+// NewCronJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
 func NewCronJobConverger(cronJobDescriptor projectModel.CronJobDescriptor) Converger {
 	client, err := newRancherClient(rancher.ClientConfig{
 		RancherURL: cronJobDescriptor.Metadata.RancherURL,

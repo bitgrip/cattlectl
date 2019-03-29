@@ -43,8 +43,12 @@ type DeploymentConfig struct {
 }
 
 func ConvertDeploymentDescriptorToProjectAPI(descriptor DeploymentDescriptor) (projectAPI.Deployment, error) {
+	return ConvertDeploymentToProjectAPI(descriptor.Spec)
+}
+
+func ConvertDeploymentToProjectAPI(deployment Deployment) (projectAPI.Deployment, error) {
 	result := projectAPI.Deployment{}
-	transferContent, err := json.Marshal(descriptor.Spec)
+	transferContent, err := json.Marshal(deployment)
 	if err != nil {
 		return result, err
 	}

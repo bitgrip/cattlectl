@@ -20,12 +20,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// NewCronJobParser creates a Parser that is printing prettified representations
-func NewCronJobParser(descriptorFile string, jobData []byte, target *projectModel.CronJobDescriptor, values map[string]interface{}) Parser {
+// NewJobParser creates a Parser that is printing prettified representations
+func NewJobParser(descriptorFile string, jobData []byte, target *projectModel.JobDescriptor, values map[string]interface{}) Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return cronJobParser{
+	return jobParser{
 		logger:  logger,
 		target:  target,
 		jobData: jobData,
@@ -33,15 +33,15 @@ func NewCronJobParser(descriptorFile string, jobData []byte, target *projectMode
 	}
 }
 
-type cronJobParser struct {
+type jobParser struct {
 	logger  *logrus.Entry
-	target  *projectModel.CronJobDescriptor
+	target  *projectModel.JobDescriptor
 	jobData []byte
 	values  map[string]interface{}
 }
 
-func (parser cronJobParser) Parse() error {
-	isProject, err := isDescriptor(parser.jobData, "CronJob", parser.logger)
+func (parser jobParser) Parse() error {
+	isProject, err := isDescriptor(parser.jobData, "Job", parser.logger)
 	if !isProject || err != nil {
 		return err
 	}
