@@ -60,6 +60,8 @@ type Client interface {
 	CreateDeployment(namespace string, deployment projectModel.Deployment) error
 	HasDaemonSet(namespace string, daemonSet projectModel.DaemonSet) (bool, error)
 	CreateDaemonSet(namespace string, daemonSet projectModel.DaemonSet) error
+	HasStatefulSet(namespace string, statefulSet projectModel.StatefulSet) (bool, error)
+	CreateStatefulSet(namespace string, statefulSet projectModel.StatefulSet) error
 }
 
 type ClientConfig struct {

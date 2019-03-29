@@ -14,17 +14,6 @@
 
 package model
 
-import (
-	"github.com/rancher/types/client/project/v3"
-)
-
-type StatefulSetDescriptor struct {
-	APIVersion string `yaml:"api_version"`
-	Kind       string
-	Metadata   WorkloadMetadata
-	Spec       client.StatefulSet
-}
-
 type WorkloadMetadata struct {
 	ProjectName string `yaml:"project_name,omitempty"`
 	ProjectID   string `yaml:"project_id,omitempty"`

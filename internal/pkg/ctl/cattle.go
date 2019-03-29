@@ -24,25 +24,28 @@ import (
 )
 
 const (
-	ProjectKind    = "Project"
-	JobKind        = "Job"
-	CronJobKind    = "CronJob"
-	DeploymentKind = "Deployment"
-	DaemonSetKind  = "DaemonSet"
+	ProjectKind     = "Project"
+	JobKind         = "Job"
+	CronJobKind     = "CronJob"
+	DeploymentKind  = "Deployment"
+	DaemonSetKind   = "DaemonSet"
+	StatefulSetKind = "StatefulSet"
 )
 
 var (
-	newProjectConverger    = project.NewProjectConverger
-	newJobConverger        = project.NewJobConverger
-	newCronJobConverger    = project.NewCronJobConverger
-	newDeploymentConverger = project.NewDeploymentConverger
-	newDaemonSetConverger  = project.NewDaemonSetConverger
+	newProjectConverger     = project.NewProjectConverger
+	newJobConverger         = project.NewJobConverger
+	newCronJobConverger     = project.NewCronJobConverger
+	newDeploymentConverger  = project.NewDeploymentConverger
+	newDaemonSetConverger   = project.NewDaemonSetConverger
+	newStatefulSetConverger = project.NewStatefulSetConverger
 
-	newProjectParser    = project.NewProjectParser
-	newJobParser        = project.NewJobParser
-	newCronJobParser    = project.NewCronJobParser
-	newDeploymentParser = project.NewDeploymentParser
-	newDaemonSetParser  = project.NewDaemonSetParser
+	newProjectParser     = project.NewProjectParser
+	newJobParser         = project.NewJobParser
+	newCronJobParser     = project.NewCronJobParser
+	newDeploymentParser  = project.NewDeploymentParser
+	newDaemonSetParser   = project.NewDaemonSetParser
+	newStatefulSetParser = project.NewStatefulSetParser
 )
 
 func ApplyDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
@@ -91,6 +94,14 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
 			return err
 		}
+	case StatefulSetKind:
+		statefulSetDescriptor := projectModel.StatefulSetDescriptor{}
+		if err := newStatefulSetParser(file, data, &statefulSetDescriptor, values).Parse(); err != nil {
+			return err
+		}
+		if err := ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -113,6 +124,11 @@ func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, con
 func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) error {
 	fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
 	return newDaemonSetConverger(daemonSetDescriptor).Converge()
+}
+
+func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, config config.Config) error {
+	fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
+	return newStatefulSetConverger(statefulSetDescriptor).Converge()
 }
 
 func ApplyProject(project projectModel.Project, config config.Config) error {
