@@ -58,6 +58,8 @@ type Client interface {
 	CreateCronJob(namespace string, cronJob projectModel.CronJob) error
 	HasDeployment(namespace string, deployment projectModel.Deployment) (bool, error)
 	CreateDeployment(namespace string, deployment projectModel.Deployment) error
+	HasDaemonSet(namespace string, daemonSet projectModel.DaemonSet) (bool, error)
+	CreateDaemonSet(namespace string, daemonSet projectModel.DaemonSet) error
 }
 
 type ClientConfig struct {

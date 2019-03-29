@@ -20,31 +20,31 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// NewJobParser creates a Parser that is printing prettified representations
-func NewJobParser(descriptorFile string, jobData []byte, target *projectModel.JobDescriptor, values map[string]interface{}) Parser {
+// NewDaemonSetParser creates a Parser that is printing prettified representations
+func NewDaemonSetParser(descriptorFile string, daemonSetData []byte, target *projectModel.DaemonSetDescriptor, values map[string]interface{}) Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return jobParser{
-		logger:  logger,
-		target:  target,
-		jobData: jobData,
-		values:  values,
+	return daemonSetParser{
+		logger:        logger,
+		target:        target,
+		daemonSetData: daemonSetData,
+		values:        values,
 	}
 }
 
-type jobParser struct {
-	logger  *logrus.Entry
-	target  *projectModel.JobDescriptor
-	jobData []byte
-	values  map[string]interface{}
+type daemonSetParser struct {
+	logger        *logrus.Entry
+	target        *projectModel.DaemonSetDescriptor
+	daemonSetData []byte
+	values        map[string]interface{}
 }
 
-func (parser jobParser) Parse() error {
-	isProject, err := isDescriptor(parser.jobData, "Job", parser.logger)
+func (parser daemonSetParser) Parse() error {
+	isProject, err := isDescriptor(parser.daemonSetData, "DaemonSet", parser.logger)
 	if !isProject || err != nil {
 		return err
 	}
 
-	return yaml.Unmarshal(parser.jobData, parser.target)
+	return yaml.Unmarshal(parser.daemonSetData, parser.target)
 }

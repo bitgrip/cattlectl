@@ -25,13 +25,6 @@ type StatefulSetDescriptor struct {
 	Spec       client.StatefulSet
 }
 
-type DaemonSetDescriptor struct {
-	APIVersion string `yaml:"api_version"`
-	Kind       string
-	Metadata   WorkloadMetadata
-	Spec       client.DaemonSet
-}
-
 type WorkloadMetadata struct {
 	ProjectName string `yaml:"project_name,omitempty"`
 	ProjectID   string `yaml:"project_id,omitempty"`

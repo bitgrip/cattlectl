@@ -28,6 +28,7 @@ const (
 	JobKind        = "Job"
 	CronJobKind    = "CronJob"
 	DeploymentKind = "Deployment"
+	DaemonSetKind  = "DaemonSet"
 )
 
 var (
@@ -35,10 +36,13 @@ var (
 	newJobConverger        = project.NewJobConverger
 	newCronJobConverger    = project.NewCronJobConverger
 	newDeploymentConverger = project.NewDeploymentConverger
-	newProjectParser       = project.NewProjectParser
-	newJobParser           = project.NewJobParser
-	newCronJobParser       = project.NewCronJobParser
-	newDeploymentParser    = project.NewDeploymentParser
+	newDaemonSetConverger  = project.NewDaemonSetConverger
+
+	newProjectParser    = project.NewProjectParser
+	newJobParser        = project.NewJobParser
+	newCronJobParser    = project.NewCronJobParser
+	newDeploymentParser = project.NewDeploymentParser
+	newDaemonSetParser  = project.NewDaemonSetParser
 )
 
 func ApplyDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
@@ -79,6 +83,14 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
 			return err
 		}
+	case DaemonSetKind:
+		daemonSetDescriptor := projectModel.DaemonSetDescriptor{}
+		if err := newDaemonSetParser(file, data, &daemonSetDescriptor, values).Parse(); err != nil {
+			return err
+		}
+		if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -96,6 +108,11 @@ func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) er
 func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) error {
 	fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
 	return newDeploymentConverger(deploymentDescriptor).Converge()
+}
+
+func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) error {
+	fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
+	return newDaemonSetConverger(daemonSetDescriptor).Converge()
 }
 
 func ApplyProject(project projectModel.Project, config config.Config) error {
