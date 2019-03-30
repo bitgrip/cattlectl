@@ -42,7 +42,7 @@ func TestHasPersistentVolume_PersistentVolumeExisting(t *testing.T) {
 		persistentVolume = projectModel.PersistentVolume{
 			Name: persistentVolumeName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)
@@ -90,7 +90,7 @@ func TestHasPersistentVolume_PersistentVolumeNotExisting(t *testing.T) {
 		persistentVolume = projectModel.PersistentVolume{
 			Name: persistentVolumeName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)
@@ -143,7 +143,7 @@ func TestCreatePersistentVolume(t *testing.T) {
 			Path:             path,
 			Node:             node,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)

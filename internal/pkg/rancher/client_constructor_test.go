@@ -44,7 +44,7 @@ func TestCreateClient_ManagementClientFails(t *testing.T) {
 		newManagementClient = oldNewManagementClient
 	}()
 
-	//testClients := stubs.CreateTestClients()
+	//testClients := stubs.CreateBackendStubs()
 	newClusterClient = func(opts *clientbase.ClientOpts) (*clusterClient.Client, error) {
 		return nil, nil
 	}

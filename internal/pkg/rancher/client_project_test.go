@@ -48,7 +48,7 @@ func TestHasProject_ProjectExisting(t *testing.T) {
 		newManagementClient = oldNewManagementClient
 	}()
 
-	testClients := stubs.CreateTestClients(t)
+	testClients := stubs.CreateBackendStubs(t)
 	newClusterClient = func(opts *clientbase.ClientOpts) (*clusterClient.Client, error) {
 		return testClients.ClusterClient, nil
 	}
@@ -113,7 +113,7 @@ func TestHasProject_ProjectNotExisting(t *testing.T) {
 		newManagementClient = oldNewManagementClient
 	}()
 
-	testClients := stubs.CreateTestClients(t)
+	testClients := stubs.CreateBackendStubs(t)
 	newClusterClient = func(opts *clientbase.ClientOpts) (*clusterClient.Client, error) {
 		return testClients.ClusterClient, nil
 	}
@@ -182,7 +182,7 @@ func TestCreateProject(t *testing.T) {
 	var (
 		actualProjectPattern *managementClient.Project
 		clientConfig         = ClientConfig{}
-		testClients          = stubs.CreateTestClients(t)
+		testClients          = stubs.CreateBackendStubs(t)
 	)
 	newClusterClient = func(opts *clientbase.ClientOpts) (*clusterClient.Client, error) {
 		return testClients.ClusterClient, nil

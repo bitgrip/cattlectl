@@ -22,9 +22,9 @@ import (
 	projectClient "github.com/rancher/types/client/project/v3"
 )
 
-// CreateTestClients builds a set of testClients
-func CreateTestClients(tb testing.TB) *TestClients {
-	testClients := &TestClients{
+// CreateBackendStubs builds a set of testClients
+func CreateBackendStubs(tb testing.TB) *BackendStubs {
+	testClients := &BackendStubs{
 		ClusterClient:    &clusterClient.Client{},
 		ManagementClient: &managementClient.Client{},
 		ProjectClient:    &projectClient.Client{},
@@ -38,8 +38,8 @@ func CreateTestClients(tb testing.TB) *TestClients {
 	return testClients
 }
 
-// TestClients is a grouping structure for the rancher clients
-type TestClients struct {
+// BackendStubs is a grouping structure for the rancher clients
+type BackendStubs struct {
 	ClusterClient    *clusterClient.Client
 	ManagementClient *managementClient.Client
 	ProjectClient    *projectClient.Client

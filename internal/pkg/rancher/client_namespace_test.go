@@ -42,7 +42,7 @@ func TestHasNamespace_NamespaceExisting(t *testing.T) {
 		namespace      = projectModel.Namespace{
 			Name: namespaceName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
@@ -92,7 +92,7 @@ func TestHasNamespace_NamespaceNotExisting(t *testing.T) {
 		namespace      = projectModel.Namespace{
 			Name: namespaceName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
@@ -137,7 +137,7 @@ func TestCreateNamespace(t *testing.T) {
 		namespace    = projectModel.Namespace{
 			Name: namespaceName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)

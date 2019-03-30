@@ -42,7 +42,7 @@ func TestHasApp_AppExisting(t *testing.T) {
 		app            = projectModel.App{
 			Name: appName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
@@ -91,7 +91,7 @@ func TestHasApp_AppNotExisting(t *testing.T) {
 		app            = projectModel.App{
 			Name: appName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
@@ -146,7 +146,7 @@ func TestCreateApp(t *testing.T) {
 			Namespace: namespace,
 			Answers:   answers,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
@@ -206,7 +206,7 @@ func TestUpgradeApp(t *testing.T) {
 			Namespace: namespace,
 			Answers:   answers,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)

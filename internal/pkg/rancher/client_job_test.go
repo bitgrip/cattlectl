@@ -51,7 +51,7 @@ func TestHasJob_JobExisting(t *testing.T) {
 				NamespaceID: namespaceID,
 			},
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 	job.Name = jobName
 
@@ -117,7 +117,7 @@ func TestHasJob_JobNotExisting(t *testing.T) {
 				NamespaceID: namespaceID,
 			},
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 	job.Name = jobName
 
@@ -179,7 +179,7 @@ func TestCreateJob(t *testing.T) {
 				NamespaceID: namespaceID,
 			},
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 	job.Name = jobName
 

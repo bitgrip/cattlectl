@@ -42,7 +42,7 @@ func TestHasStorageClass_StorageClassExisting(t *testing.T) {
 		storageClass   = projectModel.StorageClass{
 			Name: storageClassName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
@@ -91,7 +91,7 @@ func TestHasStorageClass_NamespaceNotExisting(t *testing.T) {
 		storageClass   = projectModel.StorageClass{
 			Name: storageClassName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
@@ -136,7 +136,7 @@ func TestCreateStorageClass(t *testing.T) {
 		storageClass = projectModel.StorageClass{
 			Name: storageClassName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
