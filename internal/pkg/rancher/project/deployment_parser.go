@@ -15,36 +15,14 @@
 package project
 
 import (
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	"github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // NewDeploymentParser creates a Parser that is printing prettified representations
-func NewDeploymentParser(descriptorFile string, deploymentData []byte, target *projectModel.DeploymentDescriptor, values map[string]interface{}) Parser {
+func NewDeploymentParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return deploymentParser{
-		logger:         logger,
-		target:         target,
-		deploymentData: deploymentData,
-		values:         values,
-	}
-}
-
-type deploymentParser struct {
-	logger         *logrus.Entry
-	target         *projectModel.DeploymentDescriptor
-	deploymentData []byte
-	values         map[string]interface{}
-}
-
-func (parser deploymentParser) Parse() error {
-	isProject, err := isDescriptor(parser.deploymentData, "Deployment", parser.logger)
-	if !isProject || err != nil {
-		return err
-	}
-
-	return yaml.Unmarshal(parser.deploymentData, parser.target)
+	return descriptor.NewLogginParser(descriptorFile, logger, values)
 }

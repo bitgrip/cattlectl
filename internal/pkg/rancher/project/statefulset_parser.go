@@ -15,36 +15,14 @@
 package project
 
 import (
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	"github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // NewStatefulSetParser creates a Parser that is printing prettified representations
-func NewStatefulSetParser(descriptorFile string, statefulSetData []byte, target *projectModel.StatefulSetDescriptor, values map[string]interface{}) Parser {
+func NewStatefulSetParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return statefulSetParser{
-		logger:          logger,
-		target:          target,
-		statefulSetData: statefulSetData,
-		values:          values,
-	}
-}
-
-type statefulSetParser struct {
-	logger          *logrus.Entry
-	target          *projectModel.StatefulSetDescriptor
-	statefulSetData []byte
-	values          map[string]interface{}
-}
-
-func (parser statefulSetParser) Parse() error {
-	isProject, err := isDescriptor(parser.statefulSetData, "StatefulSet", parser.logger)
-	if !isProject || err != nil {
-		return err
-	}
-
-	return yaml.Unmarshal(parser.statefulSetData, parser.target)
+	return descriptor.NewLogginParser(descriptorFile, logger, values)
 }

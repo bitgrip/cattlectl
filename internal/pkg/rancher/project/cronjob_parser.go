@@ -15,36 +15,14 @@
 package project
 
 import (
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	"github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // NewCronJobParser creates a Parser that is printing prettified representations
-func NewCronJobParser(descriptorFile string, jobData []byte, target *projectModel.CronJobDescriptor, values map[string]interface{}) Parser {
+func NewCronJobParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return cronJobParser{
-		logger:  logger,
-		target:  target,
-		jobData: jobData,
-		values:  values,
-	}
-}
-
-type cronJobParser struct {
-	logger  *logrus.Entry
-	target  *projectModel.CronJobDescriptor
-	jobData []byte
-	values  map[string]interface{}
-}
-
-func (parser cronJobParser) Parse() error {
-	isProject, err := isDescriptor(parser.jobData, "CronJob", parser.logger)
-	if !isProject || err != nil {
-		return err
-	}
-
-	return yaml.Unmarshal(parser.jobData, parser.target)
+	return descriptor.NewLogginParser(descriptorFile, logger, values)
 }

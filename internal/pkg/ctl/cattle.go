@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	yaml "gopkg.in/yaml.v2"
@@ -33,6 +34,8 @@ const (
 )
 
 var (
+	newRancherClient = rancher.NewClient
+
 	newProjectConverger     = project.NewProjectConverger
 	newJobConverger         = project.NewJobConverger
 	newCronJobConverger     = project.NewCronJobConverger
@@ -56,7 +59,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 	switch kind {
 	case ProjectKind:
 		project := projectModel.Project{}
-		if err := newProjectParser(file, data, &project, values).Parse(); err != nil {
+		if err := newProjectParser(file, values).Parse(data, &project); err != nil {
 			return err
 		}
 		if err := ApplyProject(project, config); err != nil {
@@ -64,7 +67,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		}
 	case JobKind:
 		jobDescriptor := projectModel.JobDescriptor{}
-		if err := newJobParser(file, data, &jobDescriptor, values).Parse(); err != nil {
+		if err := newJobParser(file, values).Parse(data, &jobDescriptor); err != nil {
 			return err
 		}
 		if err := ApplyJob(jobDescriptor, config); err != nil {
@@ -72,7 +75,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		}
 	case CronJobKind:
 		cronJobDescriptor := projectModel.CronJobDescriptor{}
-		if err := newCronJobParser(file, data, &cronJobDescriptor, values).Parse(); err != nil {
+		if err := newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
 			return err
 		}
 		if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
@@ -80,7 +83,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		}
 	case DeploymentKind:
 		deploymentDescriptor := projectModel.DeploymentDescriptor{}
-		if err := newDeploymentParser(file, data, &deploymentDescriptor, values).Parse(); err != nil {
+		if err := newDeploymentParser(file, values).Parse(data, &deploymentDescriptor); err != nil {
 			return err
 		}
 		if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
@@ -88,7 +91,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		}
 	case DaemonSetKind:
 		daemonSetDescriptor := projectModel.DaemonSetDescriptor{}
-		if err := newDaemonSetParser(file, data, &daemonSetDescriptor, values).Parse(); err != nil {
+		if err := newDaemonSetParser(file, values).Parse(data, &daemonSetDescriptor); err != nil {
 			return err
 		}
 		if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
@@ -96,7 +99,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		}
 	case StatefulSetKind:
 		statefulSetDescriptor := projectModel.StatefulSetDescriptor{}
-		if err := newStatefulSetParser(file, data, &statefulSetDescriptor, values).Parse(); err != nil {
+		if err := newStatefulSetParser(file, values).Parse(data, &statefulSetDescriptor); err != nil {
 			return err
 		}
 		if err := ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
@@ -107,33 +110,51 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 }
 
 func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) error {
-	fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
-	return newCronJobConverger(cronJobDescriptor).Converge()
+	client, err := fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
+	if err != nil {
+		return err
+	}
+	return newCronJobConverger(cronJobDescriptor).Converge(client)
 }
 
 func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) error {
-	fillWorkloadMetadata(&jobDescriptor.Metadata, config)
-	return newJobConverger(jobDescriptor).Converge()
+	client, err := fillWorkloadMetadata(&jobDescriptor.Metadata, config)
+	if err != nil {
+		return err
+	}
+	return newJobConverger(jobDescriptor).Converge(client)
 }
 
 func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) error {
-	fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
-	return newDeploymentConverger(deploymentDescriptor).Converge()
+	client, err := fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
+	if err != nil {
+		return err
+	}
+	return newDeploymentConverger(deploymentDescriptor).Converge(client)
 }
 
 func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) error {
-	fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
-	return newDaemonSetConverger(daemonSetDescriptor).Converge()
+	client, err := fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
+	if err != nil {
+		return err
+	}
+	return newDaemonSetConverger(daemonSetDescriptor).Converge(client)
 }
 
 func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, config config.Config) error {
-	fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
-	return newStatefulSetConverger(statefulSetDescriptor).Converge()
+	client, err := fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
+	if err != nil {
+		return err
+	}
+	return newStatefulSetConverger(statefulSetDescriptor).Converge(client)
 }
 
 func ApplyProject(project projectModel.Project, config config.Config) error {
-	fillProjectMetadata(&project.Metadata, config)
-	return newProjectConverger(project).Converge()
+	client, err := fillProjectMetadata(&project.Metadata, config)
+	if err != nil {
+		return err
+	}
+	return newProjectConverger(project).Converge(client)
 }
 
 func GetKind(data []byte) (string, error) {
@@ -157,19 +178,19 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 	switch kind {
 	case ProjectKind:
 		project := projectModel.Project{}
-		if err = newProjectParser(file, data, &project, values).Parse(); err != nil {
+		if err = newProjectParser(file, values).Parse(data, &project); err != nil {
 			return err
 		}
 		descriptor = project
 	case JobKind:
 		jobDescriptor := projectModel.JobDescriptor{}
-		if err = newJobParser(file, data, &jobDescriptor, values).Parse(); err != nil {
+		if err = newJobParser(file, values).Parse(data, &jobDescriptor); err != nil {
 			return err
 		}
 		descriptor = jobDescriptor
 	case CronJobKind:
 		cronJobDescriptor := projectModel.CronJobDescriptor{}
-		if err = newCronJobParser(file, data, &cronJobDescriptor, values).Parse(); err != nil {
+		if err = newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
 			return err
 		}
 	}
@@ -181,7 +202,7 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 	return err
 }
 
-func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) {
+func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) (rancher.Client, error) {
 	if config.RancherUrl() != "" {
 		metadata.RancherURL = config.RancherUrl()
 	}
@@ -200,9 +221,15 @@ func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config
 	if config.ClusterId() != "" {
 		metadata.ClusterID = config.ClusterId()
 	}
+
+	return newRancherClient(rancher.ClientConfig{
+		RancherURL: metadata.RancherURL,
+		AccessKey:  metadata.AccessKey,
+		SecretKey:  metadata.SecretKey,
+	})
 }
 
-func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.Config) {
+func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.Config) (rancher.Client, error) {
 	if config.RancherUrl() != "" {
 		metadata.RancherURL = config.RancherUrl()
 	}
@@ -221,4 +248,10 @@ func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.C
 	if config.ClusterId() != "" {
 		metadata.ClusterID = config.ClusterId()
 	}
+
+	return newRancherClient(rancher.ClientConfig{
+		RancherURL: metadata.RancherURL,
+		AccessKey:  metadata.AccessKey,
+		SecretKey:  metadata.SecretKey,
+	})
 }

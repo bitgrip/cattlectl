@@ -54,10 +54,10 @@ func TestErrorOnParsingClusterDescriptor(t *testing.T) {
 		projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(projectFile), false)
 		assert.Ok(t, err)
 
-		parser := NewProjectParser(projectFile, projectData, &model.Project{}, values)
+		parser := NewProjectParser(projectFile, values)
 
 		//Act
-		err = parser.Parse()
+		err = parser.Parse(projectData, &model.Project{})
 
 		//Assert
 		assert.NotOk(t, err, fmt.Sprintf("Invalid descriptor: %s", testCase[kindKey]))
@@ -80,10 +80,10 @@ func TestParseValidProjectDescriptor(t *testing.T) {
 	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(projectFile), false)
 	assert.Ok(t, err)
 	project := model.Project{}
-	parser := NewProjectParser(projectFile, projectData, &project, values)
+	parser := NewProjectParser(projectFile, values)
 
 	//Act
-	err = parser.Parse()
+	err = parser.Parse(projectData, &project)
 
 	//Verify
 	assert.Ok(t, err)
@@ -116,10 +116,10 @@ func runTestWithGoldenFile(t *testing.T, testName string) {
 	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(projectFile), false)
 	assert.Ok(t, err)
 	project := model.Project{}
-	parser := NewProjectParser(projectFile, projectData, &project, values)
+	parser := NewProjectParser(projectFile, values)
 
 	//Act
-	err = parser.Parse()
+	err = parser.Parse(projectData, &project)
 
 	//Verify
 	assert.Ok(t, err)

@@ -15,84 +15,54 @@
 package project
 
 import (
-	"fmt"
-
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/sirupsen/logrus"
 )
 
 // NewJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewJobConverger(jobDescriptor projectModel.JobDescriptor) Converger {
-	client, err := newRancherClient(rancher.ClientConfig{
-		RancherURL: jobDescriptor.Metadata.RancherURL,
-		AccessKey:  jobDescriptor.Metadata.AccessKey,
-		SecretKey:  jobDescriptor.Metadata.SecretKey,
-	})
-	if err != nil {
-		logrus.WithError(err).Fatal("Error creating rancher client")
-	}
-	return jobConverger{
-		jobDescriptor: jobDescriptor,
-		client:        client,
+func NewJobConverger(jobDescriptor projectModel.JobDescriptor) descriptor.Converger {
+	return descriptor.DescriptorConverger{
+		InitCluster: func(client rancher.Client) error {
+			return rancher.InitCluster(
+				jobDescriptor.Metadata.ClusterID,
+				jobDescriptor.Metadata.ClusterName,
+				client,
+			)
+		},
+		InitProject: func(client rancher.Client) error {
+			return rancher.InitProject(
+				jobDescriptor.Metadata.ProjectName,
+				client,
+			)
+		},
+		PartConvergers: []descriptor.Converger{
+			newJobPartConverger(
+				jobDescriptor.Metadata.ProjectName,
+				jobDescriptor.Metadata.Namespace,
+				jobDescriptor.Spec,
+			),
+		},
 	}
 }
 
-type jobConverger struct {
-	jobDescriptor projectModel.JobDescriptor
-	client        rancher.Client
-}
-
-func (converger jobConverger) Converge() error {
-	if err := converger.initCluster(); err != nil {
-		return err
+func newJobPartConverger(projectName, namespace string, job projectModel.Job) descriptor.Converger {
+	return descriptor.PartConverger{
+		PartName: "Job",
+		HasPart: func(client rancher.Client) (bool, error) {
+			return client.HasJob(namespace, job)
+		},
+		UpdatePart: func(client rancher.Client) error {
+			logrus.WithFields(logrus.Fields{
+				"project_name": projectName,
+				"namespace":    namespace,
+				"job_name":     job.Name,
+			}).Warn("Job exists need to be removed manually")
+			return nil
+		},
+		CreatePart: func(client rancher.Client) error {
+			return client.CreateJob(namespace, job)
+		},
 	}
-	if err := converger.initProject(); err != nil {
-		return err
-	}
-
-	if hasJob, err := converger.client.HasJob(converger.jobDescriptor.Metadata.Namespace, converger.jobDescriptor.Spec); hasJob {
-		logrus.WithFields(logrus.Fields{
-			"project_name": converger.jobDescriptor.Metadata.ProjectName,
-			"namespace":    converger.jobDescriptor.Metadata.Namespace,
-			"job_name":     converger.jobDescriptor.Spec.Name,
-		}).Warn("Job exists need to be removed manually")
-		return fmt.Errorf("Can not override existing job %v", converger.jobDescriptor.Spec.Name)
-	} else if err != nil {
-		return fmt.Errorf("Failed to check for namespace, %v", err)
-	}
-	return converger.client.CreateJob(converger.jobDescriptor.Metadata.Namespace, converger.jobDescriptor.Spec)
-}
-
-func (converger jobConverger) initCluster() error {
-	if converger.jobDescriptor.Metadata.ClusterID != "" {
-		if err := converger.client.SetCluster(converger.jobDescriptor.Metadata.ClusterName, converger.jobDescriptor.Metadata.ClusterID); err != nil {
-			return fmt.Errorf("Failed to init cluster, %v", err)
-		}
-		return nil
-	}
-	if hasCluster, clusterID, err := converger.client.HasClusterWithName(converger.jobDescriptor.Metadata.ClusterName); hasCluster {
-		if err = converger.client.SetCluster(converger.jobDescriptor.Metadata.ClusterName, clusterID); err != nil {
-			return fmt.Errorf("Failed to init cluster, %v", err)
-		}
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("Failed to init cluster, %v", err)
-	} else {
-		return fmt.Errorf("Cluster not found")
-	}
-}
-func (converger jobConverger) initProject() error {
-	if hasProject, projectID, err := converger.client.HasProjectWithName(converger.jobDescriptor.Metadata.ProjectName); hasProject {
-		if err = converger.client.SetProject(converger.jobDescriptor.Metadata.ProjectName, projectID); err != nil {
-			logrus.WithError(err).WithFields(logrus.Fields{"project_name": converger.jobDescriptor.Metadata.ProjectName}).Warn("Failed to init project")
-			return fmt.Errorf("Failed to init project, %v", err)
-		}
-		return nil
-	} else if err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{"project_name": converger.jobDescriptor.Metadata.ProjectName}).Warn("Failed to check for project")
-		return fmt.Errorf("Failed to check for project, %v", err)
-	}
-	logrus.WithFields(logrus.Fields{"project_name": converger.jobDescriptor.Metadata.ProjectName}).Warn("Failed to check for project")
-	return fmt.Errorf("Project not found")
 }

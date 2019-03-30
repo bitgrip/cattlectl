@@ -15,84 +15,54 @@
 package project
 
 import (
-	"fmt"
-
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/sirupsen/logrus"
 )
 
-// NewDaemonSetConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.DaemonSetDescriptor
-func NewDaemonSetConverger(daemonSetDescriptor projectModel.DaemonSetDescriptor) Converger {
-	client, err := newRancherClient(rancher.ClientConfig{
-		RancherURL: daemonSetDescriptor.Metadata.RancherURL,
-		AccessKey:  daemonSetDescriptor.Metadata.AccessKey,
-		SecretKey:  daemonSetDescriptor.Metadata.SecretKey,
-	})
-	if err != nil {
-		logrus.WithError(err).Fatal("Error creating rancher client")
-	}
-	return daemonSetConverger{
-		daemonSetDescriptor: daemonSetDescriptor,
-		client:              client,
+// NewDaemonSetConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
+func NewDaemonSetConverger(daemonSetDescriptor projectModel.DaemonSetDescriptor) descriptor.Converger {
+	return descriptor.DescriptorConverger{
+		InitCluster: func(client rancher.Client) error {
+			return rancher.InitCluster(
+				daemonSetDescriptor.Metadata.ClusterID,
+				daemonSetDescriptor.Metadata.ClusterName,
+				client,
+			)
+		},
+		InitProject: func(client rancher.Client) error {
+			return rancher.InitProject(
+				daemonSetDescriptor.Metadata.ProjectName,
+				client,
+			)
+		},
+		PartConvergers: []descriptor.Converger{
+			newDaemonSetPartConverger(
+				daemonSetDescriptor.Metadata.ProjectName,
+				daemonSetDescriptor.Metadata.Namespace,
+				daemonSetDescriptor.Spec,
+			),
+		},
 	}
 }
 
-type daemonSetConverger struct {
-	daemonSetDescriptor projectModel.DaemonSetDescriptor
-	client              rancher.Client
-}
-
-func (converger daemonSetConverger) Converge() error {
-	if err := converger.initCluster(); err != nil {
-		return err
+func newDaemonSetPartConverger(projectName, namespace string, daemonSet projectModel.DaemonSet) descriptor.Converger {
+	return descriptor.PartConverger{
+		PartName: "DaemonSet",
+		HasPart: func(client rancher.Client) (bool, error) {
+			return client.HasDaemonSet(namespace, daemonSet)
+		},
+		UpdatePart: func(client rancher.Client) error {
+			logrus.WithFields(logrus.Fields{
+				"project_name":   projectName,
+				"namespace":      namespace,
+				"daemonset_name": daemonSet.Name,
+			}).Warn("DaemonSet exists need to be removed manually")
+			return nil
+		},
+		CreatePart: func(client rancher.Client) error {
+			return client.CreateDaemonSet(namespace, daemonSet)
+		},
 	}
-	if err := converger.initProject(); err != nil {
-		return err
-	}
-
-	if hasDaemonSet, err := converger.client.HasDaemonSet(converger.daemonSetDescriptor.Metadata.Namespace, converger.daemonSetDescriptor.Spec); hasDaemonSet {
-		logrus.WithFields(logrus.Fields{
-			"project_name":   converger.daemonSetDescriptor.Metadata.ProjectName,
-			"namespace":      converger.daemonSetDescriptor.Metadata.Namespace,
-			"daemonSet_name": converger.daemonSetDescriptor.Spec.Name,
-		}).Warn("DaemonSet exists need to be removed manually")
-		return fmt.Errorf("Can not override existing daemonSet %v", converger.daemonSetDescriptor.Spec.Name)
-	} else if err != nil {
-		return fmt.Errorf("Failed to check for namespace, %v", err)
-	}
-	return converger.client.CreateDaemonSet(converger.daemonSetDescriptor.Metadata.Namespace, converger.daemonSetDescriptor.Spec)
-}
-
-func (converger daemonSetConverger) initCluster() error {
-	if converger.daemonSetDescriptor.Metadata.ClusterID != "" {
-		if err := converger.client.SetCluster(converger.daemonSetDescriptor.Metadata.ClusterName, converger.daemonSetDescriptor.Metadata.ClusterID); err != nil {
-			return fmt.Errorf("Failed to init cluster, %v", err)
-		}
-		return nil
-	}
-	if hasCluster, clusterID, err := converger.client.HasClusterWithName(converger.daemonSetDescriptor.Metadata.ClusterName); hasCluster {
-		if err = converger.client.SetCluster(converger.daemonSetDescriptor.Metadata.ClusterName, clusterID); err != nil {
-			return fmt.Errorf("Failed to init cluster, %v", err)
-		}
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("Failed to init cluster, %v", err)
-	} else {
-		return fmt.Errorf("Cluster not found")
-	}
-}
-func (converger daemonSetConverger) initProject() error {
-	if hasProject, projectID, err := converger.client.HasProjectWithName(converger.daemonSetDescriptor.Metadata.ProjectName); hasProject {
-		if err = converger.client.SetProject(converger.daemonSetDescriptor.Metadata.ProjectName, projectID); err != nil {
-			logrus.WithError(err).WithFields(logrus.Fields{"project_name": converger.daemonSetDescriptor.Metadata.ProjectName}).Warn("Failed to init project")
-			return fmt.Errorf("Failed to init project, %v", err)
-		}
-		return nil
-	} else if err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{"project_name": converger.daemonSetDescriptor.Metadata.ProjectName}).Warn("Failed to check for project")
-		return fmt.Errorf("Failed to check for project, %v", err)
-	}
-	logrus.WithFields(logrus.Fields{"project_name": converger.daemonSetDescriptor.Metadata.ProjectName}).Warn("Failed to check for project")
-	return fmt.Errorf("Project not found")
 }

@@ -102,6 +102,40 @@ type rancherClient struct {
 	logger           *logrus.Entry
 }
 
+func InitCluster(clusterID, clusterName string, client Client) error {
+	if clusterID != "" {
+		if err := client.SetCluster(clusterName, clusterID); err != nil {
+			return fmt.Errorf("Failed to init cluster, %v", err)
+		}
+		return nil
+	}
+	if hasCluster, clusterID, err := client.HasClusterWithName(clusterName); hasCluster {
+		if err = client.SetCluster(clusterName, clusterID); err != nil {
+			return fmt.Errorf("Failed to init cluster, %v", err)
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("Failed to init cluster, %v", err)
+	} else {
+		return fmt.Errorf("Cluster not found")
+	}
+}
+
+func InitProject(projectName string, client Client) error {
+	if hasProject, projectID, err := client.HasProjectWithName(projectName); hasProject {
+		if err = client.SetProject(projectName, projectID); err != nil {
+			logrus.WithError(err).WithFields(logrus.Fields{"project_name": projectName}).Warn("Failed to init project")
+			return fmt.Errorf("Failed to init project, %v", err)
+		}
+		return nil
+	} else if err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{"project_name": projectName}).Warn("Failed to check for project")
+		return fmt.Errorf("Failed to check for project, %v", err)
+	}
+	logrus.WithFields(logrus.Fields{"project_name": projectName}).Warn("Failed to check for project")
+	return fmt.Errorf("Project not found")
+}
+
 func createClientOpts(rancherUrl string, accessKey string, secretKey string) *clientbase.ClientOpts {
 	serverURL := rancherUrl
 

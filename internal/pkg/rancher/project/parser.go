@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/rancher/norman/types/slice"
@@ -26,22 +27,17 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Parser is a object that can parse a project file using a map of template values
-type Parser interface {
-	Parse() error
-}
-
 // NewParser creates a Parser that is not printing prettified representations
-func NewProjectParser(projectFile string, projectData []byte, target *projectModel.Project, values map[string]interface{}) Parser {
-	return newProjectParser(projectFile, projectData, target, values, false, []string{})
+func NewProjectParser(projectFile string, values map[string]interface{}) descriptor.Parser {
+	return newProjectParser(projectFile, values, false, []string{})
 }
 
 // NewPrettyParser creates a Parser that is printing prettified representations
-func NewPrettyProjectParser(projectFile string, projectData []byte, target *projectModel.Project, values map[string]interface{}) Parser {
-	return newProjectParser(projectFile, projectData, target, values, true, []string{})
+func NewPrettyProjectParser(projectFile string, values map[string]interface{}) descriptor.Parser {
+	return newProjectParser(projectFile, values, true, []string{})
 }
 
-func newProjectParser(projectFile string, projectData []byte, target *projectModel.Project, values map[string]interface{}, pretty bool, parentProjectFiles []string) Parser {
+func newProjectParser(projectFile string, values map[string]interface{}, pretty bool, parentProjectFiles []string) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"project_file": projectFile,
 	})
@@ -50,8 +46,6 @@ func newProjectParser(projectFile string, projectData []byte, target *projectMod
 		pretty:             pretty,
 		parentProjectFiles: parentProjectFiles,
 		logger:             logger,
-		target:             target,
-		projectData:        projectData,
 		values:             values,
 	}
 }
@@ -61,12 +55,11 @@ type fileParser struct {
 	pretty             bool
 	parentProjectFiles []string
 	logger             *logrus.Entry
-	target             *projectModel.Project
-	projectData        []byte
 	values             map[string]interface{}
 }
 
-func (parser fileParser) Parse() error {
+func (parser fileParser) Parse(projectData []byte, target interface{}) error {
+	targetProject := target.(*projectModel.Project)
 	absProjectFile, err := filepath.Abs(parser.projectFile)
 	if err != nil {
 		return err
@@ -77,16 +70,16 @@ func (parser fileParser) Parse() error {
 	}
 	allProjectFiles := append(parser.parentProjectFiles, absProjectFile)
 
-	isProject, err := isDescriptor(parser.projectData, "Project", parser.logger)
+	isProject, err := isDescriptor(projectData, "Project", parser.logger)
 	if !isProject || err != nil {
 		return err
 	}
 
-	err = yaml.Unmarshal(parser.projectData, parser.target)
+	err = yaml.Unmarshal(projectData, targetProject)
 	if err != nil {
 		return err
 	}
-	for _, include := range parser.target.Metadata.Includes {
+	for _, include := range targetProject.Metadata.Includes {
 		var childProjectFile string
 		if filepath.IsAbs(include.File) {
 			childProjectFile = include.File
@@ -102,12 +95,12 @@ func (parser fileParser) Parse() error {
 			return err
 		}
 		childTarget := projectModel.Project{}
-		childParser := newProjectParser(childProjectFile, childProjectData, &childTarget, parser.values, parser.pretty, allProjectFiles)
-		err = childParser.Parse()
+		childParser := newProjectParser(childProjectFile, parser.values, parser.pretty, allProjectFiles)
+		err = childParser.Parse(childProjectData, &childTarget)
 		if err != nil {
 			return err
 		}
-		err = MergeProject(childTarget, parser.target)
+		err = MergeProject(childTarget, targetProject)
 		if err != nil {
 			return err
 		}
