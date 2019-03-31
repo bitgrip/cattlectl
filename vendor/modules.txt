@@ -21,8 +21,6 @@ github.com/hashicorp/hcl/hcl/scanner
 github.com/hashicorp/hcl/hcl/strconv
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/imdario/mergo v0.3.7
-github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
@@ -40,11 +38,11 @@ github.com/pkg/errors
 # github.com/rancher/norman v0.0.0-20190129215722-196df5ed9da3
 github.com/rancher/norman/clientbase
 github.com/rancher/norman/types
+github.com/rancher/norman/types/slice
 github.com/rancher/norman/httperror
 github.com/rancher/norman/name
 github.com/rancher/norman/types/convert
 github.com/rancher/norman/types/definition
-github.com/rancher/norman/types/slice
 github.com/rancher/norman/types/values
 # github.com/rancher/types v0.0.0-20190129233033-68de51b62acf
 github.com/rancher/types/client/cluster/v3
@@ -83,7 +81,7 @@ golang.org/x/text/unicode/norm
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
 # k8s.io/apimachinery v0.0.0-20190126155707-0e6dcdd1b5ce
-k8s.io/apimachinery/pkg/util/rand
 k8s.io/apimachinery/pkg/util/intstr
+k8s.io/apimachinery/pkg/util/rand
 # k8s.io/klog v0.1.0
 k8s.io/klog
