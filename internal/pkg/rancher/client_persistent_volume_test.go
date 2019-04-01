@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
 	clusterClient "github.com/rancher/types/client/cluster/v3"
@@ -38,10 +39,10 @@ func TestHasPersistentVolume_PersistentVolumeExisting(t *testing.T) {
 	var (
 		actualListOpts   *types.ListOpts
 		clientConfig     = ClientConfig{}
-		persistentVolume = PersistentVolume{
+		persistentVolume = projectModel.PersistentVolume{
 			Name: persistentVolumeName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)
@@ -86,10 +87,10 @@ func TestHasPersistentVolume_PersistentVolumeNotExisting(t *testing.T) {
 	var (
 		actualListOpts   *types.ListOpts
 		clientConfig     = ClientConfig{}
-		persistentVolume = PersistentVolume{
+		persistentVolume = projectModel.PersistentVolume{
 			Name: persistentVolumeName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)
@@ -134,7 +135,7 @@ func TestCreatePersistentVolume(t *testing.T) {
 	var (
 		actualOpts       *clusterClient.PersistentVolume
 		clientConfig     = ClientConfig{}
-		persistentVolume = PersistentVolume{
+		persistentVolume = projectModel.PersistentVolume{
 			Name:             persistentVolumeName,
 			StorageClassName: storageClassName,
 			AccessModes:      []string{"ReadWriteOnce"},
@@ -142,7 +143,7 @@ func TestCreatePersistentVolume(t *testing.T) {
 			Path:             path,
 			Node:             node,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)

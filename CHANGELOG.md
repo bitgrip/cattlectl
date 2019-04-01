@@ -5,8 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-* #7: Add support for descriptor includes (#15)
-* #14 Feature/add to yaml function in template (#16)
+* [#13](https://github.com/bitgrip/cattlectl/issues/13) Add support for project workloads
+* [#7](https://github.com/bitgrip/cattlectl/issues/7): Add support for descriptor includes
+* [#14](https://github.com/bitgrip/cattlectl/issues/14) Feature/add to yaml function in template
 
 ### Changed
 

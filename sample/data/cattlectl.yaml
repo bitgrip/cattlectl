@@ -1,5 +1,0 @@
-rancher:
-  url: https://rancher.bitgrip.berlin
-  access_key: token-zl7s4
-  secret_key: xvfffpqmhpzxfs2zn6cx94qt5csrt4qktn2glcblvnkcj9kq287v24
-  cluster_name: ksb-hetzner-k8s

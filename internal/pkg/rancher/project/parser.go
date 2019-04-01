@@ -19,29 +19,25 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/rancher/norman/types/slice"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Parser is a object that can parse a project file using a map of template values
-type Parser interface {
-	Parse(values map[string]interface{}) (rancher.Project, error)
-}
-
 // NewParser creates a Parser that is not printing prettified representations
-func NewParser(projectFile string) Parser {
-	return newParser(projectFile, false, []string{})
+func NewProjectParser(projectFile string, values map[string]interface{}) descriptor.Parser {
+	return newProjectParser(projectFile, values, false, []string{})
 }
 
 // NewPrettyParser creates a Parser that is printing prettified representations
-func NewPrettyParser(projectFile string) Parser {
-	return newParser(projectFile, true, []string{})
+func NewPrettyProjectParser(projectFile string, values map[string]interface{}) descriptor.Parser {
+	return newProjectParser(projectFile, values, true, []string{})
 }
 
-func newParser(projectFile string, pretty bool, parentProjectFiles []string) Parser {
+func newProjectParser(projectFile string, values map[string]interface{}, pretty bool, parentProjectFiles []string) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"project_file": projectFile,
 	})
@@ -50,6 +46,7 @@ func newParser(projectFile string, pretty bool, parentProjectFiles []string) Par
 		pretty:             pretty,
 		parentProjectFiles: parentProjectFiles,
 		logger:             logger,
+		values:             values,
 	}
 }
 
@@ -58,67 +55,68 @@ type fileParser struct {
 	pretty             bool
 	parentProjectFiles []string
 	logger             *logrus.Entry
+	values             map[string]interface{}
 }
 
-func (parser fileParser) Parse(values map[string]interface{}) (rancher.Project, error) {
-	project := rancher.Project{}
+func (parser fileParser) Parse(projectData []byte, target interface{}) error {
+	targetProject := target.(*projectModel.Project)
 	absProjectFile, err := filepath.Abs(parser.projectFile)
 	if err != nil {
-		return project, err
+		return err
 	}
 	if slice.ContainsString(parser.parentProjectFiles, absProjectFile) {
-		parser.logger.Info("Cycle detected - return empty result")
-		return project, nil
+		parser.logger.Info("Cycle detected - return empty result", parser.parentProjectFiles, absProjectFile)
+		return nil
 	}
 	allProjectFiles := append(parser.parentProjectFiles, absProjectFile)
-	fileContent, err := ioutil.ReadFile(absProjectFile)
-	if err != nil {
-		return project, err
-	}
 
-	projectData, err := template.BuildTemplate(fileContent, values, filepath.Dir(parser.projectFile), parser.pretty)
-	if err != nil {
-		return project, err
-	}
-
-	isProject, err := parser.isProjectDescriptor(projectData)
+	isProject, err := isDescriptor(projectData, "Project", parser.logger)
 	if !isProject || err != nil {
-		return project, err
+		return err
 	}
 
-	err = yaml.Unmarshal(projectData, &project)
+	err = yaml.Unmarshal(projectData, targetProject)
 	if err != nil {
-		return project, err
+		return err
 	}
-	for _, include := range project.Metadata.Includes {
+	for _, include := range targetProject.Metadata.Includes {
 		var childProjectFile string
 		if filepath.IsAbs(include.File) {
 			childProjectFile = include.File
 		} else {
 			childProjectFile = filepath.Clean(fmt.Sprintf("%s/%s", filepath.Dir(parser.projectFile), include.File))
 		}
-		childParser := newParser(childProjectFile, parser.pretty, allProjectFiles)
-		child, err := childParser.Parse(values)
+		childFileContent, err := ioutil.ReadFile(childProjectFile)
 		if err != nil {
-			return project, err
+			return err
 		}
-		project, err = rancher.MergeProject(child, project)
+		childProjectData, err := template.BuildTemplate(childFileContent, parser.values, filepath.Dir(childProjectFile), parser.pretty)
 		if err != nil {
-			return project, err
+			return err
+		}
+		childTarget := projectModel.Project{}
+		childParser := newProjectParser(childProjectFile, parser.values, parser.pretty, allProjectFiles)
+		err = childParser.Parse(childProjectData, &childTarget)
+		if err != nil {
+			return err
+		}
+		err = MergeProject(childTarget, targetProject)
+		if err != nil {
+			return err
 		}
 	}
 
-	return project, nil
+	return nil
 }
 
-func (parser fileParser) isProjectDescriptor(data []byte) (bool, error) {
+func isDescriptor(data []byte, kind string, logger *logrus.Entry) (bool, error) {
 	structure := make(map[string]interface{})
 	err := yaml.Unmarshal(data, &structure)
 	if err != nil {
 		return false, err
 	}
-	if structure["kind"] != "Project" {
-		parser.logger.WithField("kind", structure["kind"]).Error("Invalid descriptor")
+	if structure["kind"] != kind {
+		logger.WithField("kind", structure["kind"]).Error("Invalid descriptor")
 		return false, fmt.Errorf("Invalid descriptor: %v", structure["kind"])
 	}
 

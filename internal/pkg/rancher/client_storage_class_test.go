@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
 	clusterClient "github.com/rancher/types/client/cluster/v3"
@@ -38,10 +39,10 @@ func TestHasStorageClass_StorageClassExisting(t *testing.T) {
 	var (
 		actualListOpts *types.ListOpts
 		clientConfig   = ClientConfig{}
-		storageClass   = StorageClass{
+		storageClass   = projectModel.StorageClass{
 			Name: storageClassName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
@@ -87,10 +88,10 @@ func TestHasStorageClass_NamespaceNotExisting(t *testing.T) {
 	var (
 		actualListOpts *types.ListOpts
 		clientConfig   = ClientConfig{}
-		storageClass   = StorageClass{
+		storageClass   = projectModel.StorageClass{
 			Name: storageClassName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
@@ -132,10 +133,10 @@ func TestCreateStorageClass(t *testing.T) {
 	var (
 		actualOpts   *clusterClient.StorageClass
 		clientConfig = ClientConfig{}
-		storageClass = StorageClass{
+		storageClass = projectModel.StorageClass{
 			Name: storageClassName,
 		}
-		testClients = stubs.CreateTestClients(t)
+		testClients = stubs.CreateBackendStubs(t)
 	)
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
