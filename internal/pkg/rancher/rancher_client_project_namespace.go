@@ -58,6 +58,9 @@ func (client *rancherClient) CreateNamespace(namespace projectModel.Namespace) e
 }
 
 func (client *rancherClient) getNamespaceID(namespace string) (string, error) {
+	if namespace == "" {
+		return "", fmt.Errorf("missing required namespace name")
+	}
 	hasNamespace, err := client.HasNamespace(projectModel.Namespace{Name: namespace})
 	if err != nil {
 		return "", err

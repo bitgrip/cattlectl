@@ -71,6 +71,10 @@ func NewClientStub(tb testing.TB) rancher.Client {
 			assert.FailInStub(tb, 2, "Unexpected call of CreateConfigMap")
 			return nil
 		},
+		DoUpgradeConfigMap: func(configMap projectModel.ConfigMap) error {
+			assert.FailInStub(tb, 2, "Unexpected call of CreateConfigMap")
+			return nil
+		},
 		DoHasDockerCredential: func(dockerCredential projectModel.DockerCredential) (bool, error) {
 			assert.FailInStub(tb, 2, "Unexpected call of HasDockerCredential")
 			return false, nil
@@ -185,6 +189,7 @@ type ClientStub struct {
 	DoHasCertificate          func(certificate projectModel.Certificate) (bool, error)
 	DoCreateCertificate       func(certificate projectModel.Certificate) error
 	DoHasConfigMap            func(configMap projectModel.ConfigMap) (bool, error)
+	DoUpgradeConfigMap        func(configMap projectModel.ConfigMap) error
 	DoCreateConfigMap         func(configMap projectModel.ConfigMap) error
 	DoHasDockerCredential     func(dockerCredential projectModel.DockerCredential) (bool, error)
 	DoCreateDockerCredential  func(dockerCredential projectModel.DockerCredential) error
@@ -242,6 +247,9 @@ func (stub ClientStub) CreateCertificate(certificate projectModel.Certificate) e
 }
 func (stub ClientStub) HasConfigMap(configMap projectModel.ConfigMap) (bool, error) {
 	return stub.DoHasConfigMap(configMap)
+}
+func (stub ClientStub) UpgradeConfigMap(configMap projectModel.ConfigMap) error {
+	return stub.DoUpgradeConfigMap(configMap)
 }
 func (stub ClientStub) CreateConfigMap(configMap projectModel.ConfigMap) error {
 	return stub.DoCreateConfigMap(configMap)

@@ -185,6 +185,7 @@ func TestConvergeProjectDescriptorNonExistingCertificate(t *testing.T) {
 }
 
 func TestConvergeProjectDescriptorExistingConfigMap(t *testing.T) {
+	var configMapUpgraded = false
 	projectDescriptor := newTestProjectDescriptor(t)
 	projectDescriptor.Namespaces = make([]projectModel.Namespace, 0)
 	projectDescriptor.Resources.Certificates = make([]projectModel.Certificate, 0)
@@ -202,9 +203,15 @@ func TestConvergeProjectDescriptorExistingConfigMap(t *testing.T) {
 		assert.Equals(t, projectDescriptor.Resources.ConfigMaps[0], configMap)
 		return true, nil
 	}
+	client.DoUpgradeConfigMap = func(configMap projectModel.ConfigMap) error {
+		assert.Equals(t, projectDescriptor.Resources.ConfigMaps[0], configMap)
+		configMapUpgraded = true
+		return nil
+	}
 
 	converger := NewProjectConverger(projectDescriptor)
 	converger.Converge(&client)
+	assert.Assert(t, configMapUpgraded, "configMap not upgraded")
 }
 
 func TestConvergeProjectDescriptorNonExistingConfigMap(t *testing.T) {

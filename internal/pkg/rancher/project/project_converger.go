@@ -127,19 +127,12 @@ func newConfigMapPartConverger(configMap projectModel.ConfigMap) descriptor.Conv
 	return descriptor.PartConverger{
 		PartName: "ConfigMap",
 		HasPart: func(client rancher.Client) (bool, error) {
-			if configMap.Namespace == "" {
-				return client.HasConfigMap(configMap)
-			}
 			return client.HasConfigMap(configMap)
 		},
 		UpdatePart: func(client rancher.Client) error {
-			logrus.WithField("configMap", configMap.Name).Debug("Skip change existing configMap")
-			return nil
+			return client.UpgradeConfigMap(configMap)
 		},
 		CreatePart: func(client rancher.Client) error {
-			if configMap.Namespace == "" {
-				return client.CreateConfigMap(configMap)
-			}
 			return client.CreateConfigMap(configMap)
 		},
 	}

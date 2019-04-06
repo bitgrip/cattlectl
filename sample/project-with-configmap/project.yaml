@@ -1,0 +1,13 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+namespaces:
+  - name: {{ .project_name }}-first-namespace
+resources:
+  config_maps:
+  - name: first-test-configmap
+    namespace: {{ .project_name }}-first-namespace
+    data:
+      key: {{ .data }}

@@ -37,6 +37,7 @@ type Client interface {
 	HasCertificate(certificate projectModel.Certificate) (bool, error)
 	CreateCertificate(certificate projectModel.Certificate) error
 	HasConfigMap(configMap projectModel.ConfigMap) (bool, error)
+	UpgradeConfigMap(configMap projectModel.ConfigMap) error
 	CreateConfigMap(configMap projectModel.ConfigMap) error
 	HasDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error)
 	CreateDockerCredential(dockerCredential projectModel.DockerCredential) error
@@ -90,6 +91,7 @@ func NewClient(clientConfig ClientConfig) (Client, error) {
 		namespaceCache:        make(map[string]clusterClient.Namespace),
 		secretCache:           make(map[string]projectClient.Secret),
 		namespacedSecretCache: make(map[string]projectClient.NamespacedSecret),
+		configMapCache:        make(map[string]projectClient.ConfigMap),
 		logger:                logrus.WithFields(logrus.Fields{}),
 	}, nil
 }
@@ -105,6 +107,7 @@ type rancherClient struct {
 	namespaceCache        map[string]clusterClient.Namespace
 	secretCache           map[string]projectClient.Secret
 	namespacedSecretCache map[string]projectClient.NamespacedSecret
+	configMapCache        map[string]projectClient.ConfigMap
 	logger                *logrus.Entry
 }
 
