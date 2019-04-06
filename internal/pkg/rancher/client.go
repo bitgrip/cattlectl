@@ -41,8 +41,10 @@ type Client interface {
 	HasDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error)
 	CreateDockerCredential(dockerCredential projectModel.DockerCredential) error
 	HasSecret(secret projectModel.ConfigMap) (bool, error)
+	UpgradeSecret(secret projectModel.ConfigMap) error
 	CreateSecret(secret projectModel.ConfigMap) error
 	HasNamespacedSecret(secret projectModel.ConfigMap) (bool, error)
+	UpgradeNamespacedSecret(secret projectModel.ConfigMap) error
 	CreateNamespacedSecret(secret projectModel.ConfigMap) error
 	HasStorageClass(storageClass projectModel.StorageClass) (bool, error)
 	CreateStorageClass(storageClass projectModel.StorageClass) error
@@ -82,24 +84,28 @@ func NewClient(clientConfig ClientConfig) (Client, error) {
 		return nil, err
 	}
 	return &rancherClient{
-		clientConfig:     clientConfig,
-		managementClient: managementClient,
-		appCache:         make(map[string]projectClient.App),
-		namespaceCache:   make(map[string]clusterClient.Namespace),
-		logger:           logrus.WithFields(logrus.Fields{}),
+		clientConfig:          clientConfig,
+		managementClient:      managementClient,
+		appCache:              make(map[string]projectClient.App),
+		namespaceCache:        make(map[string]clusterClient.Namespace),
+		secretCache:           make(map[string]projectClient.Secret),
+		namespacedSecretCache: make(map[string]projectClient.NamespacedSecret),
+		logger:                logrus.WithFields(logrus.Fields{}),
 	}, nil
 }
 
 type rancherClient struct {
-	clusterId        string
-	projectId        string
-	clientConfig     ClientConfig
-	clusterClient    *clusterClient.Client
-	managementClient *managementClient.Client
-	projectClient    *projectClient.Client
-	appCache         map[string]projectClient.App
-	namespaceCache   map[string]clusterClient.Namespace
-	logger           *logrus.Entry
+	clusterId             string
+	projectId             string
+	clientConfig          ClientConfig
+	clusterClient         *clusterClient.Client
+	managementClient      *managementClient.Client
+	projectClient         *projectClient.Client
+	appCache              map[string]projectClient.App
+	namespaceCache        map[string]clusterClient.Namespace
+	secretCache           map[string]projectClient.Secret
+	namespacedSecretCache map[string]projectClient.NamespacedSecret
+	logger                *logrus.Entry
 }
 
 func InitCluster(clusterID, clusterName string, client Client) error {

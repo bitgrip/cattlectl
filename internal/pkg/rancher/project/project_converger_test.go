@@ -291,6 +291,7 @@ func TestConvergeProjectDescriptorNonExistingDockerCredential(t *testing.T) {
 }
 
 func TestConvergeProjectDescriptorExistingSecret(t *testing.T) {
+	var secretUpgraded = false
 	projectDescriptor := newTestProjectDescriptor(t)
 	projectDescriptor.Namespaces = make([]projectModel.Namespace, 0)
 	projectDescriptor.Resources.Certificates = make([]projectModel.Certificate, 0)
@@ -308,9 +309,15 @@ func TestConvergeProjectDescriptorExistingSecret(t *testing.T) {
 		assert.Equals(t, projectDescriptor.Resources.Secrets[0], secret)
 		return true, nil
 	}
+	client.DoUpgradeSecret = func(secret projectModel.ConfigMap) error {
+		assert.Equals(t, projectDescriptor.Resources.Secrets[0], secret)
+		secretUpgraded = true
+		return nil
+	}
 
 	converger := NewProjectConverger(projectDescriptor)
 	converger.Converge(&client)
+	assert.Assert(t, secretUpgraded, "secret not upgraded")
 }
 
 func TestConvergeProjectDescriptorNonExistingSecret(t *testing.T) {

@@ -1,0 +1,17 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+namespaces:
+  - name: {{ .project_name }}-first-namespace
+  - name: {{ .project_name }}-second-namespace
+resources:
+  secrets:
+  - name: global-test-secret
+    data:
+      key: {{ .data | base64 }}
+  - name: namespaced-test-secret
+    namespace: {{ .project_name }}-first-namespace
+    data:
+      key: {{ .data | base64 }}

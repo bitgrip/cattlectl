@@ -177,8 +177,10 @@ func newSecretPartConverger(secret projectModel.ConfigMap) descriptor.Converger 
 			return client.HasNamespacedSecret(secret)
 		},
 		UpdatePart: func(client rancher.Client) error {
-			logrus.WithField("secret", secret.Name).Debug("Skip change existing secret")
-			return nil
+			if secret.Namespace == "" {
+				return client.UpgradeSecret(secret)
+			}
+			return client.UpgradeNamespacedSecret(secret)
 		},
 		CreatePart: func(client rancher.Client) error {
 			if secret.Namespace == "" {
