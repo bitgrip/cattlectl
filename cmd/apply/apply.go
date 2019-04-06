@@ -60,7 +60,7 @@ func apply(cmd *cobra.Command, args []string) {
 		logrus.WithField("apply_file", applyFile).
 			Fatal(err)
 	}
-	logrus.WithFields(values).Debug("Read descriptor with values")
+	logrus.WithFields(values).Trace("Read descriptor with values")
 	fileContent, err := ioutil.ReadFile(applyFile)
 	if err != nil {
 		logrus.WithField("apply_file", applyFile).
