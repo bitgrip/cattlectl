@@ -35,7 +35,11 @@ type Client interface {
 	HasNamespace(namespace projectModel.Namespace) (bool, error)
 	CreateNamespace(namespace projectModel.Namespace) error
 	HasCertificate(certificate projectModel.Certificate) (bool, error)
+	UpgradeCertificate(certificate projectModel.Certificate) error
 	CreateCertificate(certificate projectModel.Certificate) error
+	HasNamespacedCertificate(certificate projectModel.Certificate) (bool, error)
+	UpgradeNamespacedCertificate(certificate projectModel.Certificate) error
+	CreateNamespacedCertificate(certificate projectModel.Certificate) error
 	HasConfigMap(configMap projectModel.ConfigMap) (bool, error)
 	UpgradeConfigMap(configMap projectModel.ConfigMap) error
 	CreateConfigMap(configMap projectModel.ConfigMap) error
@@ -85,30 +89,34 @@ func NewClient(clientConfig ClientConfig) (Client, error) {
 		return nil, err
 	}
 	return &rancherClient{
-		clientConfig:          clientConfig,
-		managementClient:      managementClient,
-		appCache:              make(map[string]projectClient.App),
-		namespaceCache:        make(map[string]clusterClient.Namespace),
-		secretCache:           make(map[string]projectClient.Secret),
-		namespacedSecretCache: make(map[string]projectClient.NamespacedSecret),
-		configMapCache:        make(map[string]projectClient.ConfigMap),
-		logger:                logrus.WithFields(logrus.Fields{}),
+		clientConfig:               clientConfig,
+		managementClient:           managementClient,
+		appCache:                   make(map[string]projectClient.App),
+		namespaceCache:             make(map[string]clusterClient.Namespace),
+		secretCache:                make(map[string]projectClient.Secret),
+		namespacedSecretCache:      make(map[string]projectClient.NamespacedSecret),
+		configMapCache:             make(map[string]projectClient.ConfigMap),
+		certificateCache:           make(map[string]projectClient.Certificate),
+		namespacedCertificateCache: make(map[string]projectClient.NamespacedCertificate),
+		logger:                     logrus.WithFields(logrus.Fields{}),
 	}, nil
 }
 
 type rancherClient struct {
-	clusterId             string
-	projectId             string
-	clientConfig          ClientConfig
-	clusterClient         *clusterClient.Client
-	managementClient      *managementClient.Client
-	projectClient         *projectClient.Client
-	appCache              map[string]projectClient.App
-	namespaceCache        map[string]clusterClient.Namespace
-	secretCache           map[string]projectClient.Secret
-	namespacedSecretCache map[string]projectClient.NamespacedSecret
-	configMapCache        map[string]projectClient.ConfigMap
-	logger                *logrus.Entry
+	clusterId                  string
+	projectId                  string
+	clientConfig               ClientConfig
+	clusterClient              *clusterClient.Client
+	managementClient           *managementClient.Client
+	projectClient              *projectClient.Client
+	appCache                   map[string]projectClient.App
+	namespaceCache             map[string]clusterClient.Namespace
+	secretCache                map[string]projectClient.Secret
+	namespacedSecretCache      map[string]projectClient.NamespacedSecret
+	configMapCache             map[string]projectClient.ConfigMap
+	certificateCache           map[string]projectClient.Certificate
+	namespacedCertificateCache map[string]projectClient.NamespacedCertificate
+	logger                     *logrus.Entry
 }
 
 func InitCluster(clusterID, clusterName string, client Client) error {

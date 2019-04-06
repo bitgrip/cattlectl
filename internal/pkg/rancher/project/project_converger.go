@@ -108,17 +108,19 @@ func newCertificatePartConverger(certificate projectModel.Certificate) descripto
 			if certificate.Namespace == "" {
 				return client.HasCertificate(certificate)
 			}
-			return client.HasCertificate(certificate)
+			return client.HasNamespacedCertificate(certificate)
 		},
 		UpdatePart: func(client rancher.Client) error {
-			logrus.WithField("certificate", certificate.Name).Debug("Skip change existing certificate")
-			return nil
+			if certificate.Namespace == "" {
+				return client.UpgradeCertificate(certificate)
+			}
+			return client.UpgradeNamespacedCertificate(certificate)
 		},
 		CreatePart: func(client rancher.Client) error {
 			if certificate.Namespace == "" {
 				return client.CreateCertificate(certificate)
 			}
-			return client.CreateCertificate(certificate)
+			return client.CreateNamespacedCertificate(certificate)
 		},
 	}
 }

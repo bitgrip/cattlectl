@@ -97,11 +97,15 @@ func (client *rancherClient) HasNamespacedSecret(secret projectModel.ConfigMap) 
 	if _, exists := client.namespacedSecretCache[secret.Name]; exists {
 		return true, nil
 	}
+	namespaceID, err := client.getNamespaceID(secret.Namespace)
+	if err != nil {
+		return false, fmt.Errorf("Failed to read config_map list, %v", err)
+	}
 	collection, err := client.projectClient.NamespacedSecret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"system":      "false",
 			"name":        secret.Name,
-			"namespaceId": secret.Namespace,
+			"namespaceId": namespaceID,
 		},
 	})
 	if nil != err {
@@ -125,11 +129,15 @@ func (client *rancherClient) UpgradeNamespacedSecret(secret projectModel.ConfigM
 		client.logger.WithField("secret_name", secret.Name).WithField("namespace", secret.Namespace).Trace("Use Cache")
 		existingSecret = item
 	} else {
+		namespaceID, err := client.getNamespaceID(secret.Namespace)
+		if err != nil {
+			return fmt.Errorf("Failed to read config_map list, %v", err)
+		}
 		collection, err := client.projectClient.NamespacedSecret.List(&types.ListOpts{
 			Filters: map[string]interface{}{
 				"system":      "false",
 				"name":        secret.Name,
-				"namespaceId": secret.Namespace,
+				"namespaceId": namespaceID,
 			},
 		})
 		if nil != err {
@@ -155,13 +163,17 @@ func (client *rancherClient) UpgradeNamespacedSecret(secret projectModel.ConfigM
 
 func (client *rancherClient) CreateNamespacedSecret(secret projectModel.ConfigMap) error {
 	client.logger.WithField("secret_name", secret.Name).WithField("namespace", secret.Namespace).Info("Create new Secret")
+	namespaceID, err := client.getNamespaceID(secret.Namespace)
+	if err != nil {
+		return fmt.Errorf("Failed to read config_map list, %v", err)
+	}
 	newSecret := &projectClient.NamespacedSecret{
 		Name:        secret.Name,
 		Data:        secret.Data,
-		NamespaceId: secret.Namespace,
+		NamespaceId: namespaceID,
 		ProjectID:   client.projectId,
 	}
 
-	_, err := client.projectClient.NamespacedSecret.Create(newSecret)
+	_, err = client.projectClient.NamespacedSecret.Create(newSecret)
 	return err
 }

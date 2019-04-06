@@ -132,6 +132,7 @@ func TestConvergeProjectDescriptorNonExistingNamespace(t *testing.T) {
 }
 
 func TestConvergeProjectDescriptorExistingCertificate(t *testing.T) {
+	var certificateUpgraded = false
 	projectDescriptor := newTestProjectDescriptor(t)
 	projectDescriptor.Namespaces = make([]projectModel.Namespace, 0)
 	//projectDescriptor.Resources.Certificates = make([]projectModel.Certificate, 0)
@@ -149,9 +150,15 @@ func TestConvergeProjectDescriptorExistingCertificate(t *testing.T) {
 		assert.Equals(t, projectDescriptor.Resources.Certificates[0], certificate)
 		return true, nil
 	}
+	client.DoUpgradeCertificate = func(certificate projectModel.Certificate) error {
+		assert.Equals(t, projectDescriptor.Resources.Certificates[0], certificate)
+		certificateUpgraded = true
+		return nil
+	}
 
 	converger := NewProjectConverger(projectDescriptor)
 	converger.Converge(&client)
+	assert.Assert(t, certificateUpgraded, "certificate not upgraded")
 }
 
 func TestConvergeProjectDescriptorNonExistingCertificate(t *testing.T) {

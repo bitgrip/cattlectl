@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+* Certificates do now respect namespace property
+
 ## 0.1.0 (Feb 15 2019)
 
 * Initial release

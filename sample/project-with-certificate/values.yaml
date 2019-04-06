@@ -1,0 +1,3 @@
+project_name: test-project
+tls_cert_key_file: server.key
+tls_cert_file: server-1.crt

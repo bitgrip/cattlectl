@@ -1,0 +1,21 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+namespaces:
+  - name: {{ .project_name }}-first-namespace
+  - name: {{ .project_name }}-second-namespace
+resources:
+  certificates:
+  - name: global-test-certificate
+    key: |
+{{ read .tls_cert_key_file | indent 3}}
+    certs: |
+{{ read .tls_cert_file | indent 3}}
+  - name: namespaced-test-certificate
+    namespace: {{ .project_name }}-first-namespace
+    key: |
+{{ read .tls_cert_key_file | indent 3}}
+    certs: |
+{{ read .tls_cert_file | indent 3}}
