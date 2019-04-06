@@ -20,9 +20,29 @@ import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
 )
 
-var (
-//newRancherClient = rancher.NewClient
-)
+func ClusterResourceDescriptorConverger(clusterName string, partConvergers []Converger) Converger {
+	return DescriptorConverger{
+		InitCluster: DefaultInitCluster(
+			clusterName,
+		),
+		InitProject: func(client rancher.Client) error {
+			return nil
+		},
+		PartConvergers: partConvergers,
+	}
+}
+
+func ProjectResourceDescriptorConverger(clusterName, projectName string, partConvergers []Converger) Converger {
+	return DescriptorConverger{
+		InitCluster: DefaultInitCluster(
+			clusterName,
+		),
+		InitProject: DefaultInitProject(
+			projectName,
+		),
+		PartConvergers: partConvergers,
+	}
+}
 
 // Converger is a object which can converge github.com/bitgrip/cattlectl/internal/pkg/projectModel.Project
 type Converger interface {
@@ -64,4 +84,23 @@ func (converger PartConverger) Converge(client rancher.Client) error {
 		return fmt.Errorf("Failed to check for %s, %v", converger.PartName, err)
 	}
 	return converger.CreatePart(client)
+}
+
+func DefaultInitCluster(clusterName string) func(client rancher.Client) error {
+	return func(client rancher.Client) error {
+		return rancher.InitCluster(
+			"",
+			clusterName,
+			client,
+		)
+	}
+}
+
+func DefaultInitProject(projectName string) func(client rancher.Client) error {
+	return func(client rancher.Client) error {
+		return rancher.InitProject(
+			projectName,
+			client,
+		)
+	}
 }

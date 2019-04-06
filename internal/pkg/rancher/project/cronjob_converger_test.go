@@ -42,10 +42,11 @@ func TestConvergeExistingCronJobDescriptor(t *testing.T) {
 	expectSetProjectForExisting(cronJobDescriptor.Metadata.ProjectName, "project-id", &client, t)
 	client.DoHasCronJob = func(namespace string, part projectModel.CronJob) (bool, error) {
 		assert.Equals(t, cronJobDescriptor.Metadata.Namespace, namespace)
+		assert.Equals(t, cronJobDescriptor.Spec.Name, part.Name)
 		return true, nil
 	}
 	converger := NewCronJobConverger(cronJobDescriptor)
-	converger.Converge(client)
+	converger.Converge(&client)
 }
 
 func TestConvergeNewCronJobDescriptor(t *testing.T) {
