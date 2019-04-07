@@ -15,6 +15,7 @@
 package rancher
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,7 @@ import (
 	managementClient "github.com/rancher/types/client/management/v3"
 	projectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 type Client interface {
@@ -44,7 +46,11 @@ type Client interface {
 	UpgradeConfigMap(configMap projectModel.ConfigMap) error
 	CreateConfigMap(configMap projectModel.ConfigMap) error
 	HasDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error)
+	UpgradeDockerCredential(dockerCredential projectModel.DockerCredential) error
 	CreateDockerCredential(dockerCredential projectModel.DockerCredential) error
+	HasNamespacedDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error)
+	UpgradeNamespacedDockerCredential(dockerCredential projectModel.DockerCredential) error
+	CreateNamespacedDockerCredential(dockerCredential projectModel.DockerCredential) error
 	HasSecret(secret projectModel.ConfigMap) (bool, error)
 	UpgradeSecret(secret projectModel.ConfigMap) error
 	CreateSecret(secret projectModel.ConfigMap) error
@@ -89,34 +95,38 @@ func NewClient(clientConfig ClientConfig) (Client, error) {
 		return nil, err
 	}
 	return &rancherClient{
-		clientConfig:               clientConfig,
-		managementClient:           managementClient,
-		appCache:                   make(map[string]projectClient.App),
-		namespaceCache:             make(map[string]clusterClient.Namespace),
-		secretCache:                make(map[string]projectClient.Secret),
-		namespacedSecretCache:      make(map[string]projectClient.NamespacedSecret),
-		configMapCache:             make(map[string]projectClient.ConfigMap),
-		certificateCache:           make(map[string]projectClient.Certificate),
-		namespacedCertificateCache: make(map[string]projectClient.NamespacedCertificate),
-		logger:                     logrus.WithFields(logrus.Fields{}),
+		clientConfig:                    clientConfig,
+		managementClient:                managementClient,
+		appCache:                        make(map[string]projectClient.App),
+		namespaceCache:                  make(map[string]clusterClient.Namespace),
+		secretCache:                     make(map[string]projectClient.Secret),
+		namespacedSecretCache:           make(map[string]projectClient.NamespacedSecret),
+		configMapCache:                  make(map[string]projectClient.ConfigMap),
+		certificateCache:                make(map[string]projectClient.Certificate),
+		namespacedCertificateCache:      make(map[string]projectClient.NamespacedCertificate),
+		dockerCredentialCache:           make(map[string]projectClient.DockerCredential),
+		namespacedDockerCredentialCache: make(map[string]projectClient.NamespacedDockerCredential),
+		logger:                          logrus.WithFields(logrus.Fields{}),
 	}, nil
 }
 
 type rancherClient struct {
-	clusterId                  string
-	projectId                  string
-	clientConfig               ClientConfig
-	clusterClient              *clusterClient.Client
-	managementClient           *managementClient.Client
-	projectClient              *projectClient.Client
-	appCache                   map[string]projectClient.App
-	namespaceCache             map[string]clusterClient.Namespace
-	secretCache                map[string]projectClient.Secret
-	namespacedSecretCache      map[string]projectClient.NamespacedSecret
-	configMapCache             map[string]projectClient.ConfigMap
-	certificateCache           map[string]projectClient.Certificate
-	namespacedCertificateCache map[string]projectClient.NamespacedCertificate
-	logger                     *logrus.Entry
+	clusterId                       string
+	projectId                       string
+	clientConfig                    ClientConfig
+	clusterClient                   *clusterClient.Client
+	managementClient                *managementClient.Client
+	projectClient                   *projectClient.Client
+	appCache                        map[string]projectClient.App
+	namespaceCache                  map[string]clusterClient.Namespace
+	secretCache                     map[string]projectClient.Secret
+	namespacedSecretCache           map[string]projectClient.NamespacedSecret
+	configMapCache                  map[string]projectClient.ConfigMap
+	certificateCache                map[string]projectClient.Certificate
+	namespacedCertificateCache      map[string]projectClient.NamespacedCertificate
+	dockerCredentialCache           map[string]projectClient.DockerCredential
+	namespacedDockerCredentialCache map[string]projectClient.NamespacedDockerCredential
+	logger                          *logrus.Entry
 }
 
 func InitCluster(clusterID, clusterName string, client Client) error {
@@ -223,4 +233,13 @@ func createProjectClient(rancherUrl string, accessKey string, secretKey string, 
 		return nil, fmt.Errorf("Failed to create project client, %v", err)
 	}
 	return pc, nil
+}
+
+func hashOf(data interface{}) string {
+
+	dataBytes, _ := yaml.Marshal(data)
+	h := sha1.New()
+	h.Write(dataBytes)
+	bs := h.Sum(nil)
+	return fmt.Sprintf("%x", bs)
 }

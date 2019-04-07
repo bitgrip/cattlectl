@@ -147,17 +147,19 @@ func newDockerCredentialPartConverger(dockerCredential projectModel.DockerCreden
 			if dockerCredential.Namespace == "" {
 				return client.HasDockerCredential(dockerCredential)
 			}
-			return client.HasDockerCredential(dockerCredential)
+			return client.HasNamespacedDockerCredential(dockerCredential)
 		},
 		UpdatePart: func(client rancher.Client) error {
-			logrus.WithField("dockerCredential", dockerCredential.Name).Debug("Skip change existing dockerCredential")
-			return nil
+			if dockerCredential.Namespace == "" {
+				return client.UpgradeDockerCredential(dockerCredential)
+			}
+			return client.UpgradeNamespacedDockerCredential(dockerCredential)
 		},
 		CreatePart: func(client rancher.Client) error {
 			if dockerCredential.Namespace == "" {
 				return client.CreateDockerCredential(dockerCredential)
 			}
-			return client.CreateDockerCredential(dockerCredential)
+			return client.CreateNamespacedDockerCredential(dockerCredential)
 		},
 	}
 }

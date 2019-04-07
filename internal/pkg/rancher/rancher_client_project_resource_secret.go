@@ -70,7 +70,7 @@ func (client *rancherClient) UpgradeSecret(secret projectModel.ConfigMap) error 
 		}
 		existingSecret = collection.Data[0]
 	}
-	if reflect.DeepEqual(existingSecret.Data, secret.Data) {
+	if isSecretUnchanged(existingSecret, secret) {
 		client.logger.WithField("secret_name", secret.Name).Debug("Skip upgrade secret - no changes")
 		return nil
 	}
@@ -150,7 +150,7 @@ func (client *rancherClient) UpgradeNamespacedSecret(secret projectModel.ConfigM
 		}
 		existingSecret = collection.Data[0]
 	}
-	if reflect.DeepEqual(existingSecret.Data, secret.Data) {
+	if isNamespacedSecretUnchanged(existingSecret, secret) {
 		client.logger.WithField("secret_name", secret.Name).WithField("namespace", secret.Namespace).Debug("Skip upgrade secret - no changes")
 		return nil
 	}
@@ -176,4 +176,12 @@ func (client *rancherClient) CreateNamespacedSecret(secret projectModel.ConfigMa
 
 	_, err = client.projectClient.NamespacedSecret.Create(newSecret)
 	return err
+}
+
+func isSecretUnchanged(existingSecret projectClient.Secret, secret projectModel.ConfigMap) bool {
+	return reflect.DeepEqual(existingSecret.Data, secret.Data)
+}
+
+func isNamespacedSecretUnchanged(existingSecret projectClient.NamespacedSecret, secret projectModel.ConfigMap) bool {
+	return reflect.DeepEqual(existingSecret.Data, secret.Data)
 }

@@ -6,16 +6,19 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 * [#13](https://github.com/bitgrip/cattlectl/issues/13) Add support for project workloads
-* [#7](https://github.com/bitgrip/cattlectl/issues/7): Add support for descriptor includes
+* [#7](https://github.com/bitgrip/cattlectl/issues/7) Add support for descriptor includes
 * [#14](https://github.com/bitgrip/cattlectl/issues/14) Feature/add to yaml function in template
 
 ### Changed
+
+* [#18](https://github.com/bitgrip/cattlectl/issues/18) Add support to update project resources
 
 ### Removed
 
 ### Fixed
 
 * Certificates do now respect namespace property
+* DockerCredentials do now respect namespace property
 
 ## 0.1.0 (Feb 15 2019)
 

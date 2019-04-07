@@ -252,6 +252,7 @@ func TestConvergeProjectDescriptorNonExistingConfigMap(t *testing.T) {
 }
 
 func TestConvergeProjectDescriptorExistingDockerCredential(t *testing.T) {
+	var dockerCredentialUpgraded = false
 	projectDescriptor := newTestProjectDescriptor(t)
 	projectDescriptor.Namespaces = make([]projectModel.Namespace, 0)
 	projectDescriptor.Resources.Certificates = make([]projectModel.Certificate, 0)
@@ -269,9 +270,15 @@ func TestConvergeProjectDescriptorExistingDockerCredential(t *testing.T) {
 		assert.Equals(t, projectDescriptor.Resources.DockerCredentials[0], dockerCredential)
 		return true, nil
 	}
+	client.DoUpgradeDockerCredential = func(dockerCredential projectModel.DockerCredential) error {
+		assert.Equals(t, projectDescriptor.Resources.DockerCredentials[0], dockerCredential)
+		dockerCredentialUpgraded = true
+		return nil
+	}
 
 	converger := NewProjectConverger(projectDescriptor)
 	converger.Converge(&client)
+	assert.Assert(t, dockerCredentialUpgraded, "dockerCredential not upgraded")
 }
 
 func TestConvergeProjectDescriptorNonExistingDockerCredential(t *testing.T) {
