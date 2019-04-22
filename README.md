@@ -27,7 +27,7 @@ Install
 Usage as docker image
 ---------------------
 
-* You need to mound your descriptor to the directory `/data` in your container.
+* You need to mount your descriptor to the directory `/data` in your container.
 * `cattlectl` is the ENTRYPOINT so that you can use the cattlectl commands directly.
 
 ```bash
