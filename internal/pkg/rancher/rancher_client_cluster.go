@@ -36,9 +36,7 @@ func (client *rancherClient) HasClusterWithName(name string) (bool, string, erro
 
 func (client *rancherClient) SetCluster(clusterName, clusterId string) error {
 	if clusterClient, err := createClusterClient(
-		client.clientConfig.RancherURL,
-		client.clientConfig.AccessKey,
-		client.clientConfig.SecretKey,
+		client.clientConfig,
 		clusterId,
 	); err != nil {
 		return err

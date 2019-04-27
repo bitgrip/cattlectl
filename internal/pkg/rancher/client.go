@@ -81,6 +81,8 @@ type ClientConfig struct {
 	RancherURL string
 	AccessKey  string
 	SecretKey  string
+	Insecure   bool
+	CACerts    string
 }
 
 var (
@@ -90,7 +92,7 @@ var (
 )
 
 func NewClient(clientConfig ClientConfig) (Client, error) {
-	managementClient, err := createManagementClient(clientConfig.RancherURL, clientConfig.AccessKey, clientConfig.SecretKey)
+	managementClient, err := createManagementClient(clientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -163,34 +165,43 @@ func InitProject(projectName string, client Client) error {
 	return fmt.Errorf("Project not found")
 }
 
-func createClientOpts(rancherUrl string, accessKey string, secretKey string) *clientbase.ClientOpts {
-	serverURL := rancherUrl
+func createClientOpts(clientConfig ClientConfig) *clientbase.ClientOpts {
+	serverURL := clientConfig.RancherURL
 
 	if !strings.HasSuffix(serverURL, "/v3") {
 		serverURL = serverURL + "/v3"
 	}
 
+	if clientConfig.Insecure {
+		logrus.WithFields(logrus.Fields{"rancher.url": serverURL}).
+			Warn("Without SSL verification")
+	}
+	if clientConfig.CACerts != "" {
+		logrus.WithFields(logrus.Fields{"rancher.url": serverURL, "rancher.ca_certs": clientConfig.CACerts}).
+			Trace("Whith custom CA")
+	}
+
 	options := &clientbase.ClientOpts{
 		URL:       serverURL,
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-		//TODO: Add CACert support
-		//CACerts:   config.CACerts,
+		AccessKey: clientConfig.AccessKey,
+		SecretKey: clientConfig.SecretKey,
+		Insecure:  clientConfig.Insecure,
+		CACerts:   clientConfig.CACerts,
 	}
 	return options
 }
 
-func createClusterClient(rancherUrl string, accessKey string, secretKey string, clusterId string) (*clusterClient.Client, error) {
+func createClusterClient(clientConfig ClientConfig, clusterId string) (*clusterClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
-		"rancher.url":        rancherUrl,
+		"rancher.url":        clientConfig.RancherURL,
 		"rancher.cluster_id": clusterId,
 	}).Debug("Create Cluster Client")
-	options := createClientOpts(rancherUrl, accessKey, secretKey)
+	options := createClientOpts(clientConfig)
 	options.URL = options.URL + "/cluster/" + clusterId
 	clusterClient, err := newClusterClient(options)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
-			"rancher.url":        rancherUrl,
+			"rancher.url":        clientConfig.RancherURL,
 			"rancher.cluster_id": clusterId,
 		}).Error("Failed to create cluster client")
 		return nil, fmt.Errorf("Failed to create cluster client, %v", err)
@@ -198,35 +209,42 @@ func createClusterClient(rancherUrl string, accessKey string, secretKey string, 
 	return clusterClient, nil
 }
 
-func createManagementClient(rancherUrl string, accessKey string, secretKey string) (*managementClient.Client, error) {
+func createManagementClient(clientConfig ClientConfig) (*managementClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
-		"rancher.url": rancherUrl,
+		"rancher.url": clientConfig.RancherURL,
 	}).Debug("Create Management Client")
-	options := createClientOpts(rancherUrl, accessKey, secretKey)
+	options := createClientOpts(clientConfig)
 	managementClientCache, err := newManagementClient(options)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
-			"rancher.url": rancherUrl,
+			"rancher.url": clientConfig.RancherURL,
 		}).Error("Failed to create management client")
 		return nil, fmt.Errorf("Failed to create management client, %v", err)
+	}
+	if managementClientCache == nil || managementClientCache.APIBaseClient.Ops == nil {
+		logrus.WithFields(logrus.Fields{
+			"rancher.url":      clientConfig.RancherURL,
+			"rancher.ca_certs": clientConfig.CACerts,
+		}).Error("Failed to create management client")
+		return nil, fmt.Errorf("Failed to create management client")
 	}
 
 	return managementClientCache, nil
 }
 
-func createProjectClient(rancherUrl string, accessKey string, secretKey string, clusterId string, projectId string) (*projectClient.Client, error) {
+func createProjectClient(clientConfig ClientConfig, clusterId string, projectId string) (*projectClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
-		"rancher.url":        rancherUrl,
+		"rancher.url":        clientConfig.RancherURL,
 		"rancher.cluster_id": clusterId,
 		"project_id":         projectId,
 	}).Debug("Create Project Client")
-	options := createClientOpts(rancherUrl, accessKey, secretKey)
+	options := createClientOpts(clientConfig)
 	options.URL = options.URL + "/projects/" + projectId
 
 	pc, err := newProjectClient(options)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
-			"rancher.url":        rancherUrl,
+			"rancher.url":        clientConfig.RancherURL,
 			"rancher.cluster_id": clusterId,
 			"project_id":         projectId,
 		}).Error("Failed to create project client")

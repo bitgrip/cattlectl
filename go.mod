@@ -1,6 +1,7 @@
 module github.com/bitgrip/cattlectl
 
 require (
+	github.com/766b/go-outliner v0.0.0-20180511142203-fc6edecdadd7 // indirect
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/cpuguy83/go-md2man v1.0.9-0.20180619205630-691ee98543af // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect

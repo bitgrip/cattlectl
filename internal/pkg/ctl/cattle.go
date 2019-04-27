@@ -203,8 +203,8 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 }
 
 func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) (rancher.Client, error) {
-	if config.RancherUrl() != "" {
-		metadata.RancherURL = config.RancherUrl()
+	if config.RancherURL() != "" {
+		metadata.RancherURL = config.RancherURL()
 	}
 	if config.AccessKey() != "" {
 		metadata.AccessKey = config.AccessKey()
@@ -218,20 +218,22 @@ func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config
 	if config.ClusterName() != "" {
 		metadata.ClusterName = config.ClusterName()
 	}
-	if config.ClusterId() != "" {
-		metadata.ClusterID = config.ClusterId()
+	if config.ClusterID() != "" {
+		metadata.ClusterID = config.ClusterID()
 	}
 
 	return newRancherClient(rancher.ClientConfig{
 		RancherURL: metadata.RancherURL,
 		AccessKey:  metadata.AccessKey,
 		SecretKey:  metadata.SecretKey,
+		Insecure:   config.InsecureAPI(),
+		CACerts:    config.CACerts(),
 	})
 }
 
 func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.Config) (rancher.Client, error) {
-	if config.RancherUrl() != "" {
-		metadata.RancherURL = config.RancherUrl()
+	if config.RancherURL() != "" {
+		metadata.RancherURL = config.RancherURL()
 	}
 	if config.AccessKey() != "" {
 		metadata.AccessKey = config.AccessKey()
@@ -245,13 +247,15 @@ func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.C
 	if config.ClusterName() != "" {
 		metadata.ClusterName = config.ClusterName()
 	}
-	if config.ClusterId() != "" {
-		metadata.ClusterID = config.ClusterId()
+	if config.ClusterID() != "" {
+		metadata.ClusterID = config.ClusterID()
 	}
 
 	return newRancherClient(rancher.ClientConfig{
 		RancherURL: metadata.RancherURL,
 		AccessKey:  metadata.AccessKey,
 		SecretKey:  metadata.SecretKey,
+		Insecure:   config.InsecureAPI(),
+		CACerts:    config.CACerts(),
 	})
 }

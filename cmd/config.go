@@ -20,13 +20,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-var Config = config{}
+var rancherConfig = config{}
 
 type config struct {
 }
 
-func (config) RancherUrl() string {
+func (config) RancherURL() string {
 	return viper.GetString("rancher.url")
+}
+
+func (config) InsecureAPI() bool {
+	return viper.GetBool("rancher.insecure_api")
+}
+
+func (config) CACerts() string {
+	return viper.GetString("rancher.ca_certs")
 }
 
 func (config) AccessKey() string {
@@ -45,6 +53,6 @@ func (config) ClusterName() string {
 	return viper.GetString("rancher.cluster_name")
 }
 
-func (config) ClusterId() string {
+func (config) ClusterID() string {
 	return viper.GetString("rancher.cluster_id")
 }
