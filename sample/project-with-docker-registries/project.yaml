@@ -1,0 +1,27 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+namespaces:
+  - name: {{ .project_name }}-first-namespace
+  - name: {{ .project_name }}-second-namespace
+resources:
+  docker_credentials:
+  - name: 	global-test-registry
+    registries:
+    - name: docker.test1.registry
+      username: {{ .username1 }}
+      password: {{ .password1 }}
+    - name: docker.test2.registry
+      username: {{ .username2 }}
+      password: {{ .password2 }}
+  - name: 	namespaced-test-registry
+    namespace: {{ .project_name }}-first-namespace
+    registries:
+    - name: docker.test1.registry
+      username: {{ .username1 }}
+      password: {{ .password1 }}
+    - name: docker.test2.registry
+      username: {{ .username2 }}
+      password: {{ .password2 }}

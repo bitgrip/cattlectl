@@ -23,28 +23,17 @@ import (
 
 // NewCronJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
 func NewCronJobConverger(cronJobDescriptor projectModel.CronJobDescriptor) descriptor.Converger {
-	return descriptor.DescriptorConverger{
-		InitCluster: func(client rancher.Client) error {
-			return rancher.InitCluster(
-				cronJobDescriptor.Metadata.ClusterID,
-				cronJobDescriptor.Metadata.ClusterName,
-				client,
-			)
-		},
-		InitProject: func(client rancher.Client) error {
-			return rancher.InitProject(
-				cronJobDescriptor.Metadata.ProjectName,
-				client,
-			)
-		},
-		PartConvergers: []descriptor.Converger{
+	return descriptor.ProjectResourceDescriptorConverger(
+		cronJobDescriptor.Metadata.ClusterName,
+		cronJobDescriptor.Metadata.ProjectName,
+		[]descriptor.Converger{
 			newCronJobPartConverger(
 				cronJobDescriptor.Metadata.ProjectName,
 				cronJobDescriptor.Metadata.Namespace,
 				cronJobDescriptor.Spec,
 			),
 		},
-	}
+	)
 }
 
 func newCronJobPartConverger(projectName, namespace string, cronJob projectModel.CronJob) descriptor.Converger {

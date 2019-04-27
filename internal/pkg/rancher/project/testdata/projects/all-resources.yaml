@@ -1,0 +1,44 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: test-project
+  cluster_name: test-cluster
+namespaces:
+- name: test-namespace
+resources:
+  certificates:
+  - name: test-certificate
+    key: test-certificate-key
+    certs: test-certificate-certs
+  config_maps:
+  - name: test-config-map
+    data:
+      key1: value1
+  docker_credentials:
+  - name: test-docker-credential
+    registries:
+    - name: test-registry
+      username: test-username
+      password: test-password
+  secrets:
+  - name: test-secret
+    data:
+      key1: value1
+storage_classes:
+- name: test-storage-class
+  provisioner: test-provisioner
+  reclaimPolicy: Delete
+persistent_volumes:
+- name: test-persistent-volume
+  type: local
+  path: /test/path
+  storage_class_name: test-storage-class
+apps:
+- name: test-app
+  catalog: test-catalog
+  chart: test-chart
+  version: 1.0.0
+  namespace: test-namespace
+  answers:
+    key1: value1

@@ -59,8 +59,24 @@ func NewClientStub(tb testing.TB) rancher.Client {
 			assert.FailInStub(tb, 2, "Unexpected call of HasCertificate")
 			return false, nil
 		},
+		DoUpgradeCertificate: func(certificate projectModel.Certificate) error {
+			assert.FailInStub(tb, 2, "Unexpected call of UpgradeCertificate")
+			return nil
+		},
 		DoCreateCertificate: func(certificate projectModel.Certificate) error {
 			assert.FailInStub(tb, 2, "Unexpected call of CreateCertificate")
+			return nil
+		},
+		DoHasNamespacedCertificate: func(certificate projectModel.Certificate) (bool, error) {
+			assert.FailInStub(tb, 2, "Unexpected call of HasNamespacedCertificate")
+			return false, nil
+		},
+		DoUpgradeNamespacedCertificate: func(certificate projectModel.Certificate) error {
+			assert.FailInStub(tb, 2, "Unexpected call of UpgradeNamespacedCertificate")
+			return nil
+		},
+		DoCreateNamespacedCertificate: func(certificate projectModel.Certificate) error {
+			assert.FailInStub(tb, 2, "Unexpected call of CreateNamespacedCertificate")
 			return nil
 		},
 		DoHasConfigMap: func(configMap projectModel.ConfigMap) (bool, error) {
@@ -71,17 +87,41 @@ func NewClientStub(tb testing.TB) rancher.Client {
 			assert.FailInStub(tb, 2, "Unexpected call of CreateConfigMap")
 			return nil
 		},
+		DoUpgradeConfigMap: func(configMap projectModel.ConfigMap) error {
+			assert.FailInStub(tb, 2, "Unexpected call of CreateConfigMap")
+			return nil
+		},
 		DoHasDockerCredential: func(dockerCredential projectModel.DockerCredential) (bool, error) {
 			assert.FailInStub(tb, 2, "Unexpected call of HasDockerCredential")
 			return false, nil
+		},
+		DoUpgradeDockerCredential: func(dockerCredential projectModel.DockerCredential) error {
+			assert.FailInStub(tb, 2, "Unexpected call of UpgradeDockerCredential")
+			return nil
 		},
 		DoCreateDockerCredential: func(dockerCredential projectModel.DockerCredential) error {
 			assert.FailInStub(tb, 2, "Unexpected call of CreateDockerCredential")
 			return nil
 		},
+		DoHasNamespacedDockerCredential: func(dockerCredential projectModel.DockerCredential) (bool, error) {
+			assert.FailInStub(tb, 2, "Unexpected call of HasNamespacedDockerCredential")
+			return false, nil
+		},
+		DoUpgradeNamespacedDockerCredential: func(dockerCredential projectModel.DockerCredential) error {
+			assert.FailInStub(tb, 2, "Unexpected call of UpgradeNamespacedDockerCredential")
+			return nil
+		},
+		DoCreateNamespacedDockerCredential: func(dockerCredential projectModel.DockerCredential) error {
+			assert.FailInStub(tb, 2, "Unexpected call of CreateNamespacedDockerCredential")
+			return nil
+		},
 		DoHasSecret: func(secret projectModel.ConfigMap) (bool, error) {
 			assert.FailInStub(tb, 2, "Unexpected call of HasSecret")
 			return false, nil
+		},
+		DoUpgradeSecret: func(secret projectModel.ConfigMap) error {
+			assert.FailInStub(tb, 2, "Unexpected call of UpgradeSecret")
+			return nil
 		},
 		DoCreateSecret: func(secret projectModel.ConfigMap) error {
 			assert.FailInStub(tb, 2, "Unexpected call of CreateSecret")
@@ -90,6 +130,10 @@ func NewClientStub(tb testing.TB) rancher.Client {
 		DoHasNamespacedSecret: func(secret projectModel.ConfigMap) (bool, error) {
 			assert.FailInStub(tb, 2, "Unexpected call of HasNamespacedSecret")
 			return false, nil
+		},
+		DoUpgradeNamespacedSecret: func(secret projectModel.ConfigMap) error {
+			assert.FailInStub(tb, 2, "Unexpected call of UpgradeNamespacedSecret")
+			return nil
 		},
 		DoCreateNamespacedSecret: func(secret projectModel.ConfigMap) error {
 			assert.FailInStub(tb, 2, "Unexpected call of CreateNamespacedSecret")
@@ -167,40 +211,51 @@ func NewClientStub(tb testing.TB) rancher.Client {
 }
 
 type ClientStub struct {
-	DoHasClusterWithName     func(name string) (bool, string, error)
-	DoSetCluster             func(clusterName, clusterID string) error
-	DoHasProjectWithName     func(name string) (bool, string, error)
-	DoSetProject             func(projectName, projectID string) error
-	DoCreateProject          func(projectName string) (string, error)
-	DoHasNamespace           func(namespace projectModel.Namespace) (bool, error)
-	DoCreateNamespace        func(namespace projectModel.Namespace) error
-	DoHasCertificate         func(certificate projectModel.Certificate) (bool, error)
-	DoCreateCertificate      func(certificate projectModel.Certificate) error
-	DoHasConfigMap           func(configMap projectModel.ConfigMap) (bool, error)
-	DoCreateConfigMap        func(configMap projectModel.ConfigMap) error
-	DoHasDockerCredential    func(dockerCredential projectModel.DockerCredential) (bool, error)
-	DoCreateDockerCredential func(dockerCredential projectModel.DockerCredential) error
-	DoHasSecret              func(secret projectModel.ConfigMap) (bool, error)
-	DoCreateSecret           func(secret projectModel.ConfigMap) error
-	DoHasNamespacedSecret    func(secret projectModel.ConfigMap) (bool, error)
-	DoCreateNamespacedSecret func(secret projectModel.ConfigMap) error
-	DoHasStorageClass        func(storageClass projectModel.StorageClass) (bool, error)
-	DoCreateStorageClass     func(storageClass projectModel.StorageClass) error
-	DoHasPersistentVolume    func(persistentVolume projectModel.PersistentVolume) (bool, error)
-	DoCreatePersistentVolume func(persistentVolume projectModel.PersistentVolume) error
-	DoHasApp                 func(app projectModel.App) (bool, error)
-	DoUpgradeApp             func(app projectModel.App) error
-	DoCreateApp              func(app projectModel.App) error
-	DoHasJob                 func(namespace string, job projectModel.Job) (bool, error)
-	DoCreateJob              func(namespace string, job projectModel.Job) error
-	DoHasCronJob             func(namespace string, cronJob projectModel.CronJob) (bool, error)
-	DoCreateCronJob          func(namespace string, cronJob projectModel.CronJob) error
-	DoHasDeployment          func(namespace string, deployment projectModel.Deployment) (bool, error)
-	DoCreateDeployment       func(namespace string, deployment projectModel.Deployment) error
-	DoHasDaemonSet           func(namespace string, daemonSet projectModel.DaemonSet) (bool, error)
-	DoCreateDaemonSet        func(namespace string, daemonSet projectModel.DaemonSet) error
-	DoHasStatefulSet         func(namespace string, statefulSet projectModel.StatefulSet) (bool, error)
-	DoCreateStatefulSet      func(namespace string, statefulSet projectModel.StatefulSet) error
+	DoHasClusterWithName                func(name string) (bool, string, error)
+	DoSetCluster                        func(clusterName, clusterID string) error
+	DoHasProjectWithName                func(name string) (bool, string, error)
+	DoSetProject                        func(projectName, projectID string) error
+	DoCreateProject                     func(projectName string) (string, error)
+	DoHasNamespace                      func(namespace projectModel.Namespace) (bool, error)
+	DoCreateNamespace                   func(namespace projectModel.Namespace) error
+	DoHasCertificate                    func(certificate projectModel.Certificate) (bool, error)
+	DoUpgradeCertificate                func(certificate projectModel.Certificate) error
+	DoCreateCertificate                 func(certificate projectModel.Certificate) error
+	DoHasNamespacedCertificate          func(certificate projectModel.Certificate) (bool, error)
+	DoUpgradeNamespacedCertificate      func(certificate projectModel.Certificate) error
+	DoCreateNamespacedCertificate       func(certificate projectModel.Certificate) error
+	DoHasConfigMap                      func(configMap projectModel.ConfigMap) (bool, error)
+	DoUpgradeConfigMap                  func(configMap projectModel.ConfigMap) error
+	DoCreateConfigMap                   func(configMap projectModel.ConfigMap) error
+	DoHasDockerCredential               func(dockerCredential projectModel.DockerCredential) (bool, error)
+	DoUpgradeDockerCredential           func(dockerCredential projectModel.DockerCredential) error
+	DoCreateDockerCredential            func(dockerCredential projectModel.DockerCredential) error
+	DoHasNamespacedDockerCredential     func(dockerCredential projectModel.DockerCredential) (bool, error)
+	DoUpgradeNamespacedDockerCredential func(dockerCredential projectModel.DockerCredential) error
+	DoCreateNamespacedDockerCredential  func(dockerCredential projectModel.DockerCredential) error
+	DoHasSecret                         func(secret projectModel.ConfigMap) (bool, error)
+	DoUpgradeSecret                     func(secret projectModel.ConfigMap) error
+	DoCreateSecret                      func(secret projectModel.ConfigMap) error
+	DoHasNamespacedSecret               func(secret projectModel.ConfigMap) (bool, error)
+	DoUpgradeNamespacedSecret           func(secret projectModel.ConfigMap) error
+	DoCreateNamespacedSecret            func(secret projectModel.ConfigMap) error
+	DoHasStorageClass                   func(storageClass projectModel.StorageClass) (bool, error)
+	DoCreateStorageClass                func(storageClass projectModel.StorageClass) error
+	DoHasPersistentVolume               func(persistentVolume projectModel.PersistentVolume) (bool, error)
+	DoCreatePersistentVolume            func(persistentVolume projectModel.PersistentVolume) error
+	DoHasApp                            func(app projectModel.App) (bool, error)
+	DoUpgradeApp                        func(app projectModel.App) error
+	DoCreateApp                         func(app projectModel.App) error
+	DoHasJob                            func(namespace string, job projectModel.Job) (bool, error)
+	DoCreateJob                         func(namespace string, job projectModel.Job) error
+	DoHasCronJob                        func(namespace string, cronJob projectModel.CronJob) (bool, error)
+	DoCreateCronJob                     func(namespace string, cronJob projectModel.CronJob) error
+	DoHasDeployment                     func(namespace string, deployment projectModel.Deployment) (bool, error)
+	DoCreateDeployment                  func(namespace string, deployment projectModel.Deployment) error
+	DoHasDaemonSet                      func(namespace string, daemonSet projectModel.DaemonSet) (bool, error)
+	DoCreateDaemonSet                   func(namespace string, daemonSet projectModel.DaemonSet) error
+	DoHasStatefulSet                    func(namespace string, statefulSet projectModel.StatefulSet) (bool, error)
+	DoCreateStatefulSet                 func(namespace string, statefulSet projectModel.StatefulSet) error
 }
 
 func (stub ClientStub) HasClusterWithName(name string) (bool, string, error) {
@@ -227,11 +282,26 @@ func (stub ClientStub) CreateNamespace(namespace projectModel.Namespace) error {
 func (stub ClientStub) HasCertificate(certificate projectModel.Certificate) (bool, error) {
 	return stub.DoHasCertificate(certificate)
 }
+func (stub ClientStub) UpgradeCertificate(certificate projectModel.Certificate) error {
+	return stub.DoUpgradeCertificate(certificate)
+}
 func (stub ClientStub) CreateCertificate(certificate projectModel.Certificate) error {
 	return stub.DoCreateCertificate(certificate)
 }
+func (stub ClientStub) HasNamespacedCertificate(certificate projectModel.Certificate) (bool, error) {
+	return stub.DoHasNamespacedCertificate(certificate)
+}
+func (stub ClientStub) UpgradeNamespacedCertificate(certificate projectModel.Certificate) error {
+	return stub.DoUpgradeNamespacedCertificate(certificate)
+}
+func (stub ClientStub) CreateNamespacedCertificate(certificate projectModel.Certificate) error {
+	return stub.DoCreateNamespacedCertificate(certificate)
+}
 func (stub ClientStub) HasConfigMap(configMap projectModel.ConfigMap) (bool, error) {
 	return stub.DoHasConfigMap(configMap)
+}
+func (stub ClientStub) UpgradeConfigMap(configMap projectModel.ConfigMap) error {
+	return stub.DoUpgradeConfigMap(configMap)
 }
 func (stub ClientStub) CreateConfigMap(configMap projectModel.ConfigMap) error {
 	return stub.DoCreateConfigMap(configMap)
@@ -239,17 +309,35 @@ func (stub ClientStub) CreateConfigMap(configMap projectModel.ConfigMap) error {
 func (stub ClientStub) HasDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error) {
 	return stub.DoHasDockerCredential(dockerCredential)
 }
+func (stub ClientStub) UpgradeDockerCredential(dockerCredential projectModel.DockerCredential) error {
+	return stub.DoUpgradeDockerCredential(dockerCredential)
+}
 func (stub ClientStub) CreateDockerCredential(dockerCredential projectModel.DockerCredential) error {
 	return stub.DoCreateDockerCredential(dockerCredential)
 }
+func (stub ClientStub) HasNamespacedDockerCredential(dockerCredential projectModel.DockerCredential) (bool, error) {
+	return stub.DoHasNamespacedDockerCredential(dockerCredential)
+}
+func (stub ClientStub) UpgradeNamespacedDockerCredential(dockerCredential projectModel.DockerCredential) error {
+	return stub.DoUpgradeNamespacedDockerCredential(dockerCredential)
+}
+func (stub ClientStub) CreateNamespacedDockerCredential(dockerCredential projectModel.DockerCredential) error {
+	return stub.DoCreateNamespacedDockerCredential(dockerCredential)
+}
 func (stub ClientStub) HasSecret(secret projectModel.ConfigMap) (bool, error) {
 	return stub.DoHasSecret(secret)
+}
+func (stub ClientStub) UpgradeSecret(secret projectModel.ConfigMap) error {
+	return stub.DoUpgradeSecret(secret)
 }
 func (stub ClientStub) CreateSecret(secret projectModel.ConfigMap) error {
 	return stub.DoCreateSecret(secret)
 }
 func (stub ClientStub) HasNamespacedSecret(secret projectModel.ConfigMap) (bool, error) {
 	return stub.DoHasNamespacedSecret(secret)
+}
+func (stub ClientStub) UpgradeNamespacedSecret(secret projectModel.ConfigMap) error {
+	return stub.DoUpgradeNamespacedSecret(secret)
 }
 func (stub ClientStub) CreateNamespacedSecret(secret projectModel.ConfigMap) error {
 	return stub.DoCreateNamespacedSecret(secret)
