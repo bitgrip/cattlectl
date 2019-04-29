@@ -16,7 +16,6 @@ package rancher
 
 import (
 	"fmt"
-	"reflect"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
@@ -24,7 +23,7 @@ import (
 )
 
 func (client *rancherClient) HasConfigMap(configMap projectModel.ConfigMap) (bool, error) {
-	if _, exists := client.configMapCache[configMap.Name]; exists {
+	if _, exists := client.configMapCache[configMap.Namespace+"/"+configMap.Name]; exists {
 		return true, nil
 	}
 	namespaceID, err := client.getNamespaceID(configMap.Namespace)
@@ -45,7 +44,7 @@ func (client *rancherClient) HasConfigMap(configMap projectModel.ConfigMap) (boo
 	for _, item := range collection.Data {
 		if item.Name == configMap.Name {
 			client.logger.WithField("config_map_name", configMap.Name).WithField("namespace", configMap.Namespace).Debug("ConfigMap found")
-			client.configMapCache[configMap.Name] = item
+			client.configMapCache[configMap.Namespace+"/"+configMap.Name] = item
 			return true, nil
 		}
 	}
@@ -56,7 +55,7 @@ func (client *rancherClient) HasConfigMap(configMap projectModel.ConfigMap) (boo
 func (client *rancherClient) UpgradeConfigMap(configMap projectModel.ConfigMap) error {
 	namespaceID, err := client.getNamespaceID(configMap.Namespace)
 	var existingConfigMap projectClient.ConfigMap
-	if item, exists := client.configMapCache[configMap.Name]; exists {
+	if item, exists := client.configMapCache[configMap.Namespace+"/"+configMap.Name]; exists {
 		client.logger.WithField("config_map_name", configMap.Name).WithField("namespace", configMap.Namespace).Trace("Use Cache")
 		existingConfigMap = item
 	} else {
@@ -77,12 +76,13 @@ func (client *rancherClient) UpgradeConfigMap(configMap projectModel.ConfigMap) 
 		}
 		existingConfigMap = collection.Data[0]
 	}
-	if reflect.DeepEqual(existingConfigMap.Data, configMap.Data) {
+	if isConfigMapUnchanged(existingConfigMap, configMap) {
 		client.logger.WithField("config_map_name", configMap.Name).WithField("namespace", configMap.Namespace).Debug("Skip upgrade ConfigMap - no changes")
 		return nil
 	}
 	client.logger.WithField("config_map_name", configMap.Name).WithField("namespace", configMap.Namespace).Info("Upgrade ConfigMap")
 	existingConfigMap.Data = configMap.Data
+	existingConfigMap.Labels["cattlectl.io/hash"] = hashOf(configMap)
 
 	_, err = client.projectClient.ConfigMap.Replace(&existingConfigMap)
 	return err
@@ -94,8 +94,11 @@ func (client *rancherClient) CreateConfigMap(configMap projectModel.ConfigMap) e
 		return fmt.Errorf("Failed to read namespace ID, %v", err)
 	}
 	client.logger.WithField("config_map_name", configMap.Name).Info("Create new ConfigMap")
+	labels := make(map[string]string)
+	labels["cattlectl.io/hash"] = hashOf(configMap)
 	newConfigMap := &projectClient.ConfigMap{
 		Name:        configMap.Name,
+		Labels:      labels,
 		Data:        configMap.Data,
 		NamespaceId: namespaceID,
 		ProjectID:   client.projectId,
@@ -103,4 +106,12 @@ func (client *rancherClient) CreateConfigMap(configMap projectModel.ConfigMap) e
 
 	_, err = client.projectClient.ConfigMap.Create(newConfigMap)
 	return err
+}
+
+func isConfigMapUnchanged(existingConfigMap projectClient.ConfigMap, configMap projectModel.ConfigMap) bool {
+	hash, hashExists := existingConfigMap.Labels["cattlectl.io/hash"]
+	if !hashExists {
+		return false
+	}
+	return hash == hashOf(configMap)
 }

@@ -27,12 +27,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// NewParser creates a Parser that is not printing prettified representations
+// NewProjectParser creates a Parser that is not printing prettified representations
 func NewProjectParser(projectFile string, values map[string]interface{}) descriptor.Parser {
 	return newProjectParser(projectFile, values, false, []string{})
 }
 
-// NewPrettyParser creates a Parser that is printing prettified representations
+// NewPrettyProjectParser creates a Parser that is printing prettified representations
 func NewPrettyProjectParser(projectFile string, values map[string]interface{}) descriptor.Parser {
 	return newProjectParser(projectFile, values, true, []string{})
 }

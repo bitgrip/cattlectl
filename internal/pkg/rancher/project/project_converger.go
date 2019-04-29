@@ -197,7 +197,7 @@ func newPersistentVolumePartConverger(persistentVolume projectModel.PersistentVo
 		UpdatePart: func(client rancher.Client) error {
 			logrus.WithFields(logrus.Fields{
 				"persistent_volume": persistentVolume.Name,
-			}).Warn("Skip change existing persistent volume")
+			}).Debug("Skip change existing persistent volume")
 			return nil
 		},
 		CreatePart: func(client rancher.Client) error {
@@ -228,7 +228,7 @@ func newStorageClassPartConverger(storageClass projectModel.StorageClass) descri
 		UpdatePart: func(client rancher.Client) error {
 			logrus.WithFields(logrus.Fields{
 				"storage_class": storageClass.Name,
-			}).Warn("Skip change existing storage class")
+			}).Debug("Skip change existing storage class")
 			return nil
 		},
 		CreatePart: func(client rancher.Client) error {

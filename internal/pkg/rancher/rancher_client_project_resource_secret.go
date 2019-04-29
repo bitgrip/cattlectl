@@ -94,7 +94,7 @@ func (client *rancherClient) CreateSecret(secret projectModel.ConfigMap) error {
 }
 
 func (client *rancherClient) HasNamespacedSecret(secret projectModel.ConfigMap) (bool, error) {
-	if _, exists := client.namespacedSecretCache[secret.Name]; exists {
+	if _, exists := client.namespacedSecretCache[secret.Namespace+"/"+secret.Name]; exists {
 		return true, nil
 	}
 	namespaceID, err := client.getNamespaceID(secret.Namespace)
@@ -115,7 +115,7 @@ func (client *rancherClient) HasNamespacedSecret(secret projectModel.ConfigMap) 
 	for _, item := range collection.Data {
 		if item.Name == secret.Name {
 			client.logger.WithField("secret_name", secret.Name).WithField("namespace", secret.Namespace).Debug("Secret found")
-			client.namespacedSecretCache[secret.Name] = item
+			client.namespacedSecretCache[secret.Namespace+"/"+secret.Name] = item
 			return true, nil
 		}
 	}
@@ -125,7 +125,7 @@ func (client *rancherClient) HasNamespacedSecret(secret projectModel.ConfigMap) 
 
 func (client *rancherClient) UpgradeNamespacedSecret(secret projectModel.ConfigMap) error {
 	var existingSecret projectClient.NamespacedSecret
-	if item, exists := client.namespacedSecretCache[secret.Name]; exists {
+	if item, exists := client.namespacedSecretCache[secret.Namespace+"/"+secret.Name]; exists {
 		client.logger.WithField("secret_name", secret.Name).WithField("namespace", secret.Namespace).Trace("Use Cache")
 		existingSecret = item
 	} else {
