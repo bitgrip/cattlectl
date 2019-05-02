@@ -39,6 +39,17 @@ rancher:
   cluster_id: <your cluster-id>
 ```
 
+* If you need to use self signed certificates you can also add the correct root ca to `.cattlectl.yaml`.
+  * You can use the `--insecure-api` to skip certificate validation
+
+```yaml
+---
+rancher:
+  ...
+  ca_certs: |
+    <your ca certs>
+```
+
 * In your current directory store a file `project.yaml` with the example content:
 
 ```yaml

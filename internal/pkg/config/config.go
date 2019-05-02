@@ -14,11 +14,14 @@
 
 package config
 
+// Config provides rancher access informations
 type Config interface {
-	RancherUrl() string
+	RancherURL() string
+	InsecureAPI() bool
+	CACerts() string
 	AccessKey() string
 	SecretKey() string
 	TokenKey() string
 	ClusterName() string
-	ClusterId() string
+	ClusterID() string
 }

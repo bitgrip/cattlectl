@@ -17,6 +17,7 @@ package stubs
 import (
 	"testing"
 
+	"github.com/rancher/norman/clientbase"
 	clusterClient "github.com/rancher/types/client/cluster/v3"
 	managementClient "github.com/rancher/types/client/management/v3"
 	projectClient "github.com/rancher/types/client/project/v3"
@@ -25,9 +26,13 @@ import (
 // CreateBackendStubs builds a set of testClients
 func CreateBackendStubs(tb testing.TB) *BackendStubs {
 	testClients := &BackendStubs{
-		ClusterClient:    &clusterClient.Client{},
-		ManagementClient: &managementClient.Client{},
-		ProjectClient:    &projectClient.Client{},
+		ClusterClient: &clusterClient.Client{},
+		ManagementClient: &managementClient.Client{
+			APIBaseClient: clientbase.APIBaseClient{
+				Ops: &clientbase.APIOperations{},
+			},
+		},
+		ProjectClient: &projectClient.Client{},
 	}
 	testClients.ClusterClient.Namespace = CreateNamespaceOperationsStub(tb)
 	testClients.ClusterClient.StorageClass = CreateStorageClassOperationsStub(tb)

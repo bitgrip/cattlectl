@@ -38,9 +38,7 @@ func (client *rancherClient) HasProjectWithName(name string) (bool, string, erro
 
 func (client *rancherClient) SetProject(projectName, projectId string) error {
 	if projectClient, err := createProjectClient(
-		client.clientConfig.RancherURL,
-		client.clientConfig.AccessKey,
-		client.clientConfig.SecretKey,
+		client.clientConfig,
 		client.clusterId,
 		projectId,
 	); err != nil {

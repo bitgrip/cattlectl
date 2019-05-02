@@ -61,12 +61,18 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&LogLevel, "verbosity", "v", 0, "verbosity level to use")
 	rootCmd.PersistentFlags().BoolVar(&logJson, "log-json", false, "if to log using json format")
 	rootCmd.PersistentFlags().String("rancher-url", "", "The URL to reach the rancher")
+	rootCmd.PersistentFlags().Bool("insecure-api", false, "If Rancher uses a self signed certificate")
 	rootCmd.PersistentFlags().String("access-key", "", "The access key to access rancher with")
 	rootCmd.PersistentFlags().String("secret-key", "", "The secret key to access rancher with")
 	rootCmd.PersistentFlags().String("cluster-name", "", "The name of the cluster the project is part of")
 	rootCmd.PersistentFlags().String("cluster-id", "", "The ID of the cluster the project is part of")
 	viper.BindPFlag("rancher.url", rootCmd.PersistentFlags().Lookup("rancher-url"))
 	viper.BindEnv("rancher.url", "RANCHER_URL")
+
+	viper.BindPFlag("rancher.insecure_api", rootCmd.PersistentFlags().Lookup("insecure-api"))
+	viper.BindEnv("rancher.insecure_api", "RANCHER_INSECURE_API")
+
+	viper.BindEnv("rancher.ca_certs", "RANCHER_CA_CERTS")
 
 	viper.BindPFlag("rancher.access_key", rootCmd.PersistentFlags().Lookup("access-key"))
 	viper.BindEnv("rancher.access_key", "RANCHER_ACCESS_KEY")
@@ -80,8 +86,8 @@ func init() {
 	viper.BindPFlag("rancher.cluster_name", rootCmd.PersistentFlags().Lookup("cluster-name"))
 	viper.BindEnv("rancher.cluster_name", "RANCHER_CLUSTER_NAME")
 
-	rootCmd.AddCommand(apply.BaseCommand(Config, initSubCommand))
-	rootCmd.AddCommand(show.BaseCommand(Config, initSubCommand))
+	rootCmd.AddCommand(apply.BaseCommand(rancherConfig, initSubCommand))
+	rootCmd.AddCommand(show.BaseCommand(rancherConfig, initSubCommand))
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(genDocCmd)
 }

@@ -78,8 +78,8 @@ func TestHasProject_ProjectExisting(t *testing.T) {
 	projectName := "test-project-name"
 	clientConfig := ClientConfig{}
 	client, err := NewClient(clientConfig)
-	client.(*rancherClient).clusterId = "test-cluster-id"
 	assert.Ok(t, err)
+	client.(*rancherClient).clusterId = "test-cluster-id"
 
 	//Act
 	result, foundProjectId, err := client.HasProjectWithName(projectName)
@@ -139,8 +139,8 @@ func TestHasProject_ProjectNotExisting(t *testing.T) {
 	projectName := "test-project-name"
 	clientConfig := ClientConfig{}
 	client, err := NewClient(clientConfig)
-	client.(*rancherClient).clusterId = "test-cluster-id"
 	assert.Ok(t, err)
+	client.(*rancherClient).clusterId = "test-cluster-id"
 
 	//Act
 	result, foundProjectId, err := client.HasProjectWithName(projectName)
@@ -200,8 +200,8 @@ func TestCreateProject(t *testing.T) {
 	}
 	testClients.ManagementClient.Project = projectOperationsStub
 	client, err := NewClient(clientConfig)
-	client.(*rancherClient).clusterId = "test-cluster-id"
 	assert.Ok(t, err)
+	client.(*rancherClient).clusterId = "test-cluster-id"
 
 	//Act
 	createdProjectId, err := client.CreateProject(projectName)
