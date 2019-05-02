@@ -20,6 +20,7 @@ deployement, if you run cattlectl twice.
       --cluster-name string   The name of the cluster the project is part of
       --config string         config file (default is $HOME/.cattlectl.yaml)
   -h, --help                  help for cattlectl
+      --insecure-api          If Rancher uses a self signed certificate
       --log-json              if to log using json format
       --rancher-url string    The URL to reach the rancher
       --secret-key string     The secret key to access rancher with
