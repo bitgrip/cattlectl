@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+* [#15](https://github.com/bitgrip/cattlectl/issues/15) `--values` can be used multiple times.
+  * all values files are merged
+  * later flags have higher precedence
+
 ### Removed
 
 ### Fixed
