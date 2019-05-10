@@ -30,6 +30,7 @@ deployement, if you run cattlectl twice.
 ### SEE ALSO
 
 * [cattlectl apply](cattlectl_apply.md)	 - Apply a project descriptor to your rancher
+* [cattlectl completion](cattlectl_completion.md)	 - Generates bash completion scripts
 * [cattlectl gen-doc](cattlectl_gen-doc.md)	 - genrates the markdown documentation
 * [cattlectl show](cattlectl_show.md)	 - Show the resulting project descriptor
 * [cattlectl version](cattlectl_version.md)	 - version of cattlectl

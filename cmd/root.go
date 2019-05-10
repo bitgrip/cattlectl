@@ -90,6 +90,7 @@ func init() {
 	rootCmd.AddCommand(show.BaseCommand(rancherConfig, initSubCommand))
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(genDocCmd)
+	rootCmd.AddCommand(completionCmd)
 }
 
 func initSubCommand() {
