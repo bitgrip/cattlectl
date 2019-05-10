@@ -15,9 +15,9 @@ cattlectl show [flags]
 ### Options
 
 ```
-  -f, --file string     project file to show (default "project.yaml")
-  -h, --help            help for show
-      --values string   values file to show (default "values.yaml")
+  -f, --file string      project file to show (default "project.yaml")
+  -h, --help             help for show
+      --values strings   values file(s) to show (default [values.yaml])
 ```
 
 ### Options inherited from parent commands

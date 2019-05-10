@@ -15,28 +15,51 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
 )
 
+var osFs = afero.NewOsFs()
+
 // LoadValues is reading values from a optional values file (YAML formated)
 //
 // The values are merged with corresponding environment variables.
-func LoadValues(valuesFile string) (map[string]interface{}, error) {
-	if err := verifyValuesFile(valuesFile); err != nil {
-		return nil, err
-	}
+func LoadValues(valuesFiles ...string) (map[string]interface{}, error) {
 	valuesConfig := viper.New()
-	valuesConfig.SetConfigFile(valuesFile)
+	valuesConfig.SetConfigType("yaml")
+	for _, valuesFile := range valuesFiles {
+		var absValuesFile string
+		var file []byte
+		var err error
+		if absValuesFile, err = filepath.Abs(valuesFile); err != nil {
+			return nil, err
+		}
+		logger := logrus.WithField("values-file", absValuesFile)
+		if fileExists, _ := afero.Exists(osFs, absValuesFile); !fileExists {
+			logger.Debug("values dose not exists")
+			continue
+		}
+		if err := verifyValuesFile(absValuesFile); err != nil {
+			return nil, err
+		}
+		if file, err = afero.ReadFile(osFs, absValuesFile); err != nil {
+			return nil, err
+		}
+		logger.Debug("load values")
+		valuesConfig.MergeConfig(bytes.NewReader(file))
+	}
 	valuesConfig.AutomaticEnv()
 	valuesConfig.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	valuesConfig.ReadInConfig()
 	for _, name := range viper.GetStringSlice("env_value_keys") {
 		valuesConfig.BindEnv(name)
 	}

@@ -36,7 +36,7 @@ var (
 		Run:   show,
 	}
 	showFile    string
-	valuesFile  string
+	valuesFiles []string
 	rootConfig  config.Config
 	initCommand func()
 )
@@ -52,7 +52,7 @@ func BaseCommand(config config.Config, init func()) *cobra.Command {
 
 func show(cmd *cobra.Command, args []string) {
 	initCommand()
-	values, err := utils.LoadValues(valuesFile)
+	values, err := utils.LoadValues(valuesFiles...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,5 +74,5 @@ func show(cmd *cobra.Command, args []string) {
 
 func init() {
 	showCmd.Flags().StringVarP(&showFile, "file", "f", "project.yaml", "project file to show")
-	showCmd.Flags().StringVar(&valuesFile, "values", "values.yaml", "values file to show")
+	showCmd.Flags().StringSliceVar(&valuesFiles, "values", []string{"values.yaml"}, "values file(s) to show")
 }

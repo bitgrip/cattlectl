@@ -1,0 +1,11 @@
+key1: value1
+key2: value2
+key_with_underliner: value2 from key with underliner
+storage_class:
+  azure:
+    provisioner: kubernetes.io/azure-disk
+    volume_binding_mode: Immediate
+    parameters:
+      cachingmode: None
+      kind: Managed
+      storageaccounttype: Premium_LRS

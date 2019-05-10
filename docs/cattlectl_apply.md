@@ -24,9 +24,9 @@ cattlectl apply [flags]
 ### Options
 
 ```
-  -f, --file string     project file to apply (default "project.yaml")
-  -h, --help            help for apply
-      --values string   values file to apply (default "values.yaml")
+  -f, --file string      project file to apply (default "project.yaml")
+  -h, --help             help for apply
+      --values strings   values file(s) to apply (default [values.yaml])
 ```
 
 ### Options inherited from parent commands

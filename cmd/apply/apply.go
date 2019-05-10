@@ -35,7 +35,7 @@ var (
 		Run:   apply,
 	}
 	applyFile   string
-	valuesFile  string
+	valuesFiles []string
 	rootConfig  config.Config
 	initCommand = func() {}
 )
@@ -55,7 +55,7 @@ func BaseCommand(config config.Config, init func()) *cobra.Command {
 
 func apply(cmd *cobra.Command, args []string) {
 	initCommand()
-	values, err := utils.LoadValues(valuesFile)
+	values, err := utils.LoadValues(valuesFiles...)
 	if err != nil {
 		logrus.WithField("apply_file", applyFile).
 			Fatal(err)
@@ -82,5 +82,5 @@ func apply(cmd *cobra.Command, args []string) {
 
 func init() {
 	applyCmd.Flags().StringVarP(&applyFile, "file", "f", "project.yaml", "project file to apply")
-	applyCmd.Flags().StringVar(&valuesFile, "values", "values.yaml", "values file to apply")
+	applyCmd.Flags().StringSliceVar(&valuesFiles, "values", []string{"values.yaml"}, "values file(s) to apply")
 }
