@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 
 * [#26](https://github.com/bitgrip/cattlectl/issues/26) bash completion
 * [#28](https://github.com/bitgrip/cattlectl/issues/28) multi file includes
-  * folder includes
-  * wildcard includes
+  * directory includes
+  * pattern includes
 
 ### Changed
 

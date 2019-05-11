@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
@@ -85,6 +86,7 @@ func (parser fileParser) Parse(projectData []byte, target interface{}) error {
 		if err != nil {
 			return err
 		}
+		sort.Strings(includeFiles)
 		for _, includeFile := range includeFiles {
 			if err := parser.include(targetProject, includeFile, allProjectFiles); err != nil {
 				return err
