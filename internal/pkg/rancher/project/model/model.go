@@ -70,7 +70,9 @@ type ProjectMetadata struct {
 
 // Include is used to merge multiple descriptors into one
 type Include struct {
-	File string `yaml:"file"`
+	File      string `yaml:"file,omitempty"`
+	Files     string `yaml:"files,omitempty"`
+	Directory string `yaml:"directory,omitempty"`
 }
 
 // Namespace is a subsection of a Project and is represented in K8S as namespace
