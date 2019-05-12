@@ -16,6 +16,7 @@ package project
 
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,5 +25,5 @@ func NewJobParser(descriptorFile string, values map[string]interface{}) descript
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return descriptor.NewLogginParser(descriptorFile, logger, values)
+	return descriptor.NewLogginParser(projectModel.JobKind, logger, values)
 }

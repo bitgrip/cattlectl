@@ -14,6 +14,15 @@
 
 package model
 
+const (
+	ProjectKind     = "Project"
+	JobKind         = "Job"
+	CronJobKind     = "CronJob"
+	DeploymentKind  = "Deployment"
+	DaemonSetKind   = "DaemonSet"
+	StatefulSetKind = "StatefulSet"
+)
+
 // Cluster is WIP
 type Cluster struct {
 	APIVersion        string `yaml:"api_version"`

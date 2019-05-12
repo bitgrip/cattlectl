@@ -116,7 +116,10 @@ func isDescriptor(data []byte, kind string, logger *logrus.Entry) (bool, error) 
 		return false, err
 	}
 	if structure["kind"] != kind {
-		logger.WithField("kind", structure["kind"]).Error("Invalid descriptor")
+		logger.
+			WithField("expected-kind", kind).
+			WithField("actual-kind", structure["kind"]).
+			Error("Invalid descriptor")
 		return false, fmt.Errorf("Invalid descriptor: %v", structure["kind"])
 	}
 

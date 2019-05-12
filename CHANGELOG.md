@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+* [#30](https://github.com/bitgrip/cattlectl/issues/30) Fix apply of workload.
+
 ## [1.1.0]
 
 ### Added
