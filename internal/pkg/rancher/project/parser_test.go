@@ -96,6 +96,8 @@ func TestWithGoldenFile(t *testing.T) {
 	tests := []string{
 		"simple-include",
 		"cycle-include",
+		"files-include",
+		"directory-include",
 	}
 	for _, test := range tests {
 		runTestWithGoldenFile(t, test)

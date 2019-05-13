@@ -36,9 +36,11 @@ ProjectDescriptor Structur:
 
 #### include
 
-| Field    | Description                                |
-|----------|--------------------------------------------|
-| __file__ | The file (relative of absolute) to include |
+| Field         | Description                                                           |
+|---------------|-----------------------------------------------------------------------|
+| __file__      | The file (relative of absolute) to include                            |
+| __files__     | The files pattern (relative of absolute) to include all matching files|
+| __directory__ | The directory (relative of absolute) to include all YAML files from   |
 
 #### namespaces
 

@@ -1,0 +1,161 @@
+api_version: v1.0
+kind: Project
+metadata:
+  name: include-parent
+  includes:
+  - files: child.*.yaml
+namespaces:
+- name: parent-namespace
+- name: child1-namespace
+- name: child2-namespace
+resources:
+  certificates:
+  - name: parent-cert
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+  - name: child1-cert
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+    namespace: child1-namespace
+  - name: child2-cert
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+    namespace: child2-namespace
+  config_maps:
+  - name: parent-config-map
+    data:
+      abc: def
+      bca: fed
+  - name: child1-config-map
+    data:
+      abc: def
+      bca: fed
+  - name: child2-config-map
+    data:
+      abc: def
+      bca: fed
+  docker_credentials:
+  - name: parent-registry
+    registries:
+    - name: parent.private.registry
+      password: parent-docker-registry-password
+      username: parent-docker-registry-user
+  - name: child1-registry
+    registries:
+    - name: child1.private.registry
+      password: child1-docker-registry-password
+      username: child1-docker-registry-user
+  - name: child2-registry
+    registries:
+    - name: child2.private.registry
+      password: child2-docker-registry-password
+      username: child2-docker-registry-user
+  secrets:
+  - name: parent-secret
+    data:
+      abc: def
+      bca: fed
+  - name: child1-secret
+    data:
+      abc: def
+      bca: fed
+  - name: child2-secret
+    data:
+      abc: def
+      bca: fed
+storage_classes:
+- name: parent-storage-classe
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+- name: child1-storage-classe
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+- name: child2-storage-classe
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+persistent_volumes:
+- name: parent-persistent-volume
+  type: ""
+  path: ""
+  node: ""
+  storage_class_name: parent-storage-classe
+  access_modes: []
+  capacity: ""
+  init_script: ""
+- name: child1-persistent-volume
+  type: ""
+  path: ""
+  node: ""
+  storage_class_name: child1-storage-classe
+  access_modes: []
+  capacity: ""
+  init_script: ""
+- name: child2-persistent-volume
+  type: ""
+  path: ""
+  node: ""
+  storage_class_name: child2-storage-classe
+  access_modes: []
+  capacity: ""
+  init_script: ""
+apps:
+- name: parent-app
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: parent-namespace
+  answers:
+    ingress.enabled: "false"
+- name: child1-app
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: parent-namespace
+  answers:
+    ingress.enabled: "false"
+- name: child2-app
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: parent-namespace
+  answers:
+    ingress.enabled: "false"

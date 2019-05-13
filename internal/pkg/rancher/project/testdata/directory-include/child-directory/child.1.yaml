@@ -1,0 +1,56 @@
+api_version: v1.0
+kind: Project
+metadata:
+  name: include-child1
+namespaces:
+- name: child1-namespace
+resources:
+  certificates:
+  - name: child1-cert
+    key: |
+      -----BEGIN PRIVATE KEY-----
+        ...
+        ...
+      -----END PRIVATE KEY-----
+    certs: |
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+        ...
+        ...
+      -----END CERTIFICATE-----
+    namespace: child1-namespace
+  config_maps:
+  - name: child1-config-map
+    data:
+      abc: def
+      bca: fed
+  docker_credentials:
+  - name: child1-registry
+    registries:
+    - name: child1.private.registry
+      password: child1-docker-registry-password
+      username: child1-docker-registry-user
+  secrets:
+  - name: child1-secret
+    data:
+      abc: def
+      bca: fed
+storage_classes:
+- name: child1-storage-classe
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer
+persistent_volumes:
+  - name: child1-persistent-volume
+    storage_class_name: child1-storage-classe
+apps:
+- name: child1-app
+  catalog: library
+  chart: wordpress
+  version: 2.1.10
+  namespace: parent-namespace
+  answers:
+    ingress.enabled: "false"

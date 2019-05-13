@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+* [#26](https://github.com/bitgrip/cattlectl/issues/26) bash completion
+* [#28](https://github.com/bitgrip/cattlectl/issues/28) multi file includes
+  * directory includes
+  * pattern includes
+
 ### Changed
 
 * [#15](https://github.com/bitgrip/cattlectl/issues/15) `--values` can be used multiple times.
