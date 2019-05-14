@@ -19,6 +19,13 @@ type ResourceClient interface {
 	Upgrade() error
 }
 
+// NamespacedResourceClient is a client to any Rancher resource belonging to a namespace
+type NamespacedResourceClient interface {
+	ResourceClient
+	NamespaceID() (string, error)
+	Namespace() (string, error)
+}
+
 // ClusterClient interacts with a Rancher cluster resource
 type ClusterClient interface {
 	ResourceClient
@@ -86,63 +93,63 @@ type PersistentVolumeClient interface {
 
 // CertificateClient interacts with a Rancher certificate resource
 type CertificateClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.Certificate, error)
 	SetData(persistentVolume projectModel.Certificate) error
 }
 
 // ConfigMapClient interacts with a Rancher config map or secret resource
 type ConfigMapClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.ConfigMap, error)
 	SetData(configMap projectModel.ConfigMap) error
 }
 
 // DockerCredentialClient interacts with a Rancher docker credential resource
 type DockerCredentialClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.DockerCredential, error)
 	SetData(dockerCredential projectModel.DockerCredential) error
 }
 
 // AppClient interacts with a Rancher app resource
 type AppClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.App, error)
 	SetData(app projectModel.App) error
 }
 
 // JobClient interacts with a Rancher job resource
 type JobClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.Job, error)
 	SetData(job projectModel.Job) error
 }
 
 // CronJobClient interacts with a Rancher cron job resource
 type CronJobClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.CronJob, error)
 	SetData(job projectModel.CronJob) error
 }
 
 // DeploymentClient interacts with a Rancher deployment resource
 type DeploymentClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.Deployment, error)
 	SetData(deployment projectModel.Deployment) error
 }
 
 // DaemonSetClient interacts with a Rancher daemon set resource
 type DaemonSetClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.DaemonSet, error)
 	SetData(daemonSet projectModel.DaemonSet) error
 }
 
 // StatefulSetClient interacts with a Rancher stateful set resource
 type StatefulSetClient interface {
-	ResourceClient
+	NamespacedResourceClient
 	Data() (projectModel.StatefulSet, error)
 	SetData(statefulSet projectModel.StatefulSet) error
 }

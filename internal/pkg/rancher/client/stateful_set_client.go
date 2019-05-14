@@ -16,40 +16,30 @@ func newStatefulSetClient(
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	return &statefulSetClient{
-		resourceClient: resourceClient{
-			name:   name,
-			logger: logger.WithField("statefulSet_name", name).WithField("namespace", namespace),
+		namespacedResourceClient: namespacedResourceClient{
+			resourceClient: resourceClient{
+				name:   name,
+				logger: logger.WithField("statefulSet_name", name).WithField("namespace", namespace),
+			},
+			namespace: namespace,
+			project:   project,
 		},
-		namespace:     namespace,
-		project:       project,
 		backendClient: backendClient,
 	}, nil
 }
 
 type statefulSetClient struct {
-	resourceClient
-	namespace     string
-	namespaceID   string
+	namespacedResourceClient
 	statefulSet   projectModel.StatefulSet
-	project       ProjectClient
 	backendClient *projectClient.Client
 }
 
 func (client *statefulSetClient) init() error {
-	if client.namespaceID != "" {
-		return nil
+	namespaceID, err := client.NamespaceID()
+	if namespaceID == "" && err == nil {
+		return fmt.Errorf("Can not find namespace")
 	}
-	var namespace NamespaceClient
-	var err error
-	if namespace, err = client.project.Namespace(client.namespace); err != nil {
-		client.logger.WithError(err).Error("Failed to read statefulSet list")
-		return fmt.Errorf("Failed to read statefulSet list, %v", err)
-	}
-	if client.namespaceID, err = namespace.ID(); err != nil {
-		client.logger.WithError(err).Error("Failed to read statefulSet list")
-		return fmt.Errorf("Failed to read statefulSet list, %v", err)
-	}
-	return nil
+	return err
 }
 
 func (client *statefulSetClient) Exists() (bool, error) {
