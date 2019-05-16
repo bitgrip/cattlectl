@@ -23,15 +23,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func newStatefulSetClientWithData(
-	statefulSet projectModel.StatefulSet,
+func newDeploymentClientWithData(
+	deployment projectModel.Deployment,
 	namespace string,
 	project ProjectClient,
 	backendClient *projectClient.Client,
 	logger *logrus.Entry,
-) (StatefulSetClient, error) {
-	result, err := newStatefulSetClient(
-		statefulSet.Name,
+) (DeploymentClient, error) {
+	result, err := newDeploymentClient(
+		deployment.Name,
 		namespace,
 		project,
 		backendClient,
@@ -40,21 +40,21 @@ func newStatefulSetClientWithData(
 	if err != nil {
 		return nil, err
 	}
-	err = result.SetData(statefulSet)
+	err = result.SetData(deployment)
 	return result, err
 }
 
-func newStatefulSetClient(
+func newDeploymentClient(
 	name, namespace string,
 	project ProjectClient,
 	backendClient *projectClient.Client,
 	logger *logrus.Entry,
-) (StatefulSetClient, error) {
-	return &statefulSetClient{
+) (DeploymentClient, error) {
+	return &deploymentClient{
 		namespacedResourceClient: namespacedResourceClient{
 			resourceClient: resourceClient{
 				name:   name,
-				logger: logger.WithField("statefulSet_name", name).WithField("namespace", namespace),
+				logger: logger.WithField("deployment_name", name).WithField("namespace", namespace),
 			},
 			namespace: namespace,
 			project:   project,
@@ -63,13 +63,13 @@ func newStatefulSetClient(
 	}, nil
 }
 
-type statefulSetClient struct {
+type deploymentClient struct {
 	namespacedResourceClient
-	statefulSet   projectModel.StatefulSet
+	deployment    projectModel.Deployment
 	backendClient *projectClient.Client
 }
 
-func (client *statefulSetClient) init() error {
+func (client *deploymentClient) init() error {
 	namespaceID, err := client.NamespaceID()
 	if namespaceID == "" && err == nil {
 		return fmt.Errorf("Can not find namespace")
@@ -77,53 +77,53 @@ func (client *statefulSetClient) init() error {
 	return err
 }
 
-func (client *statefulSetClient) Exists() (bool, error) {
+func (client *deploymentClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.StatefulSet.List(&types.ListOpts{
+	collection, err := client.backendClient.Deployment.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
 		},
 	})
 	if nil != err {
-		client.logger.WithError(err).Error("Failed to read statefulSet list")
-		return false, fmt.Errorf("Failed to read statefulSet list, %v", err)
+		client.logger.WithError(err).Error("Failed to read deployment list")
+		return false, fmt.Errorf("Failed to read deployment list, %v", err)
 	}
 	for _, item := range collection.Data {
 		if item.Name == client.name && item.NamespaceId == client.namespaceID {
 			return true, nil
 		}
 	}
-	client.logger.Debug("StatefulSet not found")
+	client.logger.Debug("Deployment not found")
 	return false, nil
 }
 
-func (client *statefulSetClient) Create() error {
+func (client *deploymentClient) Create() error {
 	if err := client.init(); err != nil {
 		return err
 	}
-	client.logger.Info("Create new statefulSet")
-	pattern, err := projectModel.ConvertStatefulSetToProjectAPI(client.statefulSet)
+	client.logger.Info("Create new deployment")
+	pattern, err := projectModel.ConvertDeploymentToProjectAPI(client.deployment)
 	if err != nil {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendClient.StatefulSet.Create(&pattern)
+	_, err = client.backendClient.Deployment.Create(&pattern)
 	return err
 }
 
-func (client *statefulSetClient) Upgrade() error {
+func (client *deploymentClient) Upgrade() error {
 	return fmt.Errorf("upgrade statefulset not supported")
 }
 
-func (client *statefulSetClient) Data() (projectModel.StatefulSet, error) {
-	return client.statefulSet, nil
+func (client *deploymentClient) Data() (projectModel.Deployment, error) {
+	return client.deployment, nil
 }
 
-func (client *statefulSetClient) SetData(statefulSet projectModel.StatefulSet) error {
-	client.name = statefulSet.Name
-	client.statefulSet = statefulSet
+func (client *deploymentClient) SetData(deployment projectModel.Deployment) error {
+	client.name = deployment.Name
+	client.deployment = deployment
 	return nil
 }
