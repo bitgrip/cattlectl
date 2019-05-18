@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func newDaemonSetClientWithData(
 	daemonSet projectModel.DaemonSet,
 	namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (DaemonSetClient, error) {
 	result, err := newDaemonSetClient(
@@ -47,7 +47,7 @@ func newDaemonSetClientWithData(
 func newDaemonSetClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (DaemonSetClient, error) {
 	return &daemonSetClient{
@@ -66,7 +66,7 @@ func newDaemonSetClient(
 type daemonSetClient struct {
 	namespacedResourceClient
 	daemonSet     projectModel.DaemonSet
-	backendClient *projectClient.Client
+	backendClient *backendClient.Client
 }
 
 func (client *daemonSetClient) init() error {

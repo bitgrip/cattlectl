@@ -33,6 +33,16 @@ func (client *resourceClient) Name() (string, error) {
 	return client.name, nil
 }
 
+func (client *resourceClient) Exists() (bool, error) {
+	return false, fmt.Errorf("upgrade statefulset not supported")
+}
+func (client *resourceClient) Create() error {
+	return fmt.Errorf("upgrade statefulset not supported")
+}
+func (client *resourceClient) Upgrade() error {
+	return fmt.Errorf("upgrade statefulset not supported")
+}
+
 type namespacedResourceClient struct {
 	resourceClient
 	namespaceID string

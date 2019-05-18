@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func newJobClientWithData(
 	job projectModel.Job,
 	namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (JobClient, error) {
 	result, err := newJobClient(
@@ -47,7 +47,7 @@ func newJobClientWithData(
 func newJobClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (JobClient, error) {
 	return &jobClient{
@@ -66,7 +66,7 @@ func newJobClient(
 type jobClient struct {
 	namespacedResourceClient
 	job           projectModel.Job
-	backendClient *projectClient.Client
+	backendClient *backendClient.Client
 }
 
 func (client *jobClient) init() error {

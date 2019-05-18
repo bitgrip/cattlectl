@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func newStatefulSetClientWithData(
 	statefulSet projectModel.StatefulSet,
 	namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	result, err := newStatefulSetClient(
@@ -47,7 +47,7 @@ func newStatefulSetClientWithData(
 func newStatefulSetClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	return &statefulSetClient{
@@ -66,7 +66,7 @@ func newStatefulSetClient(
 type statefulSetClient struct {
 	namespacedResourceClient
 	statefulSet   projectModel.StatefulSet
-	backendClient *projectClient.Client
+	backendClient *backendClient.Client
 }
 
 func (client *statefulSetClient) init() error {

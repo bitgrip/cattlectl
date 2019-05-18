@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func newCronJobClientWithData(
 	cronJob projectModel.CronJob,
 	namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (CronJobClient, error) {
 	result, err := newCronJobClient(
@@ -47,7 +47,7 @@ func newCronJobClientWithData(
 func newCronJobClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (CronJobClient, error) {
 	return &cronJobClient{
@@ -66,7 +66,7 @@ func newCronJobClient(
 type cronJobClient struct {
 	namespacedResourceClient
 	cronJob       projectModel.CronJob
-	backendClient *projectClient.Client
+	backendClient *backendClient.Client
 }
 
 func (client *cronJobClient) init() error {

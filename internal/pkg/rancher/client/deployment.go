@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func newDeploymentClientWithData(
 	deployment projectModel.Deployment,
 	namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (DeploymentClient, error) {
 	result, err := newDeploymentClient(
@@ -47,7 +47,7 @@ func newDeploymentClientWithData(
 func newDeploymentClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (DeploymentClient, error) {
 	return &deploymentClient{
@@ -66,7 +66,7 @@ func newDeploymentClient(
 type deploymentClient struct {
 	namespacedResourceClient
 	deployment    projectModel.Deployment
-	backendClient *projectClient.Client
+	backendClient *backendClient.Client
 }
 
 func (client *deploymentClient) init() error {

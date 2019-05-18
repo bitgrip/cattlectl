@@ -15,20 +15,22 @@
 package client
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"strings"
 
 	"github.com/rancher/norman/clientbase"
 	clusterClient "github.com/rancher/types/client/cluster/v3"
 	managementClient "github.com/rancher/types/client/management/v3"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 var (
 	newClusterClient    = clusterClient.NewClient
 	newManagementClient = managementClient.NewClient
-	newProjectClient    = projectClient.NewClient
+	newProjectClient    = backendClient.NewClient
 )
 
 func createClientOpts(config RancherConfig) *clientbase.ClientOpts {
@@ -98,7 +100,7 @@ func createManagementClient(config RancherConfig) (*managementClient.Client, err
 	return managementClientCache, nil
 }
 
-func createProjectClient(config RancherConfig, clusterID string, projectID string) (*projectClient.Client, error) {
+func createProjectClient(config RancherConfig, clusterID string, projectID string) (*backendClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
 		"rancher.url":        config.RancherURL,
 		"rancher.cluster_id": clusterID,
@@ -117,4 +119,13 @@ func createProjectClient(config RancherConfig, clusterID string, projectID strin
 		return nil, fmt.Errorf("Failed to create project client, %v", err)
 	}
 	return pc, nil
+}
+
+func hashOf(data interface{}) string {
+
+	dataBytes, _ := yaml.Marshal(data)
+	h := sha1.New()
+	h.Write(dataBytes)
+	bs := h.Sum(nil)
+	return fmt.Sprintf("%x", bs)
 }

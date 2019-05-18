@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	projectClient "github.com/rancher/types/client/project/v3"
+	backendClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func newAppClientWithData(
 	app projectModel.App,
 	namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	result, err := newAppClient(
@@ -47,7 +47,7 @@ func newAppClientWithData(
 func newAppClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *projectClient.Client,
+	backendClient *backendClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	return &appClient{
@@ -66,8 +66,8 @@ func newAppClient(
 type appClient struct {
 	namespacedResourceClient
 	app           projectModel.App
-	backendClient *projectClient.Client
-	backendData   *projectClient.App
+	backendClient *backendClient.Client
+	backendData   *backendClient.App
 }
 
 func (client *appClient) init() error {
@@ -107,7 +107,7 @@ func (client *appClient) Create() error {
 	}
 
 	client.logger.Info("Create new app")
-	pattern := &projectClient.App{
+	pattern := &backendClient.App{
 		Name:            client.app.Name,
 		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
 		TargetNamespace: client.app.Namespace,
