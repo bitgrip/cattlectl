@@ -109,7 +109,7 @@ type PersistentVolumeClient interface {
 type CertificateClient interface {
 	NamespacedResourceClient
 	Data() (projectModel.Certificate, error)
-	SetData(persistentVolume projectModel.Certificate) error
+	SetData(certificate projectModel.Certificate) error
 }
 
 // ConfigMapClient interacts with a Rancher config map or secret resource
