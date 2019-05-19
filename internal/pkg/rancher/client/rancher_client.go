@@ -15,8 +15,7 @@
 package client
 
 import (
-	"fmt"
-
+	"github.com/rancher/norman/types"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -56,16 +55,30 @@ func (client *rancherClient) init() error {
 	return nil
 }
 
-func (client *rancherClient) Cluster(clusterName, clusterID string) (ClusterClient, error) {
+func (client *rancherClient) Cluster(clusterName string) (ClusterClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("not yet implemented")
+	return newClusterClient(clusterName, client.config, client.backendRancherClient, client.logger)
 }
 
 func (client *rancherClient) Clusters() ([]ClusterClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("not yet implemented")
+	collection, err := client.backendRancherClient.Cluster.List(&types.ListOpts{
+		Filters: map[string]interface{}{},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]ClusterClient, len(collection.Data))
+	for i, backendCluster := range collection.Data {
+		cluster, err := client.Cluster(backendCluster.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = cluster
+	}
+	return result, nil
 }

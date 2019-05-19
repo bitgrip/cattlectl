@@ -20,7 +20,7 @@ import (
 
 // RancherClient is comunicating with the Rancher server
 type RancherClient interface {
-	Cluster(clusterName, clusterID string) (ClusterClient, error)
+	Cluster(clusterName string) (ClusterClient, error)
 	Clusters() ([]ClusterClient, error)
 }
 
@@ -43,7 +43,7 @@ type NamespacedResourceClient interface {
 // ClusterClient interacts with a Rancher cluster resource
 type ClusterClient interface {
 	ResourceClient
-	Project(projectName, projectID string) (ProjectClient, error)
+	Project(projectName string) (ProjectClient, error)
 	Projects() ([]ProjectClient, error)
 	StorageClass(name string) (StorageClassClient, error)
 	StorageClasses() ([]StorageClassClient, error)
