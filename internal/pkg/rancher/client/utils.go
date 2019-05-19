@@ -21,7 +21,7 @@ import (
 
 	"github.com/rancher/norman/clientbase"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
-	managementClient "github.com/rancher/types/client/management/v3"
+	backendRancherClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -29,7 +29,7 @@ import (
 
 var (
 	newBackendClusterClient = backendClusterClient.NewClient
-	newManagementClient     = managementClient.NewClient
+	newManagementClient     = backendRancherClient.NewClient
 	newProjectClient        = backendProjectClient.NewClient
 )
 
@@ -77,19 +77,19 @@ func createBackendClusterClient(config RancherConfig, clusterID string) (*backen
 	return backendClusterClient, nil
 }
 
-func createManagementClient(config RancherConfig) (*managementClient.Client, error) {
+func createManagementClient(config RancherConfig) (*backendRancherClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
 		"rancher.url": config.RancherURL,
 	}).Debug("Create Management Client")
 	options := createClientOpts(config)
-	managementClientCache, err := newManagementClient(options)
+	backendRancherClientCache, err := newManagementClient(options)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"rancher.url": config.RancherURL,
 		}).Error("Failed to create management client")
 		return nil, fmt.Errorf("Failed to create management client, %v", err)
 	}
-	if managementClientCache == nil || managementClientCache.APIBaseClient.Ops == nil {
+	if backendRancherClientCache == nil || backendRancherClientCache.APIBaseClient.Ops == nil {
 		logrus.WithFields(logrus.Fields{
 			"rancher.url":      config.RancherURL,
 			"rancher.ca_certs": config.CACerts,
@@ -97,7 +97,7 @@ func createManagementClient(config RancherConfig) (*managementClient.Client, err
 		return nil, fmt.Errorf("Failed to create management client")
 	}
 
-	return managementClientCache, nil
+	return backendRancherClientCache, nil
 }
 
 func createProjectClient(config RancherConfig, clusterID string, projectID string) (*backendProjectClient.Client, error) {

@@ -17,7 +17,7 @@ package client
 import (
 	"fmt"
 
-	managementClient "github.com/rancher/types/client/management/v3"
+	backendRancherClient "github.com/rancher/types/client/management/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,20 +39,20 @@ type RancherConfig struct {
 }
 
 type rancherClient struct {
-	config           RancherConfig
-	managementClient *managementClient.Client
-	logger           *logrus.Entry
+	config               RancherConfig
+	backendRancherClient *backendRancherClient.Client
+	logger               *logrus.Entry
 }
 
 func (client *rancherClient) init() error {
-	if client.managementClient != nil {
+	if client.backendRancherClient != nil {
 		return nil
 	}
-	managementClient, err := createManagementClient(client.config)
+	backendRancherClient, err := createManagementClient(client.config)
 	if err != nil {
 		return err
 	}
-	client.managementClient = managementClient
+	client.backendRancherClient = backendRancherClient
 	return nil
 }
 
