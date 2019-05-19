@@ -53,47 +53,66 @@ func (client *clusterClient) init() error {
 		return nil
 	}
 	var (
-		exists bool
-		err    error
+		id  string
+		err error
 	)
-	if exists, err = client.Exists(); err != nil {
+	if id, err = client.ID(); err != nil {
 		return err
 	}
-	if !exists {
-		return fmt.Errorf("Unknown Cluster [%s]", client.name)
-	}
-	if client.backendClusterClient, err = createBackendClusterClient(client.config, client.id); err != nil {
-		return err
-	}
-	return nil
+	client.backendClusterClient, err = createBackendClusterClient(client.config, id)
+	return err
 }
 
-func (client *clusterClient) Exists() (bool, error) {
+func (client *clusterClient) ID() (string, error) {
+	if client.id != "" {
+		return client.id, nil
+	}
 	collection, err := client.backendRancherClient.Cluster.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
 	})
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	if len(collection.Data) < 1 {
-		return false, nil
+		return "", fmt.Errorf("Unknown Cluster [%s]", client.name)
 	}
 	client.id = collection.Data[0].ID
-	return true, nil
+	return client.id, nil
+}
+
+func (client *clusterClient) Exists() (bool, error) {
+	_, err := client.ID()
+	return err != nil, err
 }
 func (client *clusterClient) Project(projectName string) (ProjectClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	return newProjectClient(projectName, client.config, client.backendRancherClient, client.backendClusterClient, client.logger)
 }
 func (client *clusterClient) Projects() ([]ProjectClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	collection, err := client.backendRancherClient.Project.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"clusterId": client.id,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]ProjectClient, len(collection.Data))
+	for i, backendProject := range collection.Data {
+		cluster, err := client.Project(backendProject.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = cluster
+	}
+	return result, nil
 }
 func (client *clusterClient) StorageClass(name string) (StorageClassClient, error) {
 	if err := client.init(); err != nil {

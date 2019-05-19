@@ -138,7 +138,12 @@ func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *
 	result, err := newCertificateClient(
 		"existing-certificate",
 		"test-namespace",
-		nil,
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
@@ -179,7 +184,12 @@ func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts
 	result, err := newCertificateClient(
 		"existing-certificate",
 		"test-namespace",
-		&projectClient{},
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)

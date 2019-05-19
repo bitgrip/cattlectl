@@ -138,7 +138,12 @@ func existingConfigMapClient(t *testing.T, expectedListOpts *types.ListOpts) *co
 	result, err := newConfigMapClient(
 		"existing-configMap",
 		"test-namespace",
-		nil,
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
@@ -179,7 +184,12 @@ func notExistingConfigMapClient(t *testing.T, expectedListOpts *types.ListOpts) 
 	result, err := newConfigMapClient(
 		"existing-configMap",
 		"test-namespace",
-		&projectClient{},
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)

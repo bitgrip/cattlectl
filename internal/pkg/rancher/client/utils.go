@@ -30,7 +30,7 @@ import (
 var (
 	newBackendClusterClient = backendClusterClient.NewClient
 	newManagementClient     = backendRancherClient.NewClient
-	newProjectClient        = backendProjectClient.NewClient
+	newBackendProjectClient = backendProjectClient.NewClient
 )
 
 func createClientOpts(config RancherConfig) *clientbase.ClientOpts {
@@ -109,7 +109,7 @@ func createProjectClient(config RancherConfig, clusterID string, projectID strin
 	options := createClientOpts(config)
 	options.URL = options.URL + "/projects/" + projectID
 
-	pc, err := newProjectClient(options)
+	pc, err := newBackendProjectClient(options)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"rancher.url":        config.RancherURL,

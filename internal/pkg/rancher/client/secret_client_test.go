@@ -138,7 +138,12 @@ func existingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *secre
 	result, err := newSecretClient(
 		"existing-secret",
 		"test-namespace",
-		nil,
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
@@ -179,7 +184,12 @@ func notExistingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *se
 	result, err := newSecretClient(
 		"existing-secret",
 		"test-namespace",
-		&projectClient{},
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)

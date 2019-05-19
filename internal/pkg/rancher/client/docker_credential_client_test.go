@@ -138,7 +138,12 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 	result, err := newDockerCredentialClient(
 		"existing-dockerCredential",
 		"test-namespace",
-		nil,
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
@@ -179,7 +184,12 @@ func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.Lis
 	result, err := newDockerCredentialClient(
 		"existing-dockerCredential",
 		"test-namespace",
-		&projectClient{},
+		&projectClient{
+			resourceClient: resourceClient{
+				name: projectName,
+				id:   projectID,
+			},
+		},
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
