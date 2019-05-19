@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newAppClientWithData(
 	app projectModel.App,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	result, err := newAppClient(
 		app.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newAppClientWithData(
 func newAppClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	return &appClient{
@@ -59,15 +59,15 @@ func newAppClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type appClient struct {
 	namespacedResourceClient
-	app           projectModel.App
-	backendClient *backendClient.Client
-	backendData   *backendClient.App
+	app                  projectModel.App
+	backendProjectClient *backendProjectClient.Client
+	backendData          *backendProjectClient.App
 }
 
 func (client *appClient) init() error {
@@ -82,7 +82,7 @@ func (client *appClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.App.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.App.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -107,13 +107,13 @@ func (client *appClient) Create() error {
 	}
 
 	client.logger.Info("Create new app")
-	pattern := &backendClient.App{
+	pattern := &backendProjectClient.App{
 		Name:            client.app.Name,
 		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
 		TargetNamespace: client.app.Namespace,
 		Answers:         client.app.Answers,
 	}
-	_, err := client.backendClient.App.Create(pattern)
+	_, err := client.backendProjectClient.App.Create(pattern)
 	return err
 }
 

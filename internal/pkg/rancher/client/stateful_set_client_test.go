@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -131,13 +131,13 @@ func existingStatefulSetClient(t *testing.T, expectedListOpts *types.ListOpts) *
 	statefulSetDescriptor.Spec = statefulSet
 
 	statefulSetOperationsStub := stubs.CreateStatefulSetOperationsStub(t)
-	statefulSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.StatefulSetCollection, error) {
+	statefulSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.StatefulSetCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.StatefulSetCollection{
-			Data: []backendClient.StatefulSet{
-				backendClient.StatefulSet{
+		return &backendProjectClient.StatefulSetCollection{
+			Data: []backendProjectClient.StatefulSet{
+				backendProjectClient.StatefulSet{
 					Name:        "existing-statefulSet",
 					NamespaceId: "test-namespace-id",
 				},
@@ -184,15 +184,15 @@ func notExistingStatefulSetClient(t *testing.T, expectedListOpts *types.ListOpts
 	statefulSetDescriptor.Spec = statefulSet
 
 	statefulSetOperationsStub := stubs.CreateStatefulSetOperationsStub(t)
-	statefulSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.StatefulSetCollection, error) {
+	statefulSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.StatefulSetCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.StatefulSetCollection{
-			Data: []backendClient.StatefulSet{},
+		return &backendProjectClient.StatefulSetCollection{
+			Data: []backendProjectClient.StatefulSet{},
 		}, nil
 	}
-	statefulSetOperationsStub.DoCreate = func(statefulSet *backendClient.StatefulSet) (*backendClient.StatefulSet, error) {
+	statefulSetOperationsStub.DoCreate = func(statefulSet *backendProjectClient.StatefulSet) (*backendProjectClient.StatefulSet, error) {
 		return statefulSet, nil
 	}
 	testClients.ProjectClient.StatefulSet = statefulSetOperationsStub

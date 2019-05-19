@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -121,13 +121,13 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 	dockerCredential.Name = dockerCredentialName
 
 	dockerCredentialOperationsStub := stubs.CreateDockerCredentialOperationsStub(t)
-	dockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.DockerCredentialCollection, error) {
+	dockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DockerCredentialCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.DockerCredentialCollection{
-			Data: []backendClient.DockerCredential{
-				backendClient.DockerCredential{
+		return &backendProjectClient.DockerCredentialCollection{
+			Data: []backendProjectClient.DockerCredential{
+				backendProjectClient.DockerCredential{
 					Name:        "existing-dockerCredential",
 					NamespaceId: "test-namespace-id",
 				},
@@ -164,15 +164,15 @@ func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.Lis
 	dockerCredential.Name = dockerCredentialName
 
 	dockerCredentialOperationsStub := stubs.CreateDockerCredentialOperationsStub(t)
-	dockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.DockerCredentialCollection, error) {
+	dockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DockerCredentialCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.DockerCredentialCollection{
-			Data: []backendClient.DockerCredential{},
+		return &backendProjectClient.DockerCredentialCollection{
+			Data: []backendProjectClient.DockerCredential{},
 		}, nil
 	}
-	dockerCredentialOperationsStub.DoCreate = func(dockerCredential *backendClient.DockerCredential) (*backendClient.DockerCredential, error) {
+	dockerCredentialOperationsStub.DoCreate = func(dockerCredential *backendProjectClient.DockerCredential) (*backendProjectClient.DockerCredential, error) {
 		return dockerCredential, nil
 	}
 	testClients.ProjectClient.DockerCredential = dockerCredentialOperationsStub

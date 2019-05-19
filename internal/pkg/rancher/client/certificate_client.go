@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newCertificateClientWithData(
 	certificate projectModel.Certificate,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CertificateClient, error) {
 	result, err := newCertificateClient(
 		certificate.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newCertificateClientWithData(
 func newCertificateClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CertificateClient, error) {
 	return &certificateClient{
@@ -59,14 +59,14 @@ func newCertificateClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type certificateClient struct {
 	namespacedResourceClient
-	certificate   projectModel.Certificate
-	backendClient *backendClient.Client
+	certificate          projectModel.Certificate
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *certificateClient) init() error {
@@ -81,7 +81,7 @@ func (client *certificateClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.Certificate.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.Certificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -115,7 +115,7 @@ func (client *certificateClient) Create() error {
 	client.logger.Info("Create new Certificate")
 	labels := make(map[string]string)
 	labels["cattlectl.io/hash"] = hashOf(client.certificate)
-	newCertificate := &backendClient.Certificate{
+	newCertificate := &backendProjectClient.Certificate{
 		Name:        client.certificate.Name,
 		Labels:      labels,
 		Key:         client.certificate.Key,
@@ -124,7 +124,7 @@ func (client *certificateClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendClient.Certificate.Create(newCertificate)
+	_, err = client.backendProjectClient.Certificate.Create(newCertificate)
 	return err
 }
 

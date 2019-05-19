@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -131,13 +131,13 @@ func existingCronJobClient(t *testing.T, expectedListOpts *types.ListOpts) *cron
 	cronJobDescriptor.Spec = cronJob
 
 	cronJobOperationsStub := stubs.CreateCronJobOperationsStub(t)
-	cronJobOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.CronJobCollection, error) {
+	cronJobOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CronJobCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.CronJobCollection{
-			Data: []backendClient.CronJob{
-				backendClient.CronJob{
+		return &backendProjectClient.CronJobCollection{
+			Data: []backendProjectClient.CronJob{
+				backendProjectClient.CronJob{
 					Name:        "existing-cronJob",
 					NamespaceId: "test-namespace-id",
 				},
@@ -184,15 +184,15 @@ func notExistingCronJobClient(t *testing.T, expectedListOpts *types.ListOpts) *c
 	cronJobDescriptor.Spec = cronJob
 
 	cronJobOperationsStub := stubs.CreateCronJobOperationsStub(t)
-	cronJobOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.CronJobCollection, error) {
+	cronJobOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CronJobCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.CronJobCollection{
-			Data: []backendClient.CronJob{},
+		return &backendProjectClient.CronJobCollection{
+			Data: []backendProjectClient.CronJob{},
 		}, nil
 	}
-	cronJobOperationsStub.DoCreate = func(cronJob *backendClient.CronJob) (*backendClient.CronJob, error) {
+	cronJobOperationsStub.DoCreate = func(cronJob *backendProjectClient.CronJob) (*backendProjectClient.CronJob, error) {
 		return cronJob, nil
 	}
 	testClients.ProjectClient.CronJob = cronJobOperationsStub

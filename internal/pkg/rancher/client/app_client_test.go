@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -121,13 +121,13 @@ func existingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClien
 	app.Name = appName
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
-	appOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.AppCollection, error) {
+	appOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.AppCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.AppCollection{
-			Data: []backendClient.App{
-				backendClient.App{
+		return &backendProjectClient.AppCollection{
+			Data: []backendProjectClient.App{
+				backendProjectClient.App{
 					Name:        "existing-app",
 					NamespaceId: "test-namespace-id",
 				},
@@ -164,15 +164,15 @@ func notExistingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appCl
 	app.Name = appName
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
-	appOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.AppCollection, error) {
+	appOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.AppCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.AppCollection{
-			Data: []backendClient.App{},
+		return &backendProjectClient.AppCollection{
+			Data: []backendProjectClient.App{},
 		}, nil
 	}
-	appOperationsStub.DoCreate = func(app *backendClient.App) (*backendClient.App, error) {
+	appOperationsStub.DoCreate = func(app *backendProjectClient.App) (*backendProjectClient.App, error) {
 		return app, nil
 	}
 	testClients.ProjectClient.App = appOperationsStub

@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -131,13 +131,13 @@ func existingDaemonSetClient(t *testing.T, expectedListOpts *types.ListOpts) *da
 	daemonSetDescriptor.Spec = daemonSet
 
 	daemonSetOperationsStub := stubs.CreateDaemonSetOperationsStub(t)
-	daemonSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.DaemonSetCollection, error) {
+	daemonSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DaemonSetCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.DaemonSetCollection{
-			Data: []backendClient.DaemonSet{
-				backendClient.DaemonSet{
+		return &backendProjectClient.DaemonSetCollection{
+			Data: []backendProjectClient.DaemonSet{
+				backendProjectClient.DaemonSet{
 					Name:        "existing-daemonSet",
 					NamespaceId: "test-namespace-id",
 				},
@@ -184,15 +184,15 @@ func notExistingDaemonSetClient(t *testing.T, expectedListOpts *types.ListOpts) 
 	daemonSetDescriptor.Spec = daemonSet
 
 	daemonSetOperationsStub := stubs.CreateDaemonSetOperationsStub(t)
-	daemonSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.DaemonSetCollection, error) {
+	daemonSetOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DaemonSetCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.DaemonSetCollection{
-			Data: []backendClient.DaemonSet{},
+		return &backendProjectClient.DaemonSetCollection{
+			Data: []backendProjectClient.DaemonSet{},
 		}, nil
 	}
-	daemonSetOperationsStub.DoCreate = func(daemonSet *backendClient.DaemonSet) (*backendClient.DaemonSet, error) {
+	daemonSetOperationsStub.DoCreate = func(daemonSet *backendProjectClient.DaemonSet) (*backendProjectClient.DaemonSet, error) {
 		return daemonSet, nil
 	}
 	testClients.ProjectClient.DaemonSet = daemonSetOperationsStub

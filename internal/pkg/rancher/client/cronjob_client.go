@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newCronJobClientWithData(
 	cronJob projectModel.CronJob,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CronJobClient, error) {
 	result, err := newCronJobClient(
 		cronJob.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newCronJobClientWithData(
 func newCronJobClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CronJobClient, error) {
 	return &cronJobClient{
@@ -59,14 +59,14 @@ func newCronJobClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type cronJobClient struct {
 	namespacedResourceClient
-	cronJob       projectModel.CronJob
-	backendClient *backendClient.Client
+	cronJob              projectModel.CronJob
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *cronJobClient) init() error {
@@ -81,7 +81,7 @@ func (client *cronJobClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.CronJob.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.CronJob.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -110,7 +110,7 @@ func (client *cronJobClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendClient.CronJob.Create(&pattern)
+	_, err = client.backendProjectClient.CronJob.Create(&pattern)
 	return err
 }
 

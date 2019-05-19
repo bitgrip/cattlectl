@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newConfigMapClientWithData(
 	configMap projectModel.ConfigMap,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	result, err := newConfigMapClient(
 		configMap.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newConfigMapClientWithData(
 func newConfigMapClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	return &configMapClient{
@@ -59,14 +59,14 @@ func newConfigMapClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type configMapClient struct {
 	namespacedResourceClient
-	configMap     projectModel.ConfigMap
-	backendClient *backendClient.Client
+	configMap            projectModel.ConfigMap
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *configMapClient) init() error {
@@ -81,7 +81,7 @@ func (client *configMapClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.ConfigMap.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.ConfigMap.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -115,7 +115,7 @@ func (client *configMapClient) Create() error {
 	client.logger.Info("Create new ConfigMap")
 	labels := make(map[string]string)
 	labels["cattlectl.io/hash"] = hashOf(client.configMap)
-	newConfigMap := &backendClient.ConfigMap{
+	newConfigMap := &backendProjectClient.ConfigMap{
 		Name:        client.configMap.Name,
 		Labels:      labels,
 		Data:        client.configMap.Data,
@@ -123,7 +123,7 @@ func (client *configMapClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendClient.ConfigMap.Create(newConfigMap)
+	_, err = client.backendProjectClient.ConfigMap.Create(newConfigMap)
 	return err
 }
 

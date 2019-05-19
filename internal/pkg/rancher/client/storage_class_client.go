@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newStorageClassClientWithData(
 	storageClass projectModel.StorageClass,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (StorageClassClient, error) {
 	result, err := newStorageClassClient(
 		storageClass.Name,
 		namespace,
 		project,
-		backendClient,
+		backendClusterClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newStorageClassClientWithData(
 func newStorageClassClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (StorageClassClient, error) {
 	return &storageClassClient{
@@ -55,14 +55,14 @@ func newStorageClassClient(
 			name:   name,
 			logger: logger.WithField("storageClass_name", name).WithField("namespace", namespace),
 		},
-		backendClient: backendClient,
+		backendClusterClient: backendClusterClient,
 	}, nil
 }
 
 type storageClassClient struct {
 	resourceClient
-	storageClass  projectModel.StorageClass
-	backendClient *backendClient.Client
+	storageClass         projectModel.StorageClass
+	backendClusterClient *backendClusterClient.Client
 }
 
 func (client *storageClassClient) init() error {
@@ -73,7 +73,7 @@ func (client *storageClassClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.StorageClass.List(&types.ListOpts{
+	collection, err := client.backendClusterClient.StorageClass.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -96,7 +96,7 @@ func (client *storageClassClient) Create() error {
 		return err
 	}
 	client.logger.Info("Create new storage class")
-	newStorageClass := &backendClient.StorageClass{
+	newStorageClass := &backendClusterClient.StorageClass{
 		Name:              client.storageClass.Name,
 		VolumeBindingMode: client.storageClass.VolumeBindMode,
 		ReclaimPolicy:     client.storageClass.ReclaimPolicy,
@@ -105,7 +105,7 @@ func (client *storageClassClient) Create() error {
 		MountOptions:      client.storageClass.MountOptions,
 	}
 
-	_, err := client.backendClient.StorageClass.Create(newStorageClass)
+	_, err := client.backendClusterClient.StorageClass.Create(newStorageClass)
 	return err
 }
 

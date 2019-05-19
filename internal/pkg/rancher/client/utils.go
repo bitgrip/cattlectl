@@ -20,17 +20,17 @@ import (
 	"strings"
 
 	"github.com/rancher/norman/clientbase"
-	clusterClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	managementClient "github.com/rancher/types/client/management/v3"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 var (
-	newClusterClient    = clusterClient.NewClient
-	newManagementClient = managementClient.NewClient
-	newProjectClient    = backendClient.NewClient
+	newBackendClusterClient = backendClusterClient.NewClient
+	newManagementClient     = managementClient.NewClient
+	newProjectClient        = backendProjectClient.NewClient
 )
 
 func createClientOpts(config RancherConfig) *clientbase.ClientOpts {
@@ -59,14 +59,14 @@ func createClientOpts(config RancherConfig) *clientbase.ClientOpts {
 	return options
 }
 
-func createClusterClient(config RancherConfig, clusterID string) (*clusterClient.Client, error) {
+func createBackendClusterClient(config RancherConfig, clusterID string) (*backendClusterClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
 		"rancher.url":        config.RancherURL,
 		"rancher.cluster_id": clusterID,
 	}).Debug("Create Cluster Client")
 	options := createClientOpts(config)
 	options.URL = options.URL + "/cluster/" + clusterID
-	clusterClient, err := newClusterClient(options)
+	backendClusterClient, err := newBackendClusterClient(options)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"rancher.url":        config.RancherURL,
@@ -74,7 +74,7 @@ func createClusterClient(config RancherConfig, clusterID string) (*clusterClient
 		}).Error("Failed to create cluster client")
 		return nil, fmt.Errorf("Failed to create cluster client, %v", err)
 	}
-	return clusterClient, nil
+	return backendClusterClient, nil
 }
 
 func createManagementClient(config RancherConfig) (*managementClient.Client, error) {
@@ -100,7 +100,7 @@ func createManagementClient(config RancherConfig) (*managementClient.Client, err
 	return managementClientCache, nil
 }
 
-func createProjectClient(config RancherConfig, clusterID string, projectID string) (*backendClient.Client, error) {
+func createProjectClient(config RancherConfig, clusterID string, projectID string) (*backendProjectClient.Client, error) {
 	logrus.WithFields(logrus.Fields{
 		"rancher.url":        config.RancherURL,
 		"rancher.cluster_id": clusterID,

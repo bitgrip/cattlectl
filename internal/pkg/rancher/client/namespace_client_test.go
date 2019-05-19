@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -118,13 +118,13 @@ func existingNamespaceClient(t *testing.T, expectedListOpts *types.ListOpts) *na
 	namespace.Name = namespaceName
 
 	namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
-	namespaceOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.NamespaceCollection, error) {
+	namespaceOperationsStub.DoList = func(opts *types.ListOpts) (*backendClusterClient.NamespaceCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.NamespaceCollection{
-			Data: []backendClient.Namespace{
-				backendClient.Namespace{
+		return &backendClusterClient.NamespaceCollection{
+			Data: []backendClusterClient.Namespace{
+				backendClusterClient.Namespace{
 					Name: "existing-namespace",
 				},
 			},
@@ -157,15 +157,15 @@ func notExistingNamespaceClient(t *testing.T, expectedListOpts *types.ListOpts) 
 	namespace.Name = namespaceName
 
 	namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
-	namespaceOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.NamespaceCollection, error) {
+	namespaceOperationsStub.DoList = func(opts *types.ListOpts) (*backendClusterClient.NamespaceCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.NamespaceCollection{
-			Data: []backendClient.Namespace{},
+		return &backendClusterClient.NamespaceCollection{
+			Data: []backendClusterClient.Namespace{},
 		}, nil
 	}
-	namespaceOperationsStub.DoCreate = func(namespace *backendClient.Namespace) (*backendClient.Namespace, error) {
+	namespaceOperationsStub.DoCreate = func(namespace *backendClusterClient.Namespace) (*backendClusterClient.Namespace, error) {
 		return namespace, nil
 	}
 	testClients.ClusterClient.Namespace = namespaceOperationsStub

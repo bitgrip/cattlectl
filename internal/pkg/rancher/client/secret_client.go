@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newSecretpClientWithData(
 	configMap projectModel.ConfigMap,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	result, err := newConfigMapClient(
 		configMap.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newSecretpClientWithData(
 func newSecretClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	return &secretClient{
@@ -59,14 +59,14 @@ func newSecretClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type secretClient struct {
 	namespacedResourceClient
-	configMap     projectModel.ConfigMap
-	backendClient *backendClient.Client
+	configMap            projectModel.ConfigMap
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *secretClient) init() error {
@@ -81,7 +81,7 @@ func (client *secretClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.Secret.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.Secret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -115,7 +115,7 @@ func (client *secretClient) Create() error {
 	client.logger.Info("Create new Secret")
 	labels := make(map[string]string)
 	labels["cattlectl.io/hash"] = hashOf(client.configMap)
-	newSecret := &backendClient.Secret{
+	newSecret := &backendProjectClient.Secret{
 		Name:        client.configMap.Name,
 		Labels:      labels,
 		Data:        client.configMap.Data,
@@ -123,7 +123,7 @@ func (client *secretClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendClient.Secret.Create(newSecret)
+	_, err = client.backendProjectClient.Secret.Create(newSecret)
 	return err
 }
 

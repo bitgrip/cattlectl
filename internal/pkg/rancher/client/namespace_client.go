@@ -19,20 +19,20 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
 )
 
 func newNamespaceClientWithData(
 	namespace projectModel.Namespace,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (NamespaceClient, error) {
 	result, err := newNamespaceClient(
 		namespace.Name,
 		project,
-		backendClient,
+		backendClusterClient,
 		logger,
 	)
 	if err != nil {
@@ -45,7 +45,7 @@ func newNamespaceClientWithData(
 func newNamespaceClient(
 	name string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (NamespaceClient, error) {
 	return &namespaceClient{
@@ -53,14 +53,14 @@ func newNamespaceClient(
 			name:   name,
 			logger: logger.WithField("namespace_name", name),
 		},
-		backendClient: backendClient,
+		backendClusterClient: backendClusterClient,
 	}, nil
 }
 
 type namespaceClient struct {
 	resourceClient
-	namespace     projectModel.Namespace
-	backendClient *backendClient.Client
+	namespace            projectModel.Namespace
+	backendClusterClient *backendClusterClient.Client
 }
 
 func (client *namespaceClient) init() error {
@@ -71,7 +71,7 @@ func (client *namespaceClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.Namespace.List(&types.ListOpts{
+	collection, err := client.backendClusterClient.Namespace.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -95,11 +95,11 @@ func (client *namespaceClient) Create() error {
 	}
 
 	client.logger.Info("Create new namespace")
-	newNamespace := &backendClient.Namespace{
+	newNamespace := &backendClusterClient.Namespace{
 		Name: client.namespace.Name,
 	}
 
-	_, err := client.backendClient.Namespace.Create(newNamespace)
+	_, err := client.backendClusterClient.Namespace.Create(newNamespace)
 	return err
 }
 

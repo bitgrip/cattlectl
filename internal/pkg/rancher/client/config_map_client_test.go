@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -121,13 +121,13 @@ func existingConfigMapClient(t *testing.T, expectedListOpts *types.ListOpts) *co
 	configMap.Name = configMapName
 
 	configMapOperationsStub := stubs.CreateConfigMapOperationsStub(t)
-	configMapOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.ConfigMapCollection, error) {
+	configMapOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.ConfigMapCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.ConfigMapCollection{
-			Data: []backendClient.ConfigMap{
-				backendClient.ConfigMap{
+		return &backendProjectClient.ConfigMapCollection{
+			Data: []backendProjectClient.ConfigMap{
+				backendProjectClient.ConfigMap{
 					Name:        "existing-configMap",
 					NamespaceId: "test-namespace-id",
 				},
@@ -164,15 +164,15 @@ func notExistingConfigMapClient(t *testing.T, expectedListOpts *types.ListOpts) 
 	configMap.Name = configMapName
 
 	configMapOperationsStub := stubs.CreateConfigMapOperationsStub(t)
-	configMapOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.ConfigMapCollection, error) {
+	configMapOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.ConfigMapCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.ConfigMapCollection{
-			Data: []backendClient.ConfigMap{},
+		return &backendProjectClient.ConfigMapCollection{
+			Data: []backendProjectClient.ConfigMap{},
 		}, nil
 	}
-	configMapOperationsStub.DoCreate = func(configMap *backendClient.ConfigMap) (*backendClient.ConfigMap, error) {
+	configMapOperationsStub.DoCreate = func(configMap *backendProjectClient.ConfigMap) (*backendProjectClient.ConfigMap, error) {
 		return configMap, nil
 	}
 	testClients.ProjectClient.ConfigMap = configMapOperationsStub

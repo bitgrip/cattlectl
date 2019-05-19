@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newDockerCredentialClientWithData(
 	dockerCredential projectModel.DockerCredential,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DockerCredentialClient, error) {
 	result, err := newDockerCredentialClient(
 		dockerCredential.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newDockerCredentialClientWithData(
 func newDockerCredentialClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DockerCredentialClient, error) {
 	return &dockerCredentialClient{
@@ -59,14 +59,14 @@ func newDockerCredentialClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type dockerCredentialClient struct {
 	namespacedResourceClient
-	dockerCredential projectModel.DockerCredential
-	backendClient    *backendClient.Client
+	dockerCredential     projectModel.DockerCredential
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *dockerCredentialClient) init() error {
@@ -81,7 +81,7 @@ func (client *dockerCredentialClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.DockerCredential.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.DockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -106,9 +106,9 @@ func (client *dockerCredentialClient) Create() error {
 	}
 	client.logger.Info("Create new DockerCredential")
 
-	registries := make(map[string]backendClient.RegistryCredential)
+	registries := make(map[string]backendProjectClient.RegistryCredential)
 	for _, registry := range client.dockerCredential.Registries {
-		registries[registry.Name] = backendClient.RegistryCredential{
+		registries[registry.Name] = backendProjectClient.RegistryCredential{
 			Username: registry.Username,
 			Password: registry.Password,
 		}
@@ -119,7 +119,7 @@ func (client *dockerCredentialClient) Create() error {
 	if err != nil {
 		return err
 	}
-	newDockerCredential := &backendClient.DockerCredential{
+	newDockerCredential := &backendProjectClient.DockerCredential{
 		Name:        client.dockerCredential.Name,
 		Labels:      labels,
 		Registries:  registries,
@@ -127,7 +127,7 @@ func (client *dockerCredentialClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendClient.DockerCredential.Create(newDockerCredential)
+	_, err = client.backendProjectClient.DockerCredential.Create(newDockerCredential)
 	return err
 }
 

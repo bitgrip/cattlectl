@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -119,13 +119,13 @@ func existingPersistentVolumeClient(t *testing.T, expectedListOpts *types.ListOp
 	persistentVolume.Name = persistentVolumeName
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)
-	persistentVolumeOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.PersistentVolumeCollection, error) {
+	persistentVolumeOperationsStub.DoList = func(opts *types.ListOpts) (*backendClusterClient.PersistentVolumeCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.PersistentVolumeCollection{
-			Data: []backendClient.PersistentVolume{
-				backendClient.PersistentVolume{
+		return &backendClusterClient.PersistentVolumeCollection{
+			Data: []backendClusterClient.PersistentVolume{
+				backendClusterClient.PersistentVolume{
 					Name: "existing-persistentVolume",
 				},
 			},
@@ -160,15 +160,15 @@ func notExistingPersistentVolumeClient(t *testing.T, expectedListOpts *types.Lis
 	persistentVolume.Name = persistentVolumeName
 
 	persistentVolumeOperationsStub := stubs.CreatePersistentVolumeOperationsStub(t)
-	persistentVolumeOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.PersistentVolumeCollection, error) {
+	persistentVolumeOperationsStub.DoList = func(opts *types.ListOpts) (*backendClusterClient.PersistentVolumeCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.PersistentVolumeCollection{
-			Data: []backendClient.PersistentVolume{},
+		return &backendClusterClient.PersistentVolumeCollection{
+			Data: []backendClusterClient.PersistentVolume{},
 		}, nil
 	}
-	persistentVolumeOperationsStub.DoCreate = func(persistentVolume *backendClient.PersistentVolume) (*backendClient.PersistentVolume, error) {
+	persistentVolumeOperationsStub.DoCreate = func(persistentVolume *backendClusterClient.PersistentVolume) (*backendClusterClient.PersistentVolume, error) {
 		return persistentVolume, nil
 	}
 	testClients.ClusterClient.PersistentVolume = persistentVolumeOperationsStub

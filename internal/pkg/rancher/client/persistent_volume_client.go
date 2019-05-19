@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newPersistentVolumeClientWithData(
 	persistentVolume projectModel.PersistentVolume,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (PersistentVolumeClient, error) {
 	result, err := newPersistentVolumeClient(
 		persistentVolume.Name,
 		namespace,
 		project,
-		backendClient,
+		backendClusterClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newPersistentVolumeClientWithData(
 func newPersistentVolumeClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (PersistentVolumeClient, error) {
 	return &persistentVolumeClient{
@@ -55,14 +55,14 @@ func newPersistentVolumeClient(
 			name:   name,
 			logger: logger.WithField("persistentVolume_name", name).WithField("namespace", namespace),
 		},
-		backendClient: backendClient,
+		backendClusterClient: backendClusterClient,
 	}, nil
 }
 
 type persistentVolumeClient struct {
 	resourceClient
-	persistentVolume projectModel.PersistentVolume
-	backendClient    *backendClient.Client
+	persistentVolume     projectModel.PersistentVolume
+	backendClusterClient *backendClusterClient.Client
 }
 
 func (client *persistentVolumeClient) init() error {
@@ -73,7 +73,7 @@ func (client *persistentVolumeClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.PersistentVolume.List(&types.ListOpts{
+	collection, err := client.backendClusterClient.PersistentVolume.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -96,21 +96,21 @@ func (client *persistentVolumeClient) Create() error {
 		return err
 	}
 	client.logger.Info("Create new persistent volume")
-	newPersistentVolume := &backendClient.PersistentVolume{
+	newPersistentVolume := &backendClusterClient.PersistentVolume{
 		Name:                          client.persistentVolume.Name,
 		StorageClassID:                client.persistentVolume.StorageClassName,
 		AccessModes:                   client.persistentVolume.AccessModes,
 		Capacity:                      map[string]string{"storage": client.persistentVolume.Capacity},
 		PersistentVolumeReclaimPolicy: "Delete",
-		Local: &backendClient.LocalVolumeSource{
+		Local: &backendClusterClient.LocalVolumeSource{
 			Path: client.persistentVolume.Path,
 		},
-		NodeAffinity: &backendClient.VolumeNodeAffinity{
-			Required: &backendClient.NodeSelector{
-				NodeSelectorTerms: []backendClient.NodeSelectorTerm{
-					backendClient.NodeSelectorTerm{
-						MatchExpressions: []backendClient.NodeSelectorRequirement{
-							backendClient.NodeSelectorRequirement{
+		NodeAffinity: &backendClusterClient.VolumeNodeAffinity{
+			Required: &backendClusterClient.NodeSelector{
+				NodeSelectorTerms: []backendClusterClient.NodeSelectorTerm{
+					backendClusterClient.NodeSelectorTerm{
+						MatchExpressions: []backendClusterClient.NodeSelectorRequirement{
+							backendClusterClient.NodeSelectorRequirement{
 								Key:      "kubernetes.io/hostname",
 								Operator: "In",
 								Values:   []string{client.persistentVolume.Node},
@@ -122,7 +122,7 @@ func (client *persistentVolumeClient) Create() error {
 		},
 	}
 
-	_, err := client.backendClient.PersistentVolume.Create(newPersistentVolume)
+	_, err := client.backendClusterClient.PersistentVolume.Create(newPersistentVolume)
 	return err
 }
 

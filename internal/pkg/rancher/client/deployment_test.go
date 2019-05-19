@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -131,13 +131,13 @@ func existingDeploymentClient(t *testing.T, expectedListOpts *types.ListOpts) *d
 	deploymentDescriptor.Spec = deployment
 
 	deploymentOperationsStub := stubs.CreateDeploymentOperationsStub(t)
-	deploymentOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.DeploymentCollection, error) {
+	deploymentOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DeploymentCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.DeploymentCollection{
-			Data: []backendClient.Deployment{
-				backendClient.Deployment{
+		return &backendProjectClient.DeploymentCollection{
+			Data: []backendProjectClient.Deployment{
+				backendProjectClient.Deployment{
 					Name:        "existing-deployment",
 					NamespaceId: "test-namespace-id",
 				},
@@ -184,15 +184,15 @@ func notExistingDeploymentClient(t *testing.T, expectedListOpts *types.ListOpts)
 	deploymentDescriptor.Spec = deployment
 
 	deploymentOperationsStub := stubs.CreateDeploymentOperationsStub(t)
-	deploymentOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.DeploymentCollection, error) {
+	deploymentOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DeploymentCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.DeploymentCollection{
-			Data: []backendClient.Deployment{},
+		return &backendProjectClient.DeploymentCollection{
+			Data: []backendProjectClient.Deployment{},
 		}, nil
 	}
-	deploymentOperationsStub.DoCreate = func(deployment *backendClient.Deployment) (*backendClient.Deployment, error) {
+	deploymentOperationsStub.DoCreate = func(deployment *backendProjectClient.Deployment) (*backendProjectClient.Deployment, error) {
 		return deployment, nil
 	}
 	testClients.ProjectClient.Deployment = deploymentOperationsStub

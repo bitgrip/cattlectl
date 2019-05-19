@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newStatefulSetClientWithData(
 	statefulSet projectModel.StatefulSet,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	result, err := newStatefulSetClient(
 		statefulSet.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newStatefulSetClientWithData(
 func newStatefulSetClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	return &statefulSetClient{
@@ -59,14 +59,14 @@ func newStatefulSetClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type statefulSetClient struct {
 	namespacedResourceClient
-	statefulSet   projectModel.StatefulSet
-	backendClient *backendClient.Client
+	statefulSet          projectModel.StatefulSet
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *statefulSetClient) init() error {
@@ -81,7 +81,7 @@ func (client *statefulSetClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.StatefulSet.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.StatefulSet.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -110,7 +110,7 @@ func (client *statefulSetClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendClient.StatefulSet.Create(&pattern)
+	_, err = client.backendProjectClient.StatefulSet.Create(&pattern)
 	return err
 }
 

@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -121,13 +121,13 @@ func existingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *secre
 	secret.Name = secretName
 
 	secretOperationsStub := stubs.CreateSecretOperationsStub(t)
-	secretOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.SecretCollection, error) {
+	secretOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.SecretCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.SecretCollection{
-			Data: []backendClient.Secret{
-				backendClient.Secret{
+		return &backendProjectClient.SecretCollection{
+			Data: []backendProjectClient.Secret{
+				backendProjectClient.Secret{
 					Name:        "existing-secret",
 					NamespaceId: "test-namespace-id",
 				},
@@ -164,15 +164,15 @@ func notExistingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *se
 	secret.Name = secretName
 
 	secretOperationsStub := stubs.CreateSecretOperationsStub(t)
-	secretOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.SecretCollection, error) {
+	secretOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.SecretCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.SecretCollection{
-			Data: []backendClient.Secret{},
+		return &backendProjectClient.SecretCollection{
+			Data: []backendProjectClient.Secret{},
 		}, nil
 	}
-	secretOperationsStub.DoCreate = func(secret *backendClient.Secret) (*backendClient.Secret, error) {
+	secretOperationsStub.DoCreate = func(secret *backendProjectClient.Secret) (*backendProjectClient.Secret, error) {
 		return secret, nil
 	}
 	testClients.ProjectClient.Secret = secretOperationsStub

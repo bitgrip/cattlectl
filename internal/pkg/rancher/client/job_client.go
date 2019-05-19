@@ -19,7 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +27,14 @@ func newJobClientWithData(
 	job projectModel.Job,
 	namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (JobClient, error) {
 	result, err := newJobClient(
 		job.Name,
 		namespace,
 		project,
-		backendClient,
+		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func newJobClientWithData(
 func newJobClient(
 	name, namespace string,
 	project ProjectClient,
-	backendClient *backendClient.Client,
+	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (JobClient, error) {
 	return &jobClient{
@@ -59,14 +59,14 @@ func newJobClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendClient: backendClient,
+		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type jobClient struct {
 	namespacedResourceClient
-	job           projectModel.Job
-	backendClient *backendClient.Client
+	job                  projectModel.Job
+	backendProjectClient *backendProjectClient.Client
 }
 
 func (client *jobClient) init() error {
@@ -81,7 +81,7 @@ func (client *jobClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
-	collection, err := client.backendClient.Job.List(&types.ListOpts{
+	collection, err := client.backendProjectClient.Job.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -110,7 +110,7 @@ func (client *jobClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendClient.Job.Create(&pattern)
+	_, err = client.backendProjectClient.Job.Create(&pattern)
 	return err
 }
 

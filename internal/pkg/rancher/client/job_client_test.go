@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -131,13 +131,13 @@ func existingJobClient(t *testing.T, expectedListOpts *types.ListOpts) *jobClien
 	jobDescriptor.Spec = job
 
 	jobOperationsStub := stubs.CreateJobOperationsStub(t)
-	jobOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.JobCollection, error) {
+	jobOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.JobCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.JobCollection{
-			Data: []backendClient.Job{
-				backendClient.Job{
+		return &backendProjectClient.JobCollection{
+			Data: []backendProjectClient.Job{
+				backendProjectClient.Job{
 					Name:        "existing-job",
 					NamespaceId: "test-namespace-id",
 				},
@@ -184,15 +184,15 @@ func notExistingJobClient(t *testing.T, expectedListOpts *types.ListOpts) *jobCl
 	jobDescriptor.Spec = job
 
 	jobOperationsStub := stubs.CreateJobOperationsStub(t)
-	jobOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.JobCollection, error) {
+	jobOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.JobCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.JobCollection{
-			Data: []backendClient.Job{},
+		return &backendProjectClient.JobCollection{
+			Data: []backendProjectClient.Job{},
 		}, nil
 	}
-	jobOperationsStub.DoCreate = func(job *backendClient.Job) (*backendClient.Job, error) {
+	jobOperationsStub.DoCreate = func(job *backendProjectClient.Job) (*backendProjectClient.Job, error) {
 		return job, nil
 	}
 	testClients.ProjectClient.Job = jobOperationsStub

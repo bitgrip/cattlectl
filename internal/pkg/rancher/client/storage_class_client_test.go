@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/cluster/v3"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -119,13 +119,13 @@ func existingStorageClassClient(t *testing.T, expectedListOpts *types.ListOpts) 
 	storageClass.Name = storageClassName
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
-	storageClassOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.StorageClassCollection, error) {
+	storageClassOperationsStub.DoList = func(opts *types.ListOpts) (*backendClusterClient.StorageClassCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.StorageClassCollection{
-			Data: []backendClient.StorageClass{
-				backendClient.StorageClass{
+		return &backendClusterClient.StorageClassCollection{
+			Data: []backendClusterClient.StorageClass{
+				backendClusterClient.StorageClass{
 					Name: "existing-storageClass",
 				},
 			},
@@ -160,15 +160,15 @@ func notExistingStorageClassClient(t *testing.T, expectedListOpts *types.ListOpt
 	storageClass.Name = storageClassName
 
 	storageClassOperationsStub := stubs.CreateStorageClassOperationsStub(t)
-	storageClassOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.StorageClassCollection, error) {
+	storageClassOperationsStub.DoList = func(opts *types.ListOpts) (*backendClusterClient.StorageClassCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.StorageClassCollection{
-			Data: []backendClient.StorageClass{},
+		return &backendClusterClient.StorageClassCollection{
+			Data: []backendClusterClient.StorageClass{},
 		}, nil
 	}
-	storageClassOperationsStub.DoCreate = func(storageClass *backendClient.StorageClass) (*backendClient.StorageClass, error) {
+	storageClassOperationsStub.DoCreate = func(storageClass *backendClusterClient.StorageClass) (*backendClusterClient.StorageClass, error) {
 		return storageClass, nil
 	}
 	testClients.ClusterClient.StorageClass = storageClassOperationsStub

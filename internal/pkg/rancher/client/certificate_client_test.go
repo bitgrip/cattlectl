@@ -23,7 +23,7 @@ import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
-	backendClient "github.com/rancher/types/client/project/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -121,13 +121,13 @@ func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *
 	certificate.Name = certificateName
 
 	certificateOperationsStub := stubs.CreateCertificateOperationsStub(t)
-	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.CertificateCollection, error) {
+	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.CertificateCollection{
-			Data: []backendClient.Certificate{
-				backendClient.Certificate{
+		return &backendProjectClient.CertificateCollection{
+			Data: []backendProjectClient.Certificate{
+				backendProjectClient.Certificate{
 					Name:        "existing-certificate",
 					NamespaceId: "test-namespace-id",
 				},
@@ -164,15 +164,15 @@ func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts
 	certificate.Name = certificateName
 
 	certificateOperationsStub := stubs.CreateCertificateOperationsStub(t)
-	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendClient.CertificateCollection, error) {
+	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendClient.CertificateCollection{
-			Data: []backendClient.Certificate{},
+		return &backendProjectClient.CertificateCollection{
+			Data: []backendProjectClient.Certificate{},
 		}, nil
 	}
-	certificateOperationsStub.DoCreate = func(certificate *backendClient.Certificate) (*backendClient.Certificate, error) {
+	certificateOperationsStub.DoCreate = func(certificate *backendProjectClient.Certificate) (*backendProjectClient.Certificate, error) {
 		return certificate, nil
 	}
 	testClients.ProjectClient.Certificate = certificateOperationsStub
