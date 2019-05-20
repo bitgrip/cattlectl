@@ -23,8 +23,9 @@ import (
 // NewRancherClient creates a new rancher client
 func NewRancherClient(config RancherConfig) (RancherClient, error) {
 	return &rancherClient{
-		config: config,
-		logger: logrus.WithFields(logrus.Fields{}),
+		config:         config,
+		logger:         logrus.WithFields(logrus.Fields{}),
+		clusterClients: make(map[string]ClusterClient),
 	}, nil
 }
 
@@ -41,6 +42,7 @@ type rancherClient struct {
 	config               RancherConfig
 	backendRancherClient *backendRancherClient.Client
 	logger               *logrus.Entry
+	clusterClients       map[string]ClusterClient
 }
 
 func (client *rancherClient) init() error {
@@ -59,7 +61,15 @@ func (client *rancherClient) Cluster(clusterName string) (ClusterClient, error) 
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return newClusterClient(clusterName, client.config, client.backendRancherClient, client.logger)
+	if cache, exists := client.clusterClients[clusterName]; exists {
+		return cache, nil
+	}
+	result, err := newClusterClient(clusterName, client.config, client.backendRancherClient, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.clusterClients[clusterName] = result
+	return result, nil
 }
 
 func (client *rancherClient) Clusters() ([]ClusterClient, error) {

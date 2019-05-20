@@ -37,6 +37,7 @@ func CreateBackendStubs(tb testing.TB) *BackendStubs {
 	testClients.ClusterClient.Namespace = CreateNamespaceOperationsStub(tb)
 	testClients.ClusterClient.StorageClass = CreateStorageClassOperationsStub(tb)
 	testClients.ClusterClient.PersistentVolume = CreatePersistentVolumeOperationsStub(tb)
+	testClients.ManagementClient.Cluster = CreateClusterOperationsStub(tb)
 	testClients.ManagementClient.Project = CreateProjectOperationsStub(tb)
 	testClients.ProjectClient.App = CreateAppOperationsStub(tb)
 	testClients.ProjectClient.Job = CreateJobOperationsStub(tb)
