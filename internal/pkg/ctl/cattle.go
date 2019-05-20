@@ -193,6 +193,7 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 		if err = newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
 			return err
 		}
+		descriptor = cronJobDescriptor
 	}
 	out, err := yaml.Marshal(descriptor)
 	if err != nil {
