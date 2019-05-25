@@ -25,15 +25,11 @@ import (
 
 func newStorageClassClientWithData(
 	storageClass projectModel.StorageClass,
-	namespace string,
-	project ProjectClient,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (StorageClassClient, error) {
 	result, err := newStorageClassClient(
 		storageClass.Name,
-		namespace,
-		project,
 		backendClusterClient,
 		logger,
 	)
@@ -45,15 +41,14 @@ func newStorageClassClientWithData(
 }
 
 func newStorageClassClient(
-	name, namespace string,
-	project ProjectClient,
+	name string,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (StorageClassClient, error) {
 	return &storageClassClient{
 		resourceClient: resourceClient{
 			name:   name,
-			logger: logger.WithField("storageClass_name", name).WithField("namespace", namespace),
+			logger: logger.WithField("storageClass_name", name),
 		},
 		backendClusterClient: backendClusterClient,
 	}, nil

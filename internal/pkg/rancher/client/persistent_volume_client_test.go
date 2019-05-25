@@ -134,8 +134,6 @@ func existingPersistentVolumeClient(t *testing.T, expectedListOpts *types.ListOp
 	testClients.ClusterClient.PersistentVolume = persistentVolumeOperationsStub
 	result, err := newPersistentVolumeClient(
 		"existing-persistentVolume",
-		"test-namespace",
-		nil,
 		testClients.ClusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
@@ -174,8 +172,6 @@ func notExistingPersistentVolumeClient(t *testing.T, expectedListOpts *types.Lis
 	testClients.ClusterClient.PersistentVolume = persistentVolumeOperationsStub
 	result, err := newPersistentVolumeClient(
 		"existing-persistentVolume",
-		"test-namespace",
-		nil,
 		testClients.ClusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)

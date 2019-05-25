@@ -32,10 +32,12 @@ func newProjectClient(
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (ProjectClient, error) {
+	projectLogger := logger.WithField("project_name", name)
+	projectLogger.Trace("Create ProjectClient")
 	return &projectClient{
 		resourceClient: resourceClient{
 			name:   name,
-			logger: logger.WithField("project_name", name),
+			logger: projectLogger,
 		},
 		config:               config,
 		backendRancherClient: backendRancherClient,

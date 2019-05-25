@@ -25,13 +25,13 @@ import (
 
 func newNamespaceClientWithData(
 	namespace projectModel.Namespace,
-	project ProjectClient,
+	projectClient ProjectClient,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (NamespaceClient, error) {
 	result, err := newNamespaceClient(
 		namespace.Name,
-		project,
+		projectClient,
 		backendClusterClient,
 		logger,
 	)
@@ -44,7 +44,7 @@ func newNamespaceClientWithData(
 
 func newNamespaceClient(
 	name string,
-	project ProjectClient,
+	projectClient ProjectClient,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (NamespaceClient, error) {
@@ -53,6 +53,7 @@ func newNamespaceClient(
 			name:   name,
 			logger: logger.WithField("namespace_name", name),
 		},
+		projectClient:        projectClient,
 		backendClusterClient: backendClusterClient,
 	}, nil
 }
@@ -60,6 +61,7 @@ func newNamespaceClient(
 type namespaceClient struct {
 	resourceClient
 	namespace            projectModel.Namespace
+	projectClient        ProjectClient
 	backendClusterClient *backendClusterClient.Client
 }
 
@@ -98,6 +100,13 @@ func (client *namespaceClient) Create() error {
 	newNamespace := &backendClusterClient.Namespace{
 		Name: client.namespace.Name,
 	}
+	if hasProjct, _ := client.HasProject(); hasProjct {
+		projectID, err := client.projectClient.ID()
+		if err != nil {
+			return err
+		}
+		newNamespace.ProjectID = projectID
+	}
 
 	_, err := client.backendClusterClient.Namespace.Create(newNamespace)
 	return err
@@ -105,6 +114,10 @@ func (client *namespaceClient) Create() error {
 
 func (client *namespaceClient) Upgrade() error {
 	return fmt.Errorf("upgrade statefulset not supported")
+}
+
+func (client *namespaceClient) HasProject() (bool, error) {
+	return client.projectClient != nil, nil
 }
 
 func (client *namespaceClient) Data() (projectModel.Namespace, error) {

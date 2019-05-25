@@ -37,6 +37,10 @@ func newClusterClient(
 		},
 		config:               config,
 		backendRancherClient: backendRancherClient,
+		projectClients:       make(map[string]ProjectClient),
+		storageClasses:       make(map[string]StorageClassClient),
+		persistentVolumes:    make(map[string]PersistentVolumeClient),
+		namespaces:           make(map[string]NamespaceClient),
 	}, nil
 }
 
@@ -46,6 +50,10 @@ type clusterClient struct {
 	backendRancherClient *backendRancherClient.Client
 	backendClusterClient *backendClusterClient.Client
 	cluster              projectModel.Cluster
+	projectClients       map[string]ProjectClient
+	storageClasses       map[string]StorageClassClient
+	persistentVolumes    map[string]PersistentVolumeClient
+	namespaces           map[string]NamespaceClient
 }
 
 func (client *clusterClient) init() error {
@@ -86,11 +94,19 @@ func (client *clusterClient) Exists() (bool, error) {
 	_, err := client.ID()
 	return err != nil, err
 }
-func (client *clusterClient) Project(projectName string) (ProjectClient, error) {
+func (client *clusterClient) Project(name string) (ProjectClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return newProjectClient(projectName, client.config, client.backendRancherClient, client.backendClusterClient, client.logger)
+	if cache, exists := client.projectClients[name]; exists {
+		return cache, nil
+	}
+	project, err := newProjectClient(name, client.config, client.backendRancherClient, client.backendClusterClient, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.projectClients[name] = project
+	return project, nil
 }
 func (client *clusterClient) Projects() ([]ProjectClient, error) {
 	if err := client.init(); err != nil {
@@ -106,11 +122,11 @@ func (client *clusterClient) Projects() ([]ProjectClient, error) {
 	}
 	result := make([]ProjectClient, len(collection.Data))
 	for i, backendProject := range collection.Data {
-		cluster, err := client.Project(backendProject.Name)
+		project, err := client.Project(backendProject.Name)
 		if err != nil {
 			return nil, err
 		}
-		result[i] = cluster
+		result[i] = project
 	}
 	return result, nil
 }
@@ -118,29 +134,80 @@ func (client *clusterClient) StorageClass(name string) (StorageClassClient, erro
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	if cache, exists := client.storageClasses[name]; exists {
+		return cache, nil
+	}
+	storageClass, err := newStorageClassClient(name, client.backendClusterClient, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.storageClasses[name] = storageClass
+	return storageClass, nil
 }
 func (client *clusterClient) StorageClasses() ([]StorageClassClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	collection, err := client.backendClusterClient.StorageClass.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"clusterId": client.id,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]StorageClassClient, len(collection.Data))
+	for i, backendStorageClass := range collection.Data {
+		storageClass, err := client.StorageClass(backendStorageClass.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = storageClass
+	}
+	return result, nil
 }
 func (client *clusterClient) PersistentVolume(name string) (PersistentVolumeClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	if cache, exists := client.persistentVolumes[name]; exists {
+		return cache, nil
+	}
+	persistentVolume, err := newPersistentVolumeClient(name, client.backendClusterClient, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.persistentVolumes[name] = persistentVolume
+	return persistentVolume, nil
 }
 func (client *clusterClient) PersistentVolumes() ([]PersistentVolumeClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	collection, err := client.backendClusterClient.PersistentVolume.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"clusterId": client.id,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]PersistentVolumeClient, len(collection.Data))
+	for i, backendPersistentVolume := range collection.Data {
+		persistentVolume, err := client.PersistentVolume(backendPersistentVolume.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = persistentVolume
+	}
+	return result, nil
 }
 func (client *clusterClient) Namespace(name, projectName string) (NamespaceClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
+	}
+	if cache, exists := client.namespaces[name]; exists {
+		return cache, nil
 	}
 	return nil, fmt.Errorf("upgrade statefulset not supported")
 }

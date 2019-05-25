@@ -25,15 +25,11 @@ import (
 
 func newPersistentVolumeClientWithData(
 	persistentVolume projectModel.PersistentVolume,
-	namespace string,
-	project ProjectClient,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (PersistentVolumeClient, error) {
 	result, err := newPersistentVolumeClient(
 		persistentVolume.Name,
-		namespace,
-		project,
 		backendClusterClient,
 		logger,
 	)
@@ -45,15 +41,14 @@ func newPersistentVolumeClientWithData(
 }
 
 func newPersistentVolumeClient(
-	name, namespace string,
-	project ProjectClient,
+	name string,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (PersistentVolumeClient, error) {
 	return &persistentVolumeClient{
 		resourceClient: resourceClient{
 			name:   name,
-			logger: logger.WithField("persistentVolume_name", name).WithField("namespace", namespace),
+			logger: logger.WithField("persistentVolume_name", name),
 		},
 		backendClusterClient: backendClusterClient,
 	}, nil

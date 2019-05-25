@@ -134,8 +134,6 @@ func existingStorageClassClient(t *testing.T, expectedListOpts *types.ListOpts) 
 	testClients.ClusterClient.StorageClass = storageClassOperationsStub
 	result, err := newStorageClassClient(
 		"existing-storageClass",
-		"test-namespace",
-		nil,
 		testClients.ClusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
@@ -174,8 +172,6 @@ func notExistingStorageClassClient(t *testing.T, expectedListOpts *types.ListOpt
 	testClients.ClusterClient.StorageClass = storageClassOperationsStub
 	result, err := newStorageClassClient(
 		"existing-storageClass",
-		"test-namespace",
-		nil,
 		testClients.ClusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)

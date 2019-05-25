@@ -89,6 +89,7 @@ type ProjectClient interface {
 // NamespaceClient interacts with a Rancher namespace resource
 type NamespaceClient interface {
 	ResourceClient
+	HasProject() (bool, error)
 	Data() (projectModel.Namespace, error)
 	SetData(storageClass projectModel.Namespace) error
 }
