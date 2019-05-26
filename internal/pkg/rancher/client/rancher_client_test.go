@@ -38,7 +38,7 @@ func Test_rancherClient_Cluster(t *testing.T) {
 	}{
 		{
 			name:   "success",
-			client: testRancherClient(),
+			client: simpleRancherClient(),
 			args: args{
 				clusterName: "test-cluster",
 			},
@@ -76,7 +76,7 @@ func Test_rancherClient_Clusters(t *testing.T) {
 	}{
 		{
 			name:         "success",
-			client:       testRancherClient(),
+			client:       simpleRancherClient(),
 			doList:       twoClusters(),
 			wantedLength: 2,
 			wantErr:      false,
@@ -104,7 +104,7 @@ func Test_rancherClient_Clusters(t *testing.T) {
 	}
 }
 
-func testRancherClient() *rancherClient {
+func simpleRancherClient() *rancherClient {
 	return &rancherClient{
 		config:         RancherConfig{},
 		logger:         logrus.WithFields(logrus.Fields{}),

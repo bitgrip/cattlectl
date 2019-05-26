@@ -27,6 +27,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleNamespaceName = "simple-namespace"
+	simpleNamespaceID   = "simple-namespace-id"
+)
+
 func Test_namespaceClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

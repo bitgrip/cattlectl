@@ -40,7 +40,7 @@ func newClusterClient(
 		projectClients:       make(map[string]ProjectClient),
 		storageClasses:       make(map[string]StorageClassClient),
 		persistentVolumes:    make(map[string]PersistentVolumeClient),
-		namespaces:           make(map[string]NamespaceClient),
+		namespaces:           make(map[string]namespaceCacheEntry),
 	}, nil
 }
 
@@ -53,7 +53,12 @@ type clusterClient struct {
 	projectClients       map[string]ProjectClient
 	storageClasses       map[string]StorageClassClient
 	persistentVolumes    map[string]PersistentVolumeClient
-	namespaces           map[string]NamespaceClient
+	namespaces           map[string]namespaceCacheEntry
+}
+
+type namespaceCacheEntry struct {
+	projectName string
+	namespace   NamespaceClient
 }
 
 func (client *clusterClient) init() error {
@@ -206,14 +211,64 @@ func (client *clusterClient) Namespace(name, projectName string) (NamespaceClien
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	if cache, exists := client.namespaces[name]; exists {
-		return cache, nil
+	var (
+		projectClient ProjectClient
+		err           error
+	)
+	if projectName != "" {
+		projectClient, err = client.Project(projectName)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	if cache, exists := client.namespaces[name]; exists {
+		if cache.projectName != projectName {
+			return nil, fmt.Errorf("Namespace %s is part of project: %s", name, cache.projectName)
+		}
+		return cache.namespace, nil
+	}
+	namespace, err := newNamespaceClient(name, projectClient, client.backendClusterClient, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.namespaces[name] = namespaceCacheEntry{
+		projectName: projectName,
+		namespace:   namespace,
+	}
+	return namespace, nil
 }
 func (client *clusterClient) Namespaces(projectName string) ([]NamespaceClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+
+	filters := map[string]interface{}{
+		"clusterId": client.id,
+	}
+	if projectName != "" {
+		project, err := client.Project(projectName)
+		if err != nil {
+			return nil, err
+		}
+		projectID, err := project.ID()
+		if err != nil {
+			return nil, err
+		}
+		filters["projectId"] = projectID
+	}
+	collection, err := client.backendClusterClient.Namespace.List(&types.ListOpts{
+		Filters: filters,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]NamespaceClient, len(collection.Data))
+	for i, backendNamespace := range collection.Data {
+		namespace, err := client.Namespace(backendNamespace.Name, projectName)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = namespace
+	}
+	return result, nil
 }

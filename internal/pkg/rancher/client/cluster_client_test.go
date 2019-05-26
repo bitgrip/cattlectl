@@ -25,6 +25,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleClusterName = "simple-cluster"
+	simpleClusterID   = "simple-cluster-id"
+)
+
 func Test_clusterClient_Project(t *testing.T) {
 	type args struct {
 		projectName string
@@ -37,7 +42,7 @@ func Test_clusterClient_Project(t *testing.T) {
 		wantedErr string
 	}{
 		{
-			name:   "simple-cluster",
+			name:   simpleClusterName,
 			client: simpleClusterClient(),
 			args: args{
 				projectName: "simple-project",
@@ -125,7 +130,7 @@ func Test_clusterClient_StorageClass(t *testing.T) {
 		wantedErr string
 	}{
 		{
-			name:   "simple-cluster",
+			name:   simpleClusterName,
 			client: simpleClusterClient(),
 			args: args{
 				name: "simple-storage-class",
@@ -213,7 +218,7 @@ func Test_clusterClient_PersistentVolume(t *testing.T) {
 		wantedErr string
 	}{
 		{
-			name:   "simple-cluster",
+			name:   simpleClusterName,
 			client: simpleClusterClient(),
 			args: args{
 				name: "simple-storage-class",
@@ -258,13 +263,6 @@ func Test_clusterClient_PersistentVolumes(t *testing.T) {
 			wantedLength:           2,
 			wantErr:                false,
 		},
-		{
-			name:                   "only-one-storage-class-per-unique-name",
-			client:                 simpleClusterClient(),
-			foundPersistentVolumes: []string{"simple-storage-class1", "simple-storage-class1"},
-			wantedLength:           2,
-			wantErr:                false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -289,19 +287,104 @@ func Test_clusterClient_PersistentVolumes(t *testing.T) {
 	}
 }
 
+func Test_clusterClient_Namespace(t *testing.T) {
+	type args struct {
+		name        string
+		projectName string
+	}
+	tests := []struct {
+		name      string
+		client    *clusterClient
+		args      args
+		wantErr   bool
+		wantedErr string
+	}{
+		{
+			name:   simpleClusterName,
+			client: simpleClusterClient(),
+			args: args{
+				name:        simpleNamespaceName,
+				projectName: simpleProjectName,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Arrange
+			testClients := stubs.CreateBackendStubs(t)
+			tt.client.backendRancherClient = testClients.ManagementClient
+			tt.client.backendClusterClient = testClients.ClusterClient
+
+			got, err := tt.client.Namespace(tt.args.name, tt.args.projectName)
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				gotName, err := got.Name()
+				assert.Ok(t, err)
+				assert.Equals(t, tt.args.name, gotName)
+			}
+		})
+	}
+}
+
+func Test_clusterClient_Namespaces(t *testing.T) {
+	tests := []struct {
+		name            string
+		client          *clusterClient
+		foundNamespaces []string
+		wantedLength    int
+		wantErr         bool
+		wantedErr       string
+	}{
+		{
+			name:            "success",
+			client:          simpleClusterClient(),
+			foundNamespaces: []string{simpleNamespaceName + "1", simpleNamespaceName + "2"},
+			wantedLength:    2,
+			wantErr:         false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Arrange
+			testClients := stubs.CreateBackendStubs(t)
+			tt.client.backendRancherClient = testClients.ManagementClient
+			tt.client.backendClusterClient = testClients.ClusterClient
+
+			namespaceOperationStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationStub.DoList = foundNamespaces(tt.foundNamespaces, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationStub
+
+			got, err := tt.client.Namespaces(simpleProjectName)
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				assert.Equals(t, tt.wantedLength, len(got))
+			}
+		})
+	}
+}
+
 func simpleClusterClient() *clusterClient {
 	logrus.SetLevel(logrus.TraceLevel)
 	return &clusterClient{
 		resourceClient: resourceClient{
-			name:   "simple-cluster",
-			id:     "simple-cluster-id",
+			name:   simpleClusterName,
+			id:     simpleClusterID,
 			logger: logrus.WithFields(logrus.Fields{}),
 		},
-		config:            RancherConfig{},
-		projectClients:    make(map[string]ProjectClient),
+		config: RancherConfig{},
+		projectClients: map[string]ProjectClient{
+			simpleProjectName: simpleProjectClient(),
+		},
 		storageClasses:    make(map[string]StorageClassClient),
 		persistentVolumes: make(map[string]PersistentVolumeClient),
-		namespaces:        make(map[string]NamespaceClient),
+		namespaces:        make(map[string]namespaceCacheEntry),
 	}
 }
 
@@ -336,6 +419,18 @@ func foundPersistentVolumes(names []string) func(opts *types.ListOpts) (*backend
 	}
 	return func(opts *types.ListOpts) (*backendClusterClient.PersistentVolumeCollection, error) {
 		return &backendClusterClient.PersistentVolumeCollection{
+			Data: data,
+		}, nil
+	}
+}
+
+func foundNamespaces(names []string, projectID string) func(opts *types.ListOpts) (*backendClusterClient.NamespaceCollection, error) {
+	data := make([]backendClusterClient.Namespace, 0)
+	for _, name := range names {
+		data = append(data, backendClusterClient.Namespace{Name: name, ProjectID: projectID})
+	}
+	return func(opts *types.ListOpts) (*backendClusterClient.NamespaceCollection, error) {
+		return &backendClusterClient.NamespaceCollection{
 			Data: data,
 		}, nil
 	}

@@ -13,3 +13,17 @@
 // limitations under the License.
 
 package client
+
+const (
+	simpleProjectName = "simple-project"
+	simpleProjectID   = "simple-project-id"
+)
+
+func simpleProjectClient() *projectClient {
+	return &projectClient{
+		resourceClient: resourceClient{
+			name: simpleProjectName,
+			id:   simpleProjectID,
+		},
+	}
+}
