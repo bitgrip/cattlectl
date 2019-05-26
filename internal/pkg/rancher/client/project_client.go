@@ -28,6 +28,7 @@ import (
 func newProjectClient(
 	name string,
 	config RancherConfig,
+	clusterClient ClusterClient,
 	backendRancherClient *backendRancherClient.Client,
 	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
@@ -106,13 +107,13 @@ func (client *projectClient) Namespace(name string) (NamespaceClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	return client.clusterClient.Namespace(name, client.name)
 }
 func (client *projectClient) Namespaces() ([]NamespaceClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	return client.clusterClient.Namespaces(client.name)
 }
 func (client *projectClient) Certificate(name string) (CertificateClient, error) {
 	if err := client.init(); err != nil {

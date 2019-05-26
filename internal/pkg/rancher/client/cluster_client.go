@@ -106,7 +106,7 @@ func (client *clusterClient) Project(name string) (ProjectClient, error) {
 	if cache, exists := client.projectClients[name]; exists {
 		return cache, nil
 	}
-	project, err := newProjectClient(name, client.config, client.backendRancherClient, client.backendClusterClient, client.logger)
+	project, err := newProjectClient(name, client.config, client, client.backendRancherClient, client.backendClusterClient, client.logger)
 	if err != nil {
 		return nil, err
 	}
