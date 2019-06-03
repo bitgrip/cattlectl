@@ -70,18 +70,47 @@ type certificateClient struct {
 }
 
 func (client *certificateClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
+	if client.namespace != "" && client.namespaceID == "" {
+		namespaceID, err := client.NamespaceID()
+		if client.namespace != "" && namespaceID == "" && err == nil {
+			return fmt.Errorf("Can not find namespace %s", client.namespace)
+		}
+		return err
 	}
-	return err
+	return nil
 }
 
 func (client *certificateClient) Exists() (bool, error) {
 	if err := client.init(); err != nil {
 		return false, err
 	}
+	if client.namespace != "" {
+		return client.existsInNamespace()
+	}
+	return client.existsInProject()
+}
+
+func (client *certificateClient) existsInProject() (bool, error) {
 	collection, err := client.backendProjectClient.Certificate.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read certificate list")
+		return false, fmt.Errorf("Failed to read certificate list, %v", err)
+	}
+	for _, item := range collection.Data {
+		if item.Name == client.name {
+			return true, nil
+		}
+	}
+	client.logger.Debug("Certificate not found")
+	return false, nil
+}
+
+func (client *certificateClient) existsInNamespace() (bool, error) {
+	collection, err := client.backendProjectClient.NamespacedCertificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -104,10 +133,6 @@ func (client *certificateClient) Create() error {
 	if err := client.init(); err != nil {
 		return err
 	}
-	namespaceID, err := client.NamespaceID()
-	if err != nil {
-		return fmt.Errorf("Failed to read namespace ID, %v", err)
-	}
 	projectID, err := client.project.ID()
 	if err != nil {
 		return fmt.Errorf("Failed to read namespace ID, %v", err)
@@ -115,16 +140,37 @@ func (client *certificateClient) Create() error {
 	client.logger.Info("Create new Certificate")
 	labels := make(map[string]string)
 	labels["cattlectl.io/hash"] = hashOf(client.certificate)
+
+	if client.namespace != "" {
+		return client.createInNamespace(projectID, labels)
+	}
+	return client.createInProject(projectID, labels)
+}
+
+func (client *certificateClient) createInProject(projectID string, labels map[string]string) error {
 	newCertificate := &backendProjectClient.Certificate{
+		Name:      client.certificate.Name,
+		Labels:    labels,
+		Key:       client.certificate.Key,
+		Certs:     client.certificate.Certs,
+		ProjectID: projectID,
+	}
+
+	_, err := client.backendProjectClient.Certificate.Create(newCertificate)
+	return err
+}
+
+func (client *certificateClient) createInNamespace(projectID string, labels map[string]string) error {
+	newCertificate := &backendProjectClient.NamespacedCertificate{
 		Name:        client.certificate.Name,
 		Labels:      labels,
 		Key:         client.certificate.Key,
 		Certs:       client.certificate.Certs,
-		NamespaceId: namespaceID,
+		NamespaceId: client.namespaceID,
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendProjectClient.Certificate.Create(newCertificate)
+	_, err := client.backendProjectClient.NamespacedCertificate.Create(newCertificate)
 	return err
 }
 
@@ -138,6 +184,8 @@ func (client *certificateClient) Data() (projectModel.Certificate, error) {
 
 func (client *certificateClient) SetData(certificate projectModel.Certificate) error {
 	client.name = certificate.Name
+	client.namespace = certificate.Namespace
+	client.namespaceID = ""
 	client.certificate = certificate
 	return nil
 }

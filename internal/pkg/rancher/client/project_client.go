@@ -43,6 +43,7 @@ func newProjectClient(
 		config:               config,
 		backendRancherClient: backendRancherClient,
 		backendClusterClient: backendClusterClient,
+		certificateClients:   make(map[string]CertificateClient),
 	}, nil
 }
 
@@ -54,6 +55,7 @@ type projectClient struct {
 	backendClusterClient *backendClusterClient.Client
 	backendProjectClient *backendProjectClient.Client
 	project              projectModel.Project
+	certificateClients   map[string]CertificateClient
 }
 
 func (client *projectClient) init() error {
@@ -116,28 +118,77 @@ func (client *projectClient) Namespaces() ([]NamespaceClient, error) {
 	return client.clusterClient.Namespaces(client.name)
 }
 func (client *projectClient) Certificate(name string) (CertificateClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	return client.NamespacedCertificate(name, "")
 }
 func (client *projectClient) Certificates() ([]CertificateClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+
+	collection, err := client.backendProjectClient.Certificate.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"projectId": client.id,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]CertificateClient, len(collection.Data))
+	for i, backendCertificate := range collection.Data {
+		certificate, err := client.Certificate(backendCertificate.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = certificate
+	}
+	return result, nil
 }
 func (client *projectClient) NamespacedCertificate(name, namespaceName string) (CertificateClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+	if cache, exists := client.certificateClients[name]; exists {
+		return cache, nil
+	}
+	certificate, err := newCertificateClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.certificateClients[name] = certificate
+	return certificate, nil
 }
 func (client *projectClient) NamespacedCertificates(namespaceName string) ([]CertificateClient, error) {
 	if err := client.init(); err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("upgrade statefulset not supported")
+
+	namespace, err := client.Namespace(namespaceName)
+	if err != nil {
+		return nil, err
+	}
+	namespaceID, err := namespace.ID()
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := client.backendProjectClient.NamespacedCertificate.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"projectId":   client.id,
+			"namespaceId": namespaceID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]CertificateClient, len(collection.Data))
+	for i, backendCertificate := range collection.Data {
+		certificate, err := client.Certificate(backendCertificate.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = certificate
+	}
+	return result, nil
 }
 func (client *projectClient) ConfigMap(name, namespaceName string) (ConfigMapClient, error) {
 	if err := client.init(); err != nil {

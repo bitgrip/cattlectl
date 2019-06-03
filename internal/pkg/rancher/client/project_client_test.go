@@ -19,6 +19,7 @@ import (
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -124,11 +125,66 @@ func Test_projectClient_Namespaces(t *testing.T) {
 	}
 }
 
+func Test_projectClient_Certificate(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name      string
+		client    *projectClient
+		args      args
+		wantErr   bool
+		wantedErr string
+	}{
+		{
+			name:   simpleClusterName,
+			client: simpleProjectClient(),
+			args: args{
+				name: simpleCertificateName,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Arrange
+			testClients := stubs.CreateBackendStubs(t)
+			tt.client.backendRancherClient = testClients.ManagementClient
+			tt.client.backendClusterClient = testClients.ClusterClient
+			tt.client.backendProjectClient = testClients.ProjectClient
+			clusterClient := simpleClusterClient()
+			clusterClient.backendRancherClient = testClients.ManagementClient
+			clusterClient.backendClusterClient = testClients.ClusterClient
+			tt.client.clusterClient = clusterClient
+
+			got, err := tt.client.Certificate(tt.args.name)
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				gotName, err := got.Name()
+				assert.Ok(t, err)
+				assert.Equals(t, tt.args.name, gotName)
+			}
+			got2, err := tt.client.Certificate(tt.args.name)
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				assert.Assert(t, got == got2, "second call shout returne the same object from cache")
+			}
+		})
+	}
+}
+
 func simpleProjectClient() *projectClient {
 	return &projectClient{
 		resourceClient: resourceClient{
-			name: simpleProjectName,
-			id:   simpleProjectID,
+			name:   simpleProjectName,
+			id:     simpleProjectID,
+			logger: logrus.WithFields(logrus.Fields{}),
 		},
+		certificateClients: make(map[string]CertificateClient),
 	}
 }

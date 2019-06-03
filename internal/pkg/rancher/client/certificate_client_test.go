@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleCertificateName = "simple-certificate-name"
+)
+
 func Test_certificateClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -41,8 +45,7 @@ func Test_certificateClient_Exists(t *testing.T) {
 				t,
 				&types.ListOpts{
 					Filters: map[string]interface{}{
-						"name":        "existing-certificate",
-						"namespaceId": "test-namespace-id",
+						"name": simpleCertificateName,
 					},
 				},
 			),
@@ -55,8 +58,35 @@ func Test_certificateClient_Exists(t *testing.T) {
 				t,
 				&types.ListOpts{
 					Filters: map[string]interface{}{
-						"name":        "existing-certificate",
-						"namespaceId": "test-namespace-id",
+						"name": simpleCertificateName,
+					},
+				},
+			),
+			wanted:  false,
+			wantErr: false,
+		},
+		{
+			name: "Existing_Namespaced",
+			client: existingNamespacedCertificateClient(
+				t,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name":        simpleCertificateName,
+						"namespaceId": simpleNamespaceID,
+					},
+				},
+			),
+			wanted:  true,
+			wantErr: false,
+		},
+		{
+			name: "Not_Existing_Namespaced",
+			client: notExistingNamespacedCertificateClient(
+				t,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name":        simpleCertificateName,
+						"namespaceId": simpleNamespaceID,
 					},
 				},
 			),
@@ -92,6 +122,14 @@ func Test_certificateClient_Create(t *testing.T) {
 			),
 			wantErr: false,
 		},
+		{
+			name: "Create_namespaces",
+			client: notExistingNamespacedCertificateClient(
+				t,
+				nil,
+			),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -106,19 +144,11 @@ func Test_certificateClient_Create(t *testing.T) {
 }
 
 func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *certificateClient {
-	const (
-		projectID       = "test-project-id"
-		projectName     = "test-project-name"
-		namespaceID     = "test-namespace-id"
-		namespace       = "test-namespace"
-		clusterID       = "test-cluster-id"
-		certificateName = "test-certificate"
-	)
 	var (
 		certificate = projectModel.Certificate{}
 		testClients = stubs.CreateBackendStubs(t)
 	)
-	certificate.Name = certificateName
+	certificate.Name = simpleCertificateName
 
 	certificateOperationsStub := stubs.CreateCertificateOperationsStub(t)
 	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {
@@ -128,20 +158,19 @@ func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *
 		return &backendProjectClient.CertificateCollection{
 			Data: []backendProjectClient.Certificate{
 				backendProjectClient.Certificate{
-					Name:        "existing-certificate",
-					NamespaceId: "test-namespace-id",
+					Name: simpleCertificateName,
 				},
 			},
 		}, nil
 	}
 	testClients.ProjectClient.Certificate = certificateOperationsStub
 	result, err := newCertificateClient(
-		"existing-certificate",
-		"test-namespace",
+		simpleCertificateName,
+		"",
 		&projectClient{
 			resourceClient: resourceClient{
-				name: projectName,
-				id:   projectID,
+				name: simpleProjectName,
+				id:   simpleProjectID,
 			},
 		},
 		testClients.ProjectClient,
@@ -149,24 +178,16 @@ func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *
 	)
 	assert.Ok(t, err)
 	certificateClientResult := result.(*certificateClient)
-	certificateClientResult.namespaceID = "test-namespace-id"
+	certificateClientResult.namespaceID = simpleNamespaceID
 	return certificateClientResult
 }
 
 func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *certificateClient {
-	const (
-		projectID       = "test-project-id"
-		projectName     = "test-project-name"
-		namespaceID     = "test-namespace-id"
-		namespace       = "test-namespace"
-		clusterID       = "test-cluster-id"
-		certificateName = "test-certificate"
-	)
 	var (
 		certificate = projectModel.Certificate{}
 		testClients = stubs.CreateBackendStubs(t)
 	)
-	certificate.Name = certificateName
+	certificate.Name = simpleCertificateName
 
 	certificateOperationsStub := stubs.CreateCertificateOperationsStub(t)
 	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {
@@ -178,16 +199,19 @@ func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts
 		}, nil
 	}
 	certificateOperationsStub.DoCreate = func(certificate *backendProjectClient.Certificate) (*backendProjectClient.Certificate, error) {
+		if certificate.NamespaceId != "" {
+			return nil, fmt.Errorf("Unexpected NamespaceID %v", certificate.NamespaceId)
+		}
 		return certificate, nil
 	}
 	testClients.ProjectClient.Certificate = certificateOperationsStub
 	result, err := newCertificateClient(
-		"existing-certificate",
-		"test-namespace",
+		simpleCertificateName,
+		"",
 		&projectClient{
 			resourceClient: resourceClient{
-				name: projectName,
-				id:   projectID,
+				name: simpleProjectName,
+				id:   simpleProjectID,
 			},
 		},
 		testClients.ProjectClient,
@@ -195,6 +219,87 @@ func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts
 	)
 	assert.Ok(t, err)
 	certificateClientResult := result.(*certificateClient)
-	certificateClientResult.namespaceID = "test-namespace-id"
+	certificateClientResult.namespaceID = simpleNamespaceID
+	return certificateClientResult
+}
+
+func existingNamespacedCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *certificateClient {
+	var (
+		certificate = projectModel.Certificate{}
+		testClients = stubs.CreateBackendStubs(t)
+	)
+	certificate.Name = simpleCertificateName
+
+	certificateOperationsStub := stubs.CreateNamespacedCertificateOperationsStub(t)
+	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedCertificateCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendProjectClient.NamespacedCertificateCollection{
+			Data: []backendProjectClient.NamespacedCertificate{
+				backendProjectClient.NamespacedCertificate{
+					Name:        simpleCertificateName,
+					NamespaceId: simpleNamespaceID,
+				},
+			},
+		}, nil
+	}
+	testClients.ProjectClient.NamespacedCertificate = certificateOperationsStub
+	result, err := newCertificateClient(
+		simpleCertificateName,
+		simpleNamespaceName,
+		&projectClient{
+			resourceClient: resourceClient{
+				name: simpleProjectName,
+				id:   simpleProjectID,
+			},
+		},
+		testClients.ProjectClient,
+		logrus.New().WithFields(logrus.Fields{}),
+	)
+	assert.Ok(t, err)
+	certificateClientResult := result.(*certificateClient)
+	certificateClientResult.namespaceID = simpleNamespaceID
+	return certificateClientResult
+}
+
+func notExistingNamespacedCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *certificateClient {
+	var (
+		certificate = projectModel.Certificate{}
+		testClients = stubs.CreateBackendStubs(t)
+	)
+	certificate.Name = simpleCertificateName
+
+	certificateOperationsStub := stubs.CreateNamespacedCertificateOperationsStub(t)
+	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedCertificateCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendProjectClient.NamespacedCertificateCollection{
+			Data: []backendProjectClient.NamespacedCertificate{},
+		}, nil
+	}
+	certificateOperationsStub.DoCreate = func(certificate *backendProjectClient.NamespacedCertificate) (*backendProjectClient.NamespacedCertificate, error) {
+		if certificate.NamespaceId != simpleNamespaceID {
+			return nil, fmt.Errorf("Unexpected NamespaceID %v", certificate.NamespaceId)
+		}
+		return certificate, nil
+	}
+	testClients.ProjectClient.NamespacedCertificate = certificateOperationsStub
+	result, err := newCertificateClient(
+		simpleCertificateName,
+		simpleNamespaceName,
+		&projectClient{
+			resourceClient: resourceClient{
+				name: simpleProjectName,
+				id:   simpleProjectID,
+			},
+		},
+		testClients.ProjectClient,
+		logrus.New().WithFields(logrus.Fields{}),
+	)
+	assert.Ok(t, err)
+	certificateClientResult := result.(*certificateClient)
+	certificateClientResult.namespaceID = simpleNamespaceID
 	return certificateClientResult
 }
