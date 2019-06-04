@@ -15,54 +15,22 @@
 package project
 
 import (
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
-	"github.com/sirupsen/logrus"
 )
 
 // NewJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewJobConverger(jobDescriptor projectModel.JobDescriptor) descriptor.Converger {
-	return descriptor.DescriptorConverger{
-		InitCluster: func(client rancher.Client) error {
-			return rancher.InitCluster(
-				jobDescriptor.Metadata.ClusterID,
-				jobDescriptor.Metadata.ClusterName,
-				client,
-			)
-		},
-		InitProject: func(client rancher.Client) error {
-			return rancher.InitProject(
-				jobDescriptor.Metadata.ProjectName,
-				client,
-			)
-		},
-		PartConvergers: []descriptor.Converger{
-			newJobPartConverger(
-				jobDescriptor.Metadata.ProjectName,
-				jobDescriptor.Metadata.Namespace,
-				jobDescriptor.Spec,
-			),
-		},
+func NewJobConverger(jobDescriptor projectModel.JobDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
+	jobClient, err := projectClient.Job(jobDescriptor.Spec.Name, jobDescriptor.Metadata.Namespace)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func newJobPartConverger(projectName, namespace string, job projectModel.Job) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "Job",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasJob(namespace, job)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithFields(logrus.Fields{
-				"project_name": projectName,
-				"namespace":    namespace,
-				"job_name":     job.Name,
-			}).Warn("Job exists need to be removed manually")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateJob(namespace, job)
-		},
+	err = jobClient.SetData(jobDescriptor.Spec)
+	if err != nil {
+		return nil, err
 	}
+	return &descriptor.ResourceClientConverger{
+		Client: jobClient,
+	}, nil
 }

@@ -15,54 +15,22 @@
 package project
 
 import (
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
-	"github.com/sirupsen/logrus"
 )
 
 // NewStatefulSetConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewStatefulSetConverger(statefulSetDescriptor projectModel.StatefulSetDescriptor) descriptor.Converger {
-	return descriptor.DescriptorConverger{
-		InitCluster: func(client rancher.Client) error {
-			return rancher.InitCluster(
-				statefulSetDescriptor.Metadata.ClusterID,
-				statefulSetDescriptor.Metadata.ClusterName,
-				client,
-			)
-		},
-		InitProject: func(client rancher.Client) error {
-			return rancher.InitProject(
-				statefulSetDescriptor.Metadata.ProjectName,
-				client,
-			)
-		},
-		PartConvergers: []descriptor.Converger{
-			newStatefulSetPartConverger(
-				statefulSetDescriptor.Metadata.ProjectName,
-				statefulSetDescriptor.Metadata.Namespace,
-				statefulSetDescriptor.Spec,
-			),
-		},
+func NewStatefulSetConverger(statefulSetDescriptor projectModel.StatefulSetDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
+	statefulSetClient, err := projectClient.StatefulSet(statefulSetDescriptor.Spec.Name, statefulSetDescriptor.Metadata.Namespace)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func newStatefulSetPartConverger(projectName, namespace string, statefulSet projectModel.StatefulSet) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "StatefulSet",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasStatefulSet(namespace, statefulSet)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithFields(logrus.Fields{
-				"project_name":     projectName,
-				"namespace":        namespace,
-				"statefulset_name": statefulSet.Name,
-			}).Warn("StatefulSet exists need to be removed manually")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateStatefulSet(namespace, statefulSet)
-		},
+	err = statefulSetClient.SetData(statefulSetDescriptor.Spec)
+	if err != nil {
+		return nil, err
 	}
+	return &descriptor.ResourceClientConverger{
+		Client: statefulSetClient,
+	}, nil
 }

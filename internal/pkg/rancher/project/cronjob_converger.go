@@ -15,43 +15,22 @@
 package project
 
 import (
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
-	"github.com/sirupsen/logrus"
 )
 
 // NewCronJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewCronJobConverger(cronJobDescriptor projectModel.CronJobDescriptor) descriptor.Converger {
-	return descriptor.ProjectResourceDescriptorConverger(
-		cronJobDescriptor.Metadata.ClusterName,
-		cronJobDescriptor.Metadata.ProjectName,
-		[]descriptor.Converger{
-			newCronJobPartConverger(
-				cronJobDescriptor.Metadata.ProjectName,
-				cronJobDescriptor.Metadata.Namespace,
-				cronJobDescriptor.Spec,
-			),
-		},
-	)
-}
-
-func newCronJobPartConverger(projectName, namespace string, cronJob projectModel.CronJob) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "CronJob",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasCronJob(namespace, cronJob)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithFields(logrus.Fields{
-				"project_name": projectName,
-				"namespace":    namespace,
-				"cronjob_name": cronJob.Name,
-			}).Warn("CronJob exists need to be removed manually")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateCronJob(namespace, cronJob)
-		},
+func NewCronJobConverger(cronJobDescriptor projectModel.CronJobDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
+	cronJobClient, err := projectClient.CronJob(cronJobDescriptor.Spec.Name, cronJobDescriptor.Metadata.Namespace)
+	if err != nil {
+		return nil, err
 	}
+	err = cronJobClient.SetData(cronJobDescriptor.Spec)
+	if err != nil {
+		return nil, err
+	}
+	return &descriptor.ResourceClientConverger{
+		Client: cronJobClient,
+	}, nil
 }

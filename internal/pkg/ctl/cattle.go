@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	rancher_client "github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	yaml "gopkg.in/yaml.v2"
@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	newRancherClient = rancher.NewClient
+	newRancherClient = rancher_client.NewRancherClient
 
 	newProjectConverger     = project.NewProjectConverger
 	newJobConverger         = project.NewJobConverger
@@ -110,51 +110,75 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 }
 
 func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) error {
-	client, err := fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
+	_, _, projectClient, err := fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
 	if err != nil {
 		return err
 	}
-	return newCronJobConverger(cronJobDescriptor).Converge(client)
+	converger, err := newCronJobConverger(cronJobDescriptor, projectClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
 }
 
 func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) error {
-	client, err := fillWorkloadMetadata(&jobDescriptor.Metadata, config)
+	_, _, projectClient, err := fillWorkloadMetadata(&jobDescriptor.Metadata, config)
 	if err != nil {
 		return err
 	}
-	return newJobConverger(jobDescriptor).Converge(client)
+	converger, err := newJobConverger(jobDescriptor, projectClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
 }
 
 func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) error {
-	client, err := fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
+	_, _, projectClient, err := fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
 	if err != nil {
 		return err
 	}
-	return newDeploymentConverger(deploymentDescriptor).Converge(client)
+	converger, err := newDeploymentConverger(deploymentDescriptor, projectClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
 }
 
 func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) error {
-	client, err := fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
+	_, _, projectClient, err := fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
 	if err != nil {
 		return err
 	}
-	return newDaemonSetConverger(daemonSetDescriptor).Converge(client)
+	converger, err := newDaemonSetConverger(daemonSetDescriptor, projectClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
 }
 
 func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, config config.Config) error {
-	client, err := fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
+	_, _, projectClient, err := fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
 	if err != nil {
 		return err
 	}
-	return newStatefulSetConverger(statefulSetDescriptor).Converge(client)
+	converger, err := newStatefulSetConverger(statefulSetDescriptor, projectClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
 }
 
 func ApplyProject(project projectModel.Project, config config.Config) error {
-	client, err := fillProjectMetadata(&project.Metadata, config)
+	_, clusterClient, err := fillProjectMetadata(&project.Metadata, config)
 	if err != nil {
 		return err
 	}
-	return newProjectConverger(project).Converge(client)
+	converger, err := newProjectConverger(project, clusterClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
 }
 
 func GetKind(data []byte) (string, error) {
@@ -203,7 +227,7 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 	return err
 }
 
-func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) (rancher.Client, error) {
+func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) (rancher_client.RancherClient, rancher_client.ClusterClient, rancher_client.ProjectClient, error) {
 	if config.RancherURL() != "" {
 		metadata.RancherURL = config.RancherURL()
 	}
@@ -223,16 +247,28 @@ func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config
 		metadata.ClusterID = config.ClusterID()
 	}
 
-	return newRancherClient(rancher.ClientConfig{
+	rancherClient, err := newRancherClient(rancher_client.RancherConfig{
 		RancherURL: metadata.RancherURL,
 		AccessKey:  metadata.AccessKey,
 		SecretKey:  metadata.SecretKey,
 		Insecure:   config.InsecureAPI(),
 		CACerts:    config.CACerts(),
 	})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	clusterClient, err := rancherClient.Cluster(metadata.ClusterName)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	projectClient, err := clusterClient.Project(metadata.ProjectName)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return rancherClient, clusterClient, projectClient, nil
 }
 
-func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.Config) (rancher.Client, error) {
+func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.Config) (rancher_client.RancherClient, rancher_client.ClusterClient, error) {
 	if config.RancherURL() != "" {
 		metadata.RancherURL = config.RancherURL()
 	}
@@ -252,11 +288,19 @@ func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.C
 		metadata.ClusterID = config.ClusterID()
 	}
 
-	return newRancherClient(rancher.ClientConfig{
+	rancherClient, err := newRancherClient(rancher_client.RancherConfig{
 		RancherURL: metadata.RancherURL,
 		AccessKey:  metadata.AccessKey,
 		SecretKey:  metadata.SecretKey,
 		Insecure:   config.InsecureAPI(),
 		CACerts:    config.CACerts(),
 	})
+	if err != nil {
+		return nil, nil, err
+	}
+	clusterClient, err := rancherClient.Cluster(metadata.ClusterName)
+	if err != nil {
+		return nil, nil, err
+	}
+	return rancherClient, clusterClient, nil
 }
