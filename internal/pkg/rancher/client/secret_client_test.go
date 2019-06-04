@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleSecretName = "simple-secret"
+)
+
 func Test_secretClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

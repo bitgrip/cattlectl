@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleAppName = "simple-app"
+)
+
 func Test_appClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -41,8 +45,7 @@ func Test_appClient_Exists(t *testing.T) {
 				t,
 				&types.ListOpts{
 					Filters: map[string]interface{}{
-						"name":        "existing-app",
-						"namespaceId": "test-namespace-id",
+						"name": "existing-app",
 					},
 				},
 			),
@@ -55,8 +58,7 @@ func Test_appClient_Exists(t *testing.T) {
 				t,
 				&types.ListOpts{
 					Filters: map[string]interface{}{
-						"name":        "existing-app",
-						"namespaceId": "test-namespace-id",
+						"name": "existing-app",
 					},
 				},
 			),
@@ -109,8 +111,6 @@ func existingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClien
 	const (
 		projectID   = "test-project-id"
 		projectName = "test-project-name"
-		namespaceID = "test-namespace-id"
-		namespace   = "test-namespace"
 		clusterID   = "test-cluster-id"
 		appName     = "test-app"
 	)
@@ -137,14 +137,12 @@ func existingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClien
 	testClients.ProjectClient.App = appOperationsStub
 	result, err := newAppClient(
 		"existing-app",
-		"test-namespace",
 		nil,
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
 	appClientResult := result.(*appClient)
-	appClientResult.namespaceID = "test-namespace-id"
 	return appClientResult
 }
 
@@ -178,13 +176,11 @@ func notExistingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appCl
 	testClients.ProjectClient.App = appOperationsStub
 	result, err := newAppClient(
 		"existing-app",
-		"test-namespace",
 		nil,
 		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
 	appClientResult := result.(*appClient)
-	appClientResult.namespaceID = "test-namespace-id"
 	return appClientResult
 }

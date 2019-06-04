@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleDockerCredentialName = "simple-docker-credential"
+)
+
 func Test_dockerCredentialClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

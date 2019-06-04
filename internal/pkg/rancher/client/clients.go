@@ -58,20 +58,20 @@ type ProjectClient interface {
 	ResourceClient
 	Namespace(name string) (NamespaceClient, error)
 	Namespaces() ([]NamespaceClient, error)
-	Certificate(name string) (CertificateClient, error)
-	Certificates() ([]CertificateClient, error)
-	NamespacedCertificate(name, namespaceName string) (CertificateClient, error)
-	NamespacedCertificates(namespaceName string) ([]CertificateClient, error)
+	GlobalCertificate(name string) (CertificateClient, error)
+	GlobalCertificates() ([]CertificateClient, error)
+	Certificate(name, namespaceName string) (CertificateClient, error)
+	Certificates(namespaceName string) ([]CertificateClient, error)
 	ConfigMap(name, namespaceName string) (ConfigMapClient, error)
 	ConfigMaps(namespaceName string) ([]ConfigMapClient, error)
-	DockerCredential(name string) (DockerCredentialClient, error)
-	DockerCredentials() ([]DockerCredentialClient, error)
-	NamespacedDockerCredential(name, namespaceName string) (DockerCredentialClient, error)
-	NamespacedDockerCredentials(namespaceName string) ([]DockerCredentialClient, error)
-	Secret(name string) (ConfigMapClient, error)
-	Secrets() ([]ConfigMapClient, error)
-	NamespacedSecret(name, namespaceName string) (ConfigMapClient, error)
-	NamespacedSecrets(namespaceName string) ([]ConfigMapClient, error)
+	GlobalDockerCredential(name string) (DockerCredentialClient, error)
+	GlobalDockerCredentials() ([]DockerCredentialClient, error)
+	DockerCredential(name, namespaceName string) (DockerCredentialClient, error)
+	DockerCredentials(namespaceName string) ([]DockerCredentialClient, error)
+	GlobalSecret(name string) (ConfigMapClient, error)
+	GlobalSecrets() ([]ConfigMapClient, error)
+	Secret(name, namespaceName string) (ConfigMapClient, error)
+	Secrets(namespaceName string) ([]ConfigMapClient, error)
 	App(name string) (AppClient, error)
 	Apps() ([]AppClient, error)
 	Job(name, namespaceName string) (JobClient, error)
@@ -131,7 +131,7 @@ type DockerCredentialClient interface {
 
 // AppClient interacts with a Rancher app resource
 type AppClient interface {
-	NamespacedResourceClient
+	ResourceClient
 	Data() (projectModel.App, error)
 	SetData(app projectModel.App) error
 }

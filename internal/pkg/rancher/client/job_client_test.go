@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleJobName = "simple-job"
+)
+
 func Test_jobClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleCronJobName = "simple-cronjob"
+)
+
 func Test_cronJobClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

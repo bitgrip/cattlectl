@@ -32,7 +32,6 @@ func newAppClientWithData(
 ) (AppClient, error) {
 	result, err := newAppClient(
 		app.Name,
-		namespace,
 		project,
 		backendProjectClient,
 		logger,
@@ -45,37 +44,29 @@ func newAppClientWithData(
 }
 
 func newAppClient(
-	name, namespace string,
+	name string,
 	project ProjectClient,
 	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	return &appClient{
-		namespacedResourceClient: namespacedResourceClient{
-			resourceClient: resourceClient{
-				name:   name,
-				logger: logger.WithField("app_name", name).WithField("namespace", namespace),
-			},
-			namespace: namespace,
-			project:   project,
+		resourceClient: resourceClient{
+			name:   name,
+			logger: logger.WithField("app_name", name),
 		},
 		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type appClient struct {
-	namespacedResourceClient
+	resourceClient
 	app                  projectModel.App
 	backendProjectClient *backendProjectClient.Client
 	backendData          *backendProjectClient.App
 }
 
 func (client *appClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	return nil
 }
 
 func (client *appClient) Exists() (bool, error) {
@@ -84,8 +75,7 @@ func (client *appClient) Exists() (bool, error) {
 	}
 	collection, err := client.backendProjectClient.App.List(&types.ListOpts{
 		Filters: map[string]interface{}{
-			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"name": client.name,
 		},
 	})
 	if nil != err {
@@ -93,7 +83,7 @@ func (client *appClient) Exists() (bool, error) {
 		return false, fmt.Errorf("Failed to read app list, %v", err)
 	}
 	for _, item := range collection.Data {
-		if item.Name == client.name && item.NamespaceId == client.namespaceID {
+		if item.Name == client.name {
 			return true, nil
 		}
 	}

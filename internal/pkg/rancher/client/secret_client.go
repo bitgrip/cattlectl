@@ -30,7 +30,7 @@ func newSecretpClientWithData(
 	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
-	result, err := newConfigMapClient(
+	result, err := newSecretClient(
 		configMap.Name,
 		namespace,
 		project,

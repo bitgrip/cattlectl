@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleStatefulSetName = "simple-stateful-set"
+)
+
 func Test_statefulSetClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

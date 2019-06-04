@@ -38,7 +38,7 @@ func NewProjectConverger(project projectModel.Project, clusterClient client.Clus
 		})
 	}
 	for _, certificate := range project.Resources.Certificates {
-		certificateClient, err := projectClient.NamespacedCertificate(certificate.Name, certificate.Namespace)
+		certificateClient, err := projectClient.Certificate(certificate.Name, certificate.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +58,7 @@ func NewProjectConverger(project projectModel.Project, clusterClient client.Clus
 		})
 	}
 	for _, dockerCredential := range project.Resources.DockerCredentials {
-		dockerCredentialClient, err := projectClient.NamespacedDockerCredential(dockerCredential.Name, dockerCredential.Namespace)
+		dockerCredentialClient, err := projectClient.DockerCredential(dockerCredential.Name, dockerCredential.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func NewProjectConverger(project projectModel.Project, clusterClient client.Clus
 		})
 	}
 	for _, secret := range project.Resources.Secrets {
-		secretClient, err := projectClient.NamespacedSecret(secret.Name, secret.Namespace)
+		secretClient, err := projectClient.Secret(secret.Name, secret.Namespace)
 		if err != nil {
 			return nil, err
 		}

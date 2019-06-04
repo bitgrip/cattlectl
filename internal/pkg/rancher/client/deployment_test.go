@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleDeploymentName = "simple-deployment"
+)
+
 func Test_deploymentClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

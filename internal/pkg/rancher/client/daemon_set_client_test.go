@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleDaemonSetName = "simple-daemon-set"
+)
+
 func Test_daemonSetClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string

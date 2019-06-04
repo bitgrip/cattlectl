@@ -27,6 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	simpleConfigMapName = "simple-config-map"
+)
+
 func Test_configMapClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string
