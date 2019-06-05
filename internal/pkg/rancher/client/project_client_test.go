@@ -15,11 +15,16 @@
 package client
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
+	backendRancherClient "github.com/rancher/types/client/management/v3"
+	managementClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -28,6 +33,120 @@ const (
 	simpleProjectName = "simple-project"
 	simpleProjectID   = "simple-project-id"
 )
+
+func Test_projectClient_Exists(t *testing.T) {
+	tests := []struct {
+		name      string
+		client    *projectClient
+		wanted    bool
+		wantErr   bool
+		wantedErr string
+	}{
+		{
+			name: "Existing",
+			client: existingProjectClient(
+				t,
+				simpleProjectName,
+				simpleProjectID,
+				simpleClusterID,
+			),
+			wanted:  true,
+			wantErr: false,
+		},
+		{
+			name: "Not_Existing",
+			client: notExistingProjectClient(
+				t,
+				simpleProjectName,
+				simpleProjectID,
+				simpleClusterID,
+			),
+			wanted:  false,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.client.Exists()
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				assert.Equals(t, tt.wanted, got)
+			}
+		})
+	}
+}
+
+func Test_projectClient_Create(t *testing.T) {
+	tests := []struct {
+		name            string
+		client          *projectClient
+		wantedProjectID string
+		wantErr         bool
+		wantedErr       string
+	}{
+		{
+			name: "Create",
+			client: notExistingProjectClient(
+				t,
+				simpleProjectName,
+				simpleProjectID,
+				simpleClusterID,
+			),
+			wantedProjectID: simpleProjectID,
+			wantErr:         false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.client.Create()
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				projectID, err := tt.client.ID()
+				assert.Ok(t, err)
+				assert.Equals(t, tt.wantedProjectID, projectID)
+			}
+		})
+	}
+}
+
+func Test_projectClient_Upgrade(t *testing.T) {
+	tests := []struct {
+		name            string
+		client          *projectClient
+		wantedProjectID string
+		wantErr         bool
+		wantedErr       string
+	}{
+		{
+			name: "Upgrade",
+			client: existingProjectClient(
+				t,
+				simpleProjectName,
+				simpleProjectID,
+				simpleClusterID,
+			),
+			wantedProjectID: simpleProjectID,
+			wantErr:         false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.client.Upgrade()
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+				projectID, err := tt.client.ID()
+				assert.Ok(t, err)
+				assert.Equals(t, tt.wantedProjectID, projectID)
+			}
+		})
+	}
+}
 
 func Test_projectClient_Namespace(t *testing.T) {
 	type args struct {
@@ -1500,6 +1619,102 @@ func simpleProjectClient() *projectClient {
 		daemonSetClients:        make(map[string]DaemonSetClient),
 		statefulSetClients:      make(map[string]StatefulSetClient),
 	}
+}
+
+func existingProjectClient(t *testing.T, projectName, projectID, clusterID string) *projectClient {
+	var (
+		project     = projectModel.Project{}
+		testClients = stubs.CreateBackendStubs(t)
+	)
+	project.Metadata.Name = projectName
+
+	expectedListOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":      simpleProjectName,
+			"clusterId": simpleClusterID,
+		},
+	}
+
+	projectOperationsStub := stubs.CreateProjectOperationsStub(t)
+	projectOperationsStub.DoList = func(opts *types.ListOpts) (*backendRancherClient.ProjectCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendRancherClient.ProjectCollection{
+			Data: []backendRancherClient.Project{
+				backendRancherClient.Project{
+					Resource: types.Resource{
+						ID: projectID,
+					},
+					Name: simpleProjectName,
+				},
+			},
+		}, nil
+	}
+	testClients.ManagementClient.Project = projectOperationsStub
+	rancherClient := simpleRancherClient()
+	rancherClient._backendRancherClient = testClients.ManagementClient
+	clusterClient := simpleClusterClient()
+	clusterClient.rancherClient = rancherClient
+	clusterClient._backendClusterClient = testClients.ClusterClient
+	result, err := newProjectClient(
+		simpleProjectName,
+		RancherConfig{},
+		clusterClient,
+		logrus.New().WithFields(logrus.Fields{}),
+	)
+	assert.Ok(t, err)
+	projectClientResult := result.(*projectClient)
+
+	return projectClientResult
+}
+
+func notExistingProjectClient(t *testing.T, projectName, projectID, clusterID string) *projectClient {
+	var (
+		project     = projectModel.Project{}
+		testClients = stubs.CreateBackendStubs(t)
+	)
+	project.Metadata.Name = projectName
+
+	expectedListOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":      simpleProjectName,
+			"clusterId": simpleClusterID,
+		},
+	}
+
+	projectOperationsStub := stubs.CreateProjectOperationsStub(t)
+	projectOperationsStub.DoList = func(opts *types.ListOpts) (*backendRancherClient.ProjectCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendRancherClient.ProjectCollection{
+			Data: []backendRancherClient.Project{},
+		}, nil
+	}
+	projectOperationsStub.DoCreate = func(opts *managementClient.Project) (*managementClient.Project, error) {
+		if opts.Name != projectName || opts.ClusterID != clusterID {
+			return nil, fmt.Errorf("Unexpected Create %v", opts)
+		}
+		opts.ID = projectID
+		return opts, nil
+	}
+
+	testClients.ManagementClient.Project = projectOperationsStub
+	rancherClient := simpleRancherClient()
+	rancherClient._backendRancherClient = testClients.ManagementClient
+	clusterClient := simpleClusterClient()
+	clusterClient.rancherClient = rancherClient
+	clusterClient._backendClusterClient = testClients.ClusterClient
+	result, err := newProjectClient(
+		simpleProjectName,
+		RancherConfig{},
+		clusterClient,
+		logrus.New().WithFields(logrus.Fields{}),
+	)
+	assert.Ok(t, err)
+	projectClientResult := result.(*projectClient)
+	return projectClientResult
 }
 
 func foundGlobalCertificates(names []string, projectID string) func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {

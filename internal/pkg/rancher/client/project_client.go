@@ -19,6 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
+	backendRancherClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -37,6 +38,7 @@ func newProjectClient(
 			logger: projectLogger,
 		},
 		config:                  config,
+		clusterClient:           clusterClient,
 		certificateClients:      make(map[string]CertificateClient),
 		configMapClients:        make(map[string]ConfigMapClient),
 		dockerCredentialClients: make(map[string]DockerCredentialClient),
@@ -109,15 +111,43 @@ func (client *projectClient) ID() (string, error) {
 		return "", err
 	}
 	if len(collection.Data) < 1 {
-		return "", fmt.Errorf("Unknown Cluster [%s]", client.name)
+		client.logger.Debug("Unknown Project")
+		return "", nil
 	}
 	client.id = collection.Data[0].ID
 	return client.id, nil
 }
 
 func (client *projectClient) Exists() (bool, error) {
-	_, err := client.ID()
-	return err != nil, err
+	projectID, err := client.ID()
+	return projectID != "", err
+}
+func (client *projectClient) Create() error {
+	client.logger.Info("Create new project")
+	backendClient, err := client.clusterClient.backendRancherClient()
+	if err != nil {
+		return err
+	}
+	clusterID, err := client.clusterClient.ID()
+	if err != nil {
+		return err
+	}
+	pattern := &backendRancherClient.Project{
+		ClusterID: clusterID,
+		Name:      client.name,
+	}
+	createdProject, err := backendClient.Project.Create(pattern)
+	if err != nil {
+		client.logger.Warn("Failed to create project")
+		return err
+	}
+	client.id = createdProject.ID
+
+	return nil
+}
+func (client *projectClient) Upgrade() error {
+	client.logger.Debug("Project exists")
+	return nil
 }
 func (client *projectClient) Namespace(name string) (NamespaceClient, error) {
 	return client.clusterClient.Namespace(name, client.name)
