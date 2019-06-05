@@ -16,6 +16,7 @@ package client
 
 import (
 	"fmt"
+	"reflect"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
@@ -103,7 +104,42 @@ func (client *appClient) Create() error {
 }
 
 func (client *appClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	backendClient, err := client.projectClient.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	client.logger.Trace("Load from rancher")
+	collection, err := backendClient.App.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read app list")
+		return fmt.Errorf("Failed to read app list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("App %v not found", client.name)
+	}
+
+	installedApp := collection.Data[0]
+
+	if reflect.DeepEqual(installedApp.Answers, client.app.Answers) {
+		client.logger.Debug("Skip upgrade app - no changes")
+		return nil
+	}
+	if client.app.SkipUpgrade {
+		client.logger.Info("Suppress upgrade app - by config")
+		return nil
+	}
+
+	client.logger.Info("Upgrade app")
+	au := &backendProjectClient.AppUpgradeConfig{
+		Answers:    client.app.Answers,
+		ExternalID: fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
+	}
+	return backendClient.App.ActionUpgrade(&installedApp, au)
 }
 
 func (client *appClient) Data() (projectModel.App, error) {

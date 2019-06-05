@@ -43,11 +43,9 @@ func Test_appClient_Exists(t *testing.T) {
 			name: "Existing",
 			client: existingAppClient(
 				t,
-				&types.ListOpts{
-					Filters: map[string]interface{}{
-						"name": "existing-app",
-					},
-				},
+				simpleAppName,
+				simpleNamespaceID,
+				map[string]string{},
 			),
 			wanted:  true,
 			wantErr: false,
@@ -107,18 +105,48 @@ func Test_appClient_Create(t *testing.T) {
 	}
 }
 
-func existingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClient {
-	const (
-		projectID   = "test-project-id"
-		projectName = "test-project-name"
-		clusterID   = "test-cluster-id"
-		appName     = "test-app"
-	)
+func Test_appClient_Upgrade(t *testing.T) {
+	tests := []struct {
+		name      string
+		client    *appClient
+		wantErr   bool
+		wantedErr string
+	}{
+		{
+			name: "Create",
+			client: existingAppClient(
+				t,
+				simpleAppName,
+				simpleNamespaceID,
+				map[string]string{},
+			),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.client.Upgrade()
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+			}
+		})
+	}
+}
+
+func existingAppClient(t *testing.T, appName, namespaceID string, answers map[string]string) *appClient {
 	var (
 		app         = projectModel.App{}
 		testClients = stubs.CreateBackendStubs(t)
 	)
 	app.Name = appName
+	app.Answers = answers
+	expectedListOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": appName,
+		},
+	}
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
 	appOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.AppCollection, error) {
@@ -128,15 +156,15 @@ func existingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClien
 		return &backendProjectClient.AppCollection{
 			Data: []backendProjectClient.App{
 				backendProjectClient.App{
-					Name:        "existing-app",
-					NamespaceId: "test-namespace-id",
+					Name:        appName,
+					NamespaceId: namespaceID,
 				},
 			},
 		}, nil
 	}
 	testClients.ProjectClient.App = appOperationsStub
 	result, err := newAppClient(
-		"existing-app",
+		appName,
 		&projectClient{
 			_backendProjectClient: testClients.ProjectClient,
 		},
