@@ -39,32 +39,29 @@ type RancherConfig struct {
 }
 
 type rancherClient struct {
-	config               RancherConfig
-	backendRancherClient *backendRancherClient.Client
-	logger               *logrus.Entry
-	clusterClients       map[string]ClusterClient
+	config                RancherConfig
+	_backendRancherClient *backendRancherClient.Client
+	logger                *logrus.Entry
+	clusterClients        map[string]ClusterClient
 }
 
 func (client *rancherClient) init() error {
-	if client.backendRancherClient != nil {
+	if client._backendRancherClient != nil {
 		return nil
 	}
 	backendRancherClient, err := createManagementClient(client.config)
 	if err != nil {
 		return err
 	}
-	client.backendRancherClient = backendRancherClient
+	client._backendRancherClient = backendRancherClient
 	return nil
 }
 
 func (client *rancherClient) Cluster(clusterName string) (ClusterClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	if cache, exists := client.clusterClients[clusterName]; exists {
 		return cache, nil
 	}
-	result, err := newClusterClient(clusterName, client.config, client.backendRancherClient, client.logger)
+	result, err := newClusterClient(clusterName, client.config, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +70,11 @@ func (client *rancherClient) Cluster(clusterName string) (ClusterClient, error) 
 }
 
 func (client *rancherClient) Clusters() ([]ClusterClient, error) {
-	if err := client.init(); err != nil {
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
 		return nil, err
 	}
-	collection, err := client.backendRancherClient.Cluster.List(&types.ListOpts{
+	collection, err := backendRancherClient.Cluster.List(&types.ListOpts{
 		Filters: map[string]interface{}{},
 	})
 	if err != nil {
@@ -91,4 +89,11 @@ func (client *rancherClient) Clusters() ([]ClusterClient, error) {
 		result[i] = cluster
 	}
 	return result, nil
+}
+
+func (client *rancherClient) backendRancherClient() (*backendRancherClient.Client, error) {
+	if err := client.init(); err != nil {
+		return nil, err
+	}
+	return client._backendRancherClient, nil
 }

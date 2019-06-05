@@ -27,14 +27,12 @@ func newCertificateClientWithData(
 	certificate projectModel.Certificate,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CertificateClient, error) {
 	result, err := newCertificateClient(
 		certificate.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +45,6 @@ func newCertificateClientWithData(
 func newCertificateClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CertificateClient, error) {
 	return &certificateClient{
@@ -59,31 +56,15 @@ func newCertificateClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type certificateClient struct {
 	namespacedResourceClient
-	certificate          projectModel.Certificate
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *certificateClient) init() error {
-	if client.namespace != "" && client.namespaceID == "" {
-		namespaceID, err := client.NamespaceID()
-		if client.namespace != "" && namespaceID == "" && err == nil {
-			return fmt.Errorf("Can not find namespace %s", client.namespace)
-		}
-		return err
-	}
-	return nil
+	certificate projectModel.Certificate
 }
 
 func (client *certificateClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
-		return false, err
-	}
 	if client.namespace != "" {
 		return client.existsInNamespace()
 	}
@@ -91,7 +72,11 @@ func (client *certificateClient) Exists() (bool, error) {
 }
 
 func (client *certificateClient) existsInProject() (bool, error) {
-	collection, err := client.backendProjectClient.Certificate.List(&types.ListOpts{
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return false, err
+	}
+	collection, err := backendClient.Certificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -110,10 +95,18 @@ func (client *certificateClient) existsInProject() (bool, error) {
 }
 
 func (client *certificateClient) existsInNamespace() (bool, error) {
-	collection, err := client.backendProjectClient.NamespacedCertificate.List(&types.ListOpts{
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return false, err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return false, err
+	}
+	collection, err := backendClient.NamespacedCertificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"namespaceId": namespaceID,
 		},
 	})
 	if nil != err {
@@ -130,9 +123,6 @@ func (client *certificateClient) existsInNamespace() (bool, error) {
 }
 
 func (client *certificateClient) Create() error {
-	if err := client.init(); err != nil {
-		return err
-	}
 	projectID, err := client.project.ID()
 	if err != nil {
 		return fmt.Errorf("Failed to read namespace ID, %v", err)
@@ -148,6 +138,10 @@ func (client *certificateClient) Create() error {
 }
 
 func (client *certificateClient) createInProject(projectID string, labels map[string]string) error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
 	newCertificate := &backendProjectClient.Certificate{
 		Name:      client.certificate.Name,
 		Labels:    labels,
@@ -156,21 +150,29 @@ func (client *certificateClient) createInProject(projectID string, labels map[st
 		ProjectID: projectID,
 	}
 
-	_, err := client.backendProjectClient.Certificate.Create(newCertificate)
+	_, err = backendClient.Certificate.Create(newCertificate)
 	return err
 }
 
 func (client *certificateClient) createInNamespace(projectID string, labels map[string]string) error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
 	newCertificate := &backendProjectClient.NamespacedCertificate{
 		Name:        client.certificate.Name,
 		Labels:      labels,
 		Key:         client.certificate.Key,
 		Certs:       client.certificate.Certs,
-		NamespaceId: client.namespaceID,
+		NamespaceId: namespaceID,
 		ProjectID:   projectID,
 	}
 
-	_, err := client.backendProjectClient.NamespacedCertificate.Create(newCertificate)
+	_, err = backendClient.NamespacedCertificate.Create(newCertificate)
 	return err
 }
 

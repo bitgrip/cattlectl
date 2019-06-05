@@ -137,8 +137,9 @@ func existingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClien
 	testClients.ProjectClient.App = appOperationsStub
 	result, err := newAppClient(
 		"existing-app",
-		nil,
-		testClients.ProjectClient,
+		&projectClient{
+			_backendProjectClient: testClients.ProjectClient,
+		},
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -176,8 +177,9 @@ func notExistingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appCl
 	testClients.ProjectClient.App = appOperationsStub
 	result, err := newAppClient(
 		"existing-app",
-		nil,
-		testClients.ProjectClient,
+		&projectClient{
+			_backendProjectClient: testClients.ProjectClient,
+		},
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

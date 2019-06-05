@@ -149,11 +149,12 @@ func existingJobClient(t *testing.T, expectedListOpts *types.ListOpts) *jobClien
 		}, nil
 	}
 	testClients.ProjectClient.Job = jobOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newJobClient(
 		"existing-job",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -200,11 +201,12 @@ func notExistingJobClient(t *testing.T, expectedListOpts *types.ListOpts) *jobCl
 		return job, nil
 	}
 	testClients.ProjectClient.Job = jobOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newJobClient(
 		"existing-job",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

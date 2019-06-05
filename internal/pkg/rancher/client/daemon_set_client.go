@@ -19,7 +19,6 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +26,12 @@ func newDaemonSetClientWithData(
 	daemonSet projectModel.DaemonSet,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DaemonSetClient, error) {
 	result, err := newDaemonSetClient(
 		daemonSet.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +44,6 @@ func newDaemonSetClientWithData(
 func newDaemonSetClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DaemonSetClient, error) {
 	return &daemonSetClient{
@@ -59,29 +55,20 @@ func newDaemonSetClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type daemonSetClient struct {
 	namespacedResourceClient
-	daemonSet            projectModel.DaemonSet
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *daemonSetClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	daemonSet projectModel.DaemonSet
 }
 
 func (client *daemonSetClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.DaemonSet.List(&types.ListOpts{
+	collection, err := backendClient.DaemonSet.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -101,7 +88,8 @@ func (client *daemonSetClient) Exists() (bool, error) {
 }
 
 func (client *daemonSetClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new daemonSet")
@@ -110,7 +98,7 @@ func (client *daemonSetClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendProjectClient.DaemonSet.Create(&pattern)
+	_, err = backendClient.DaemonSet.Create(&pattern)
 	return err
 }
 

@@ -27,14 +27,12 @@ func newDockerCredentialClientWithData(
 	dockerCredential projectModel.DockerCredential,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DockerCredentialClient, error) {
 	result, err := newDockerCredentialClient(
 		dockerCredential.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +45,6 @@ func newDockerCredentialClientWithData(
 func newDockerCredentialClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DockerCredentialClient, error) {
 	return &dockerCredentialClient{
@@ -59,32 +56,57 @@ func newDockerCredentialClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type dockerCredentialClient struct {
 	namespacedResourceClient
-	dockerCredential     projectModel.DockerCredential
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *dockerCredentialClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	dockerCredential projectModel.DockerCredential
 }
 
 func (client *dockerCredentialClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	if client.namespace != "" {
+		return client.existsInNamespace()
+	}
+	return client.existsInProject()
+}
+
+func (client *dockerCredentialClient) existsInProject() (bool, error) {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.DockerCredential.List(&types.ListOpts{
+	collection, err := backendClient.DockerCredential.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read dockerCredential list")
+		return false, fmt.Errorf("Failed to read dockerCredential list, %v", err)
+	}
+	for _, item := range collection.Data {
+		if item.Name == client.name && item.NamespaceId == client.namespaceID {
+			return true, nil
+		}
+	}
+	client.logger.Debug("DockerCredential not found")
+	return false, nil
+}
+
+func (client *dockerCredentialClient) existsInNamespace() (bool, error) {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return false, err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return false, err
+	}
+	collection, err := backendClient.NamespacedDockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"namespaceId": namespaceID,
 		},
 	})
 	if nil != err {
@@ -101,9 +123,6 @@ func (client *dockerCredentialClient) Exists() (bool, error) {
 }
 
 func (client *dockerCredentialClient) Create() error {
-	if err := client.init(); err != nil {
-		return err
-	}
 	client.logger.Info("Create new DockerCredential")
 
 	registries := make(map[string]backendProjectClient.RegistryCredential)
@@ -119,6 +138,17 @@ func (client *dockerCredentialClient) Create() error {
 	if err != nil {
 		return err
 	}
+	if client.namespace != "" {
+		return client.createInNamespace(registries, labels, projectID)
+	}
+	return client.createInProject(registries, labels, projectID)
+}
+
+func (client *dockerCredentialClient) createInProject(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string) error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
 	newDockerCredential := &backendProjectClient.DockerCredential{
 		Name:        client.dockerCredential.Name,
 		Labels:      labels,
@@ -127,7 +157,28 @@ func (client *dockerCredentialClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendProjectClient.DockerCredential.Create(newDockerCredential)
+	_, err = backendClient.DockerCredential.Create(newDockerCredential)
+	return err
+}
+
+func (client *dockerCredentialClient) createInNamespace(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string) error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
+	newDockerCredential := &backendProjectClient.NamespacedDockerCredential{
+		Name:        client.dockerCredential.Name,
+		Labels:      labels,
+		Registries:  registries,
+		NamespaceId: namespaceID,
+		ProjectID:   projectID,
+	}
+
+	_, err = backendClient.NamespacedDockerCredential.Create(newDockerCredential)
 	return err
 }
 

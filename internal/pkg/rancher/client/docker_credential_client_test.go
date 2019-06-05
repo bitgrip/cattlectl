@@ -138,7 +138,24 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 			},
 		}, nil
 	}
+
+	namespacedDockerCredentialOperationsStub := stubs.CreateNamespacedDockerCredentialOperationsStub(t)
+	namespacedDockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedDockerCredentialCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendProjectClient.NamespacedDockerCredentialCollection{
+			Data: []backendProjectClient.NamespacedDockerCredential{
+				backendProjectClient.NamespacedDockerCredential{
+					Name:        "existing-dockerCredential",
+					NamespaceId: "test-namespace-id",
+				},
+			},
+		}, nil
+	}
+
 	testClients.ProjectClient.DockerCredential = dockerCredentialOperationsStub
+	testClients.ProjectClient.NamespacedDockerCredential = namespacedDockerCredentialOperationsStub
 	result, err := newDockerCredentialClient(
 		"existing-dockerCredential",
 		"test-namespace",
@@ -147,8 +164,8 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 				name: projectName,
 				id:   projectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -184,7 +201,21 @@ func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.Lis
 	dockerCredentialOperationsStub.DoCreate = func(dockerCredential *backendProjectClient.DockerCredential) (*backendProjectClient.DockerCredential, error) {
 		return dockerCredential, nil
 	}
+
+	namespacedDockerCredentialOperationsStub := stubs.CreateNamespacedDockerCredentialOperationsStub(t)
+	namespacedDockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedDockerCredentialCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendProjectClient.NamespacedDockerCredentialCollection{
+			Data: []backendProjectClient.NamespacedDockerCredential{},
+		}, nil
+	}
+	namespacedDockerCredentialOperationsStub.DoCreate = func(dockerCredential *backendProjectClient.NamespacedDockerCredential) (*backendProjectClient.NamespacedDockerCredential, error) {
+		return dockerCredential, nil
+	}
 	testClients.ProjectClient.DockerCredential = dockerCredentialOperationsStub
+	testClients.ProjectClient.NamespacedDockerCredential = namespacedDockerCredentialOperationsStub
 	result, err := newDockerCredentialClient(
 		"existing-dockerCredential",
 		"test-namespace",
@@ -193,8 +224,8 @@ func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.Lis
 				name: projectName,
 				id:   projectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

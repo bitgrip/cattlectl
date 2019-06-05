@@ -27,13 +27,11 @@ func newAppClientWithData(
 	app projectModel.App,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	result, err := newAppClient(
 		app.Name,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -46,7 +44,6 @@ func newAppClientWithData(
 func newAppClient(
 	name string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (AppClient, error) {
 	return &appClient{
@@ -54,26 +51,23 @@ func newAppClient(
 			name:   name,
 			logger: logger.WithField("app_name", name),
 		},
-		backendProjectClient: backendProjectClient,
+		projectClient: project,
 	}, nil
 }
 
 type appClient struct {
 	resourceClient
-	app                  projectModel.App
-	backendProjectClient *backendProjectClient.Client
-	backendData          *backendProjectClient.App
-}
-
-func (client *appClient) init() error {
-	return nil
+	app           projectModel.App
+	backendData   *backendProjectClient.App
+	projectClient ProjectClient
 }
 
 func (client *appClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.projectClient.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.App.List(&types.ListOpts{
+	collection, err := backendClient.App.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -92,7 +86,8 @@ func (client *appClient) Exists() (bool, error) {
 }
 
 func (client *appClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.projectClient.backendProjectClient()
+	if err != nil {
 		return err
 	}
 
@@ -103,7 +98,7 @@ func (client *appClient) Create() error {
 		TargetNamespace: client.app.Namespace,
 		Answers:         client.app.Answers,
 	}
-	_, err := client.backendProjectClient.App.Create(pattern)
+	_, err = backendClient.App.Create(pattern)
 	return err
 }
 

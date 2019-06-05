@@ -16,12 +16,17 @@ package client
 
 import (
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
+	backendRancherClient "github.com/rancher/types/client/management/v3"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 )
 
 // RancherClient is comunicating with the Rancher server
 type RancherClient interface {
 	Cluster(clusterName string) (ClusterClient, error)
 	Clusters() ([]ClusterClient, error)
+
+	backendRancherClient() (*backendRancherClient.Client, error)
 }
 
 // ResourceClient is a client to any Rancher resource
@@ -51,6 +56,9 @@ type ClusterClient interface {
 	PersistentVolumes() ([]PersistentVolumeClient, error)
 	Namespace(name, projectName string) (NamespaceClient, error)
 	Namespaces(projectName string) ([]NamespaceClient, error)
+
+	backendRancherClient() (*backendRancherClient.Client, error)
+	backendClusterClient() (*backendClusterClient.Client, error)
 }
 
 // ProjectClient interacts with a Rancher project resource
@@ -84,6 +92,8 @@ type ProjectClient interface {
 	DaemonSets(namespaceName string) ([]DaemonSetClient, error)
 	StatefulSet(name, namespaceName string) (StatefulSetClient, error)
 	StatefulSets(namespaceName string) ([]StatefulSetClient, error)
+
+	backendProjectClient() (*backendProjectClient.Client, error)
 }
 
 // NamespaceClient interacts with a Rancher namespace resource

@@ -25,12 +25,12 @@ import (
 
 func newPersistentVolumeClientWithData(
 	persistentVolume projectModel.PersistentVolume,
-	backendClusterClient *backendClusterClient.Client,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (PersistentVolumeClient, error) {
 	result, err := newPersistentVolumeClient(
 		persistentVolume.Name,
-		backendClusterClient,
+		clusterClient,
 		logger,
 	)
 	if err != nil {
@@ -42,7 +42,7 @@ func newPersistentVolumeClientWithData(
 
 func newPersistentVolumeClient(
 	name string,
-	backendClusterClient *backendClusterClient.Client,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (PersistentVolumeClient, error) {
 	return &persistentVolumeClient{
@@ -50,25 +50,22 @@ func newPersistentVolumeClient(
 			name:   name,
 			logger: logger.WithField("persistentVolume_name", name),
 		},
-		backendClusterClient: backendClusterClient,
+		clusterClient: clusterClient,
 	}, nil
 }
 
 type persistentVolumeClient struct {
 	resourceClient
-	persistentVolume     projectModel.PersistentVolume
-	backendClusterClient *backendClusterClient.Client
-}
-
-func (client *persistentVolumeClient) init() error {
-	return nil
+	persistentVolume projectModel.PersistentVolume
+	clusterClient    ClusterClient
 }
 
 func (client *persistentVolumeClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendClusterClient.PersistentVolume.List(&types.ListOpts{
+	collection, err := backendClient.PersistentVolume.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -87,7 +84,8 @@ func (client *persistentVolumeClient) Exists() (bool, error) {
 }
 
 func (client *persistentVolumeClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new persistent volume")
@@ -117,7 +115,7 @@ func (client *persistentVolumeClient) Create() error {
 		},
 	}
 
-	_, err := client.backendClusterClient.PersistentVolume.Create(newPersistentVolume)
+	_, err = backendClient.PersistentVolume.Create(newPersistentVolume)
 	return err
 }
 

@@ -19,8 +19,6 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendClusterClient "github.com/rancher/types/client/cluster/v3"
-	backendRancherClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -29,8 +27,6 @@ func newProjectClient(
 	name string,
 	config RancherConfig,
 	clusterClient ClusterClient,
-	backendRancherClient *backendRancherClient.Client,
-	backendClusterClient *backendClusterClient.Client,
 	logger *logrus.Entry,
 ) (ProjectClient, error) {
 	projectLogger := logger.WithField("project_name", name)
@@ -41,8 +37,6 @@ func newProjectClient(
 			logger: projectLogger,
 		},
 		config:                  config,
-		backendRancherClient:    backendRancherClient,
-		backendClusterClient:    backendClusterClient,
 		certificateClients:      make(map[string]CertificateClient),
 		configMapClients:        make(map[string]ConfigMapClient),
 		dockerCredentialClients: make(map[string]DockerCredentialClient),
@@ -60,9 +54,7 @@ type projectClient struct {
 	resourceClient
 	config                  RancherConfig
 	clusterClient           ClusterClient
-	backendRancherClient    *backendRancherClient.Client
-	backendClusterClient    *backendClusterClient.Client
-	backendProjectClient    *backendProjectClient.Client
+	_backendProjectClient   *backendProjectClient.Client
 	project                 projectModel.Project
 	certificateClients      map[string]CertificateClient
 	configMapClients        map[string]ConfigMapClient
@@ -77,7 +69,7 @@ type projectClient struct {
 }
 
 func (client *projectClient) init() error {
-	if client.backendProjectClient != nil {
+	if client._backendProjectClient != nil {
 		return nil
 	}
 	var (
@@ -91,7 +83,7 @@ func (client *projectClient) init() error {
 	if clusterID, err = client.clusterClient.ID(); err != nil {
 		return err
 	}
-	client.backendProjectClient, err = createProjectClient(client.config, clusterID, projectID)
+	client._backendProjectClient, err = createProjectClient(client.config, clusterID, projectID)
 	return err
 }
 
@@ -99,11 +91,15 @@ func (client *projectClient) ID() (string, error) {
 	if client.id != "" {
 		return client.id, nil
 	}
+	backendRancherClient, err := client.clusterClient.backendRancherClient()
+	if err != nil {
+		return "", err
+	}
 	clusterID, err := client.clusterClient.ID()
 	if err != nil {
 		return "", err
 	}
-	collection, err := client.backendRancherClient.Project.List(&types.ListOpts{
+	collection, err := backendRancherClient.Project.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"clusterId": clusterID,
 			"name":      client.name,
@@ -124,26 +120,21 @@ func (client *projectClient) Exists() (bool, error) {
 	return err != nil, err
 }
 func (client *projectClient) Namespace(name string) (NamespaceClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	return client.clusterClient.Namespace(name, client.name)
 }
 func (client *projectClient) Namespaces() ([]NamespaceClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	return client.clusterClient.Namespaces(client.name)
 }
 func (client *projectClient) GlobalCertificate(name string) (CertificateClient, error) {
 	return client.Certificate(name, "")
 }
 func (client *projectClient) GlobalCertificates() ([]CertificateClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.Certificate.List(&types.ListOpts{
+	collection, err := backendProjectClient.Certificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId": client.id,
 		},
@@ -165,7 +156,7 @@ func (client *projectClient) Certificate(name, namespaceName string) (Certificat
 	if cache, exists := client.certificateClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	certificate, err := newCertificateClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	certificate, err := newCertificateClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +164,8 @@ func (client *projectClient) Certificate(name, namespaceName string) (Certificat
 	return certificate, nil
 }
 func (client *projectClient) Certificates(namespaceName string) ([]CertificateClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 	if namespaceName == "" {
@@ -189,7 +181,7 @@ func (client *projectClient) Certificates(namespaceName string) ([]CertificateCl
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.NamespacedCertificate.List(&types.ListOpts{
+	collection, err := backendProjectClient.NamespacedCertificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -212,7 +204,7 @@ func (client *projectClient) ConfigMap(name, namespaceName string) (ConfigMapCli
 	if cache, exists := client.configMapClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	configMap, err := newConfigMapClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	configMap, err := newConfigMapClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +212,8 @@ func (client *projectClient) ConfigMap(name, namespaceName string) (ConfigMapCli
 	return configMap, nil
 }
 func (client *projectClient) ConfigMaps(namespaceName string) ([]ConfigMapClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -233,7 +226,7 @@ func (client *projectClient) ConfigMaps(namespaceName string) ([]ConfigMapClient
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.ConfigMap.List(&types.ListOpts{
+	collection, err := backendProjectClient.ConfigMap.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -256,11 +249,12 @@ func (client *projectClient) GlobalDockerCredential(name string) (DockerCredenti
 	return client.DockerCredential(name, "")
 }
 func (client *projectClient) GlobalDockerCredentials() ([]DockerCredentialClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.DockerCredential.List(&types.ListOpts{
+	collection, err := backendProjectClient.DockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId": client.id,
 		},
@@ -282,7 +276,7 @@ func (client *projectClient) DockerCredential(name, namespaceName string) (Docke
 	if cache, exists := client.dockerCredentialClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	dockerCredential, err := newDockerCredentialClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	dockerCredential, err := newDockerCredentialClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +284,8 @@ func (client *projectClient) DockerCredential(name, namespaceName string) (Docke
 	return dockerCredential, nil
 }
 func (client *projectClient) DockerCredentials(namespaceName string) ([]DockerCredentialClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 	if namespaceName == "" {
@@ -306,7 +301,7 @@ func (client *projectClient) DockerCredentials(namespaceName string) ([]DockerCr
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.NamespacedDockerCredential.List(&types.ListOpts{
+	collection, err := backendProjectClient.NamespacedDockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -329,11 +324,12 @@ func (client *projectClient) GlobalSecret(name string) (ConfigMapClient, error) 
 	return client.Secret(name, "")
 }
 func (client *projectClient) GlobalSecrets() ([]ConfigMapClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.Secret.List(&types.ListOpts{
+	collection, err := backendProjectClient.Secret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId": client.id,
 		},
@@ -355,7 +351,7 @@ func (client *projectClient) Secret(name, namespaceName string) (ConfigMapClient
 	if cache, exists := client.secretClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	secret, err := newSecretClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	secret, err := newSecretClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +359,8 @@ func (client *projectClient) Secret(name, namespaceName string) (ConfigMapClient
 	return secret, nil
 }
 func (client *projectClient) Secrets(namespaceName string) ([]ConfigMapClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 	if namespaceName == "" {
@@ -379,7 +376,7 @@ func (client *projectClient) Secrets(namespaceName string) ([]ConfigMapClient, e
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.NamespacedSecret.List(&types.ListOpts{
+	collection, err := backendProjectClient.NamespacedSecret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -399,13 +396,10 @@ func (client *projectClient) Secrets(namespaceName string) ([]ConfigMapClient, e
 	return result, nil
 }
 func (client *projectClient) App(name string) (AppClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	if cache, exists := client.appClients[name]; exists {
 		return cache, nil
 	}
-	app, err := newAppClient(name, client, client.backendProjectClient, client.logger)
+	app, err := newAppClient(name, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -413,11 +407,12 @@ func (client *projectClient) App(name string) (AppClient, error) {
 	return app, nil
 }
 func (client *projectClient) Apps() ([]AppClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.App.List(&types.ListOpts{
+	collection, err := backendProjectClient.App.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId": client.id,
 		},
@@ -439,7 +434,7 @@ func (client *projectClient) Job(name, namespaceName string) (JobClient, error) 
 	if cache, exists := client.jobClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	job, err := newJobClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	job, err := newJobClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +442,8 @@ func (client *projectClient) Job(name, namespaceName string) (JobClient, error) 
 	return job, nil
 }
 func (client *projectClient) Jobs(namespaceName string) ([]JobClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -460,7 +456,7 @@ func (client *projectClient) Jobs(namespaceName string) ([]JobClient, error) {
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.Job.List(&types.ListOpts{
+	collection, err := backendProjectClient.Job.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -483,7 +479,7 @@ func (client *projectClient) CronJob(name, namespaceName string) (CronJobClient,
 	if cache, exists := client.cronJobClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	cronJob, err := newCronJobClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	cronJob, err := newCronJobClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +487,8 @@ func (client *projectClient) CronJob(name, namespaceName string) (CronJobClient,
 	return cronJob, nil
 }
 func (client *projectClient) CronJobs(namespaceName string) ([]CronJobClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -504,7 +501,7 @@ func (client *projectClient) CronJobs(namespaceName string) ([]CronJobClient, er
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.CronJob.List(&types.ListOpts{
+	collection, err := backendProjectClient.CronJob.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -527,7 +524,7 @@ func (client *projectClient) Deployment(name, namespaceName string) (DeploymentC
 	if cache, exists := client.deploymentClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	deployment, err := newDeploymentClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	deployment, err := newDeploymentClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +532,8 @@ func (client *projectClient) Deployment(name, namespaceName string) (DeploymentC
 	return deployment, nil
 }
 func (client *projectClient) Deployments(namespaceName string) ([]DeploymentClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -548,7 +546,7 @@ func (client *projectClient) Deployments(namespaceName string) ([]DeploymentClie
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.Deployment.List(&types.ListOpts{
+	collection, err := backendProjectClient.Deployment.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -571,7 +569,7 @@ func (client *projectClient) DaemonSet(name, namespaceName string) (DaemonSetCli
 	if cache, exists := client.daemonSetClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	daemonSet, err := newDaemonSetClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	daemonSet, err := newDaemonSetClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +577,8 @@ func (client *projectClient) DaemonSet(name, namespaceName string) (DaemonSetCli
 	return daemonSet, nil
 }
 func (client *projectClient) DaemonSets(namespaceName string) ([]DaemonSetClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -592,7 +591,7 @@ func (client *projectClient) DaemonSets(namespaceName string) ([]DaemonSetClient
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.DaemonSet.List(&types.ListOpts{
+	collection, err := backendProjectClient.DaemonSet.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -615,7 +614,7 @@ func (client *projectClient) StatefulSet(name, namespaceName string) (StatefulSe
 	if cache, exists := client.statefulSetClients[fmt.Sprintf("%s::%s", name, namespaceName)]; exists {
 		return cache, nil
 	}
-	statefulSet, err := newStatefulSetClient(name, namespaceName, client, client.backendProjectClient, client.logger)
+	statefulSet, err := newStatefulSetClient(name, namespaceName, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -623,7 +622,8 @@ func (client *projectClient) StatefulSet(name, namespaceName string) (StatefulSe
 	return statefulSet, nil
 }
 func (client *projectClient) StatefulSets(namespaceName string) ([]StatefulSetClient, error) {
-	if err := client.init(); err != nil {
+	backendProjectClient, err := client.backendProjectClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -636,7 +636,7 @@ func (client *projectClient) StatefulSets(namespaceName string) ([]StatefulSetCl
 		return nil, err
 	}
 
-	collection, err := client.backendProjectClient.StatefulSet.List(&types.ListOpts{
+	collection, err := backendProjectClient.StatefulSet.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"projectId":   client.id,
 			"namespaceId": namespaceID,
@@ -654,4 +654,11 @@ func (client *projectClient) StatefulSets(namespaceName string) ([]StatefulSetCl
 		result[i] = statefulSet
 	}
 	return result, nil
+}
+
+func (client *projectClient) backendProjectClient() (*backendProjectClient.Client, error) {
+	if err := client.init(); err != nil {
+		return nil, err
+	}
+	return client._backendProjectClient, nil
 }

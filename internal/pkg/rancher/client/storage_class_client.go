@@ -25,12 +25,12 @@ import (
 
 func newStorageClassClientWithData(
 	storageClass projectModel.StorageClass,
-	backendClusterClient *backendClusterClient.Client,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (StorageClassClient, error) {
 	result, err := newStorageClassClient(
 		storageClass.Name,
-		backendClusterClient,
+		clusterClient,
 		logger,
 	)
 	if err != nil {
@@ -42,7 +42,7 @@ func newStorageClassClientWithData(
 
 func newStorageClassClient(
 	name string,
-	backendClusterClient *backendClusterClient.Client,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (StorageClassClient, error) {
 	return &storageClassClient{
@@ -50,25 +50,22 @@ func newStorageClassClient(
 			name:   name,
 			logger: logger.WithField("storageClass_name", name),
 		},
-		backendClusterClient: backendClusterClient,
+		clusterClient: clusterClient,
 	}, nil
 }
 
 type storageClassClient struct {
 	resourceClient
-	storageClass         projectModel.StorageClass
-	backendClusterClient *backendClusterClient.Client
-}
-
-func (client *storageClassClient) init() error {
-	return nil
+	storageClass  projectModel.StorageClass
+	clusterClient ClusterClient
 }
 
 func (client *storageClassClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendClusterClient.StorageClass.List(&types.ListOpts{
+	collection, err := backendClient.StorageClass.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -87,7 +84,8 @@ func (client *storageClassClient) Exists() (bool, error) {
 }
 
 func (client *storageClassClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new storage class")
@@ -100,7 +98,7 @@ func (client *storageClassClient) Create() error {
 		MountOptions:      client.storageClass.MountOptions,
 	}
 
-	_, err := client.backendClusterClient.StorageClass.Create(newStorageClass)
+	_, err = backendClient.StorageClass.Create(newStorageClass)
 	return err
 }
 

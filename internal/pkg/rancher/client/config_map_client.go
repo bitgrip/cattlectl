@@ -27,14 +27,12 @@ func newConfigMapClientWithData(
 	configMap projectModel.ConfigMap,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	result, err := newConfigMapClient(
 		configMap.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +45,6 @@ func newConfigMapClientWithData(
 func newConfigMapClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	return &configMapClient{
@@ -59,32 +56,27 @@ func newConfigMapClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type configMapClient struct {
 	namespacedResourceClient
-	configMap            projectModel.ConfigMap
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *configMapClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	configMap projectModel.ConfigMap
 }
 
 func (client *configMapClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.ConfigMap.List(&types.ListOpts{
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return false, err
+	}
+	collection, err := backendClient.ConfigMap.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"namespaceId": namespaceID,
 		},
 	})
 	if nil != err {
@@ -101,12 +93,13 @@ func (client *configMapClient) Exists() (bool, error) {
 }
 
 func (client *configMapClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return fmt.Errorf("Failed to read namespace ID, %v", err)
+		return err
 	}
 	projectID, err := client.project.ID()
 	if err != nil {
@@ -123,7 +116,7 @@ func (client *configMapClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendProjectClient.ConfigMap.Create(newConfigMap)
+	_, err = backendClient.ConfigMap.Create(newConfigMap)
 	return err
 }
 

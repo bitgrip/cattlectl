@@ -26,13 +26,13 @@ import (
 func newNamespaceClientWithData(
 	namespace projectModel.Namespace,
 	projectClient ProjectClient,
-	backendClusterClient *backendClusterClient.Client,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (NamespaceClient, error) {
 	result, err := newNamespaceClient(
 		namespace.Name,
 		projectClient,
-		backendClusterClient,
+		clusterClient,
 		logger,
 	)
 	if err != nil {
@@ -45,7 +45,7 @@ func newNamespaceClientWithData(
 func newNamespaceClient(
 	name string,
 	projectClient ProjectClient,
-	backendClusterClient *backendClusterClient.Client,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (NamespaceClient, error) {
 	return &namespaceClient{
@@ -53,27 +53,24 @@ func newNamespaceClient(
 			name:   name,
 			logger: logger.WithField("namespace_name", name),
 		},
-		projectClient:        projectClient,
-		backendClusterClient: backendClusterClient,
+		projectClient: projectClient,
+		clusterClient: clusterClient,
 	}, nil
 }
 
 type namespaceClient struct {
 	resourceClient
-	namespace            projectModel.Namespace
-	projectClient        ProjectClient
-	backendClusterClient *backendClusterClient.Client
-}
-
-func (client *namespaceClient) init() error {
-	return nil
+	namespace     projectModel.Namespace
+	projectClient ProjectClient
+	clusterClient ClusterClient
 }
 
 func (client *namespaceClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendClusterClient.Namespace.List(&types.ListOpts{
+	collection, err := backendClient.Namespace.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -92,7 +89,8 @@ func (client *namespaceClient) Exists() (bool, error) {
 }
 
 func (client *namespaceClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
 		return err
 	}
 
@@ -108,7 +106,7 @@ func (client *namespaceClient) Create() error {
 		newNamespace.ProjectID = projectID
 	}
 
-	_, err := client.backendClusterClient.Namespace.Create(newNamespace)
+	_, err = backendClient.Namespace.Create(newNamespace)
 	return err
 }
 

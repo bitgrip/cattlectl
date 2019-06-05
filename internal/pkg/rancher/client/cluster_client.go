@@ -27,7 +27,7 @@ import (
 func newClusterClient(
 	name string,
 	config RancherConfig,
-	backendRancherClient *backendRancherClient.Client,
+	rancherClient RancherClient,
 	logger *logrus.Entry,
 ) (ClusterClient, error) {
 	return &clusterClient{
@@ -35,25 +35,25 @@ func newClusterClient(
 			name:   name,
 			logger: logger.WithField("cluster_name", name),
 		},
-		config:               config,
-		backendRancherClient: backendRancherClient,
-		projectClients:       make(map[string]ProjectClient),
-		storageClasses:       make(map[string]StorageClassClient),
-		persistentVolumes:    make(map[string]PersistentVolumeClient),
-		namespaces:           make(map[string]namespaceCacheEntry),
+		config:            config,
+		rancherClient:     rancherClient,
+		projectClients:    make(map[string]ProjectClient),
+		storageClasses:    make(map[string]StorageClassClient),
+		persistentVolumes: make(map[string]PersistentVolumeClient),
+		namespaces:        make(map[string]namespaceCacheEntry),
 	}, nil
 }
 
 type clusterClient struct {
 	resourceClient
-	config               RancherConfig
-	backendRancherClient *backendRancherClient.Client
-	backendClusterClient *backendClusterClient.Client
-	cluster              projectModel.Cluster
-	projectClients       map[string]ProjectClient
-	storageClasses       map[string]StorageClassClient
-	persistentVolumes    map[string]PersistentVolumeClient
-	namespaces           map[string]namespaceCacheEntry
+	config                RancherConfig
+	rancherClient         RancherClient
+	_backendClusterClient *backendClusterClient.Client
+	cluster               projectModel.Cluster
+	projectClients        map[string]ProjectClient
+	storageClasses        map[string]StorageClassClient
+	persistentVolumes     map[string]PersistentVolumeClient
+	namespaces            map[string]namespaceCacheEntry
 }
 
 type namespaceCacheEntry struct {
@@ -62,7 +62,7 @@ type namespaceCacheEntry struct {
 }
 
 func (client *clusterClient) init() error {
-	if client.backendClusterClient != nil {
+	if client._backendClusterClient != nil {
 		return nil
 	}
 	var (
@@ -72,7 +72,7 @@ func (client *clusterClient) init() error {
 	if id, err = client.ID(); err != nil {
 		return err
 	}
-	client.backendClusterClient, err = createBackendClusterClient(client.config, id)
+	client._backendClusterClient, err = createBackendClusterClient(client.config, id)
 	return err
 }
 
@@ -80,7 +80,11 @@ func (client *clusterClient) ID() (string, error) {
 	if client.id != "" {
 		return client.id, nil
 	}
-	collection, err := client.backendRancherClient.Cluster.List(&types.ListOpts{
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
+		return "", err
+	}
+	collection, err := backendRancherClient.Cluster.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": client.name,
 		},
@@ -100,13 +104,10 @@ func (client *clusterClient) Exists() (bool, error) {
 	return err != nil, err
 }
 func (client *clusterClient) Project(name string) (ProjectClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	if cache, exists := client.projectClients[name]; exists {
 		return cache, nil
 	}
-	project, err := newProjectClient(name, client.config, client, client.backendRancherClient, client.backendClusterClient, client.logger)
+	project, err := newProjectClient(name, client.config, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -114,10 +115,11 @@ func (client *clusterClient) Project(name string) (ProjectClient, error) {
 	return project, nil
 }
 func (client *clusterClient) Projects() ([]ProjectClient, error) {
-	if err := client.init(); err != nil {
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
 		return nil, err
 	}
-	collection, err := client.backendRancherClient.Project.List(&types.ListOpts{
+	collection, err := backendRancherClient.Project.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"clusterId": client.id,
 		},
@@ -136,13 +138,10 @@ func (client *clusterClient) Projects() ([]ProjectClient, error) {
 	return result, nil
 }
 func (client *clusterClient) StorageClass(name string) (StorageClassClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	if cache, exists := client.storageClasses[name]; exists {
 		return cache, nil
 	}
-	storageClass, err := newStorageClassClient(name, client.backendClusterClient, client.logger)
+	storageClass, err := newStorageClassClient(name, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -150,10 +149,11 @@ func (client *clusterClient) StorageClass(name string) (StorageClassClient, erro
 	return storageClass, nil
 }
 func (client *clusterClient) StorageClasses() ([]StorageClassClient, error) {
-	if err := client.init(); err != nil {
+	backendClusterClient, err := client.backendClusterClient()
+	if err != nil {
 		return nil, err
 	}
-	collection, err := client.backendClusterClient.StorageClass.List(&types.ListOpts{
+	collection, err := backendClusterClient.StorageClass.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"clusterId": client.id,
 		},
@@ -172,13 +172,10 @@ func (client *clusterClient) StorageClasses() ([]StorageClassClient, error) {
 	return result, nil
 }
 func (client *clusterClient) PersistentVolume(name string) (PersistentVolumeClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	if cache, exists := client.persistentVolumes[name]; exists {
 		return cache, nil
 	}
-	persistentVolume, err := newPersistentVolumeClient(name, client.backendClusterClient, client.logger)
+	persistentVolume, err := newPersistentVolumeClient(name, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -186,10 +183,11 @@ func (client *clusterClient) PersistentVolume(name string) (PersistentVolumeClie
 	return persistentVolume, nil
 }
 func (client *clusterClient) PersistentVolumes() ([]PersistentVolumeClient, error) {
-	if err := client.init(); err != nil {
+	backendClusterClient, err := client.backendClusterClient()
+	if err != nil {
 		return nil, err
 	}
-	collection, err := client.backendClusterClient.PersistentVolume.List(&types.ListOpts{
+	collection, err := backendClusterClient.PersistentVolume.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"clusterId": client.id,
 		},
@@ -208,9 +206,6 @@ func (client *clusterClient) PersistentVolumes() ([]PersistentVolumeClient, erro
 	return result, nil
 }
 func (client *clusterClient) Namespace(name, projectName string) (NamespaceClient, error) {
-	if err := client.init(); err != nil {
-		return nil, err
-	}
 	var (
 		projectClient ProjectClient
 		err           error
@@ -227,7 +222,7 @@ func (client *clusterClient) Namespace(name, projectName string) (NamespaceClien
 		}
 		return cache.namespace, nil
 	}
-	namespace, err := newNamespaceClient(name, projectClient, client.backendClusterClient, client.logger)
+	namespace, err := newNamespaceClient(name, projectClient, client, client.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +233,8 @@ func (client *clusterClient) Namespace(name, projectName string) (NamespaceClien
 	return namespace, nil
 }
 func (client *clusterClient) Namespaces(projectName string) ([]NamespaceClient, error) {
-	if err := client.init(); err != nil {
+	backendClusterClient, err := client.backendClusterClient()
+	if err != nil {
 		return nil, err
 	}
 
@@ -256,7 +252,7 @@ func (client *clusterClient) Namespaces(projectName string) ([]NamespaceClient, 
 		}
 		filters["projectId"] = projectID
 	}
-	collection, err := client.backendClusterClient.Namespace.List(&types.ListOpts{
+	collection, err := backendClusterClient.Namespace.List(&types.ListOpts{
 		Filters: filters,
 	})
 	if err != nil {
@@ -271,4 +267,13 @@ func (client *clusterClient) Namespaces(projectName string) ([]NamespaceClient, 
 		result[i] = namespace
 	}
 	return result, nil
+}
+func (client *clusterClient) backendRancherClient() (*backendRancherClient.Client, error) {
+	return client.rancherClient.backendRancherClient()
+}
+func (client *clusterClient) backendClusterClient() (*backendClusterClient.Client, error) {
+	if err := client.init(); err != nil {
+		return nil, err
+	}
+	return client._backendClusterClient, nil
 }

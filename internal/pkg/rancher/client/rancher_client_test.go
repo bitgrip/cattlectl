@@ -50,7 +50,7 @@ func Test_rancherClient_Cluster(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
+			tt.client._backendRancherClient = testClients.ManagementClient
 
 			got, err := tt.client.Cluster(tt.args.clusterName)
 			if tt.wantErr {
@@ -87,7 +87,7 @@ func Test_rancherClient_Clusters(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
+			tt.client._backendRancherClient = testClients.ManagementClient
 
 			clusterOperationsStub := stubs.CreateClusterOperationsStub(t)
 			clusterOperationsStub.DoList = tt.doList

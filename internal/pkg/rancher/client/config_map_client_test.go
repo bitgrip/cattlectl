@@ -147,8 +147,8 @@ func existingConfigMapClient(t *testing.T, expectedListOpts *types.ListOpts) *co
 				name: projectName,
 				id:   projectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -193,8 +193,8 @@ func notExistingConfigMapClient(t *testing.T, expectedListOpts *types.ListOpts) 
 				name: projectName,
 				id:   projectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

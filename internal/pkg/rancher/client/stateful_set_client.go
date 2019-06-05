@@ -19,7 +19,6 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +26,12 @@ func newStatefulSetClientWithData(
 	statefulSet projectModel.StatefulSet,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	result, err := newStatefulSetClient(
 		statefulSet.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +44,6 @@ func newStatefulSetClientWithData(
 func newStatefulSetClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (StatefulSetClient, error) {
 	return &statefulSetClient{
@@ -59,29 +55,20 @@ func newStatefulSetClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type statefulSetClient struct {
 	namespacedResourceClient
-	statefulSet          projectModel.StatefulSet
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *statefulSetClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	statefulSet projectModel.StatefulSet
 }
 
 func (client *statefulSetClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.StatefulSet.List(&types.ListOpts{
+	collection, err := backendClient.StatefulSet.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -101,7 +88,8 @@ func (client *statefulSetClient) Exists() (bool, error) {
 }
 
 func (client *statefulSetClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new statefulSet")
@@ -110,7 +98,7 @@ func (client *statefulSetClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendProjectClient.StatefulSet.Create(&pattern)
+	_, err = backendClient.StatefulSet.Create(&pattern)
 	return err
 }
 

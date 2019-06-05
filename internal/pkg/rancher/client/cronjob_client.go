@@ -19,7 +19,6 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +26,12 @@ func newCronJobClientWithData(
 	cronJob projectModel.CronJob,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CronJobClient, error) {
 	result, err := newCronJobClient(
 		cronJob.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +44,6 @@ func newCronJobClientWithData(
 func newCronJobClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (CronJobClient, error) {
 	return &cronJobClient{
@@ -59,29 +55,20 @@ func newCronJobClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type cronJobClient struct {
 	namespacedResourceClient
-	cronJob              projectModel.CronJob
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *cronJobClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	cronJob projectModel.CronJob
 }
 
 func (client *cronJobClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.CronJob.List(&types.ListOpts{
+	collection, err := backendClient.CronJob.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -101,7 +88,8 @@ func (client *cronJobClient) Exists() (bool, error) {
 }
 
 func (client *cronJobClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new cronJob")
@@ -110,7 +98,7 @@ func (client *cronJobClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendProjectClient.CronJob.Create(&pattern)
+	_, err = backendClient.CronJob.Create(&pattern)
 	return err
 }
 

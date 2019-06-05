@@ -138,7 +138,24 @@ func existingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *secre
 			},
 		}, nil
 	}
+
+	namespacedSecretOperationsStub := stubs.CreateNamespacedSecretOperationsStub(t)
+	namespacedSecretOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedSecretCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendProjectClient.NamespacedSecretCollection{
+			Data: []backendProjectClient.NamespacedSecret{
+				backendProjectClient.NamespacedSecret{
+					Name:        "existing-secret",
+					NamespaceId: "test-namespace-id",
+				},
+			},
+		}, nil
+	}
+
 	testClients.ProjectClient.Secret = secretOperationsStub
+	testClients.ProjectClient.NamespacedSecret = namespacedSecretOperationsStub
 	result, err := newSecretClient(
 		"existing-secret",
 		"test-namespace",
@@ -147,8 +164,8 @@ func existingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *secre
 				name: projectName,
 				id:   projectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -184,7 +201,22 @@ func notExistingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *se
 	secretOperationsStub.DoCreate = func(secret *backendProjectClient.Secret) (*backendProjectClient.Secret, error) {
 		return secret, nil
 	}
+
+	namespacedSecretOperationsStub := stubs.CreateNamespacedSecretOperationsStub(t)
+	namespacedSecretOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedSecretCollection, error) {
+		if !reflect.DeepEqual(expectedListOpts, opts) {
+			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+		}
+		return &backendProjectClient.NamespacedSecretCollection{
+			Data: []backendProjectClient.NamespacedSecret{},
+		}, nil
+	}
+	namespacedSecretOperationsStub.DoCreate = func(secret *backendProjectClient.NamespacedSecret) (*backendProjectClient.NamespacedSecret, error) {
+		return secret, nil
+	}
+
 	testClients.ProjectClient.Secret = secretOperationsStub
+	testClients.ProjectClient.NamespacedSecret = namespacedSecretOperationsStub
 	result, err := newSecretClient(
 		"existing-secret",
 		"test-namespace",
@@ -193,8 +225,8 @@ func notExistingSecretClient(t *testing.T, expectedListOpts *types.ListOpts) *se
 				name: projectName,
 				id:   projectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

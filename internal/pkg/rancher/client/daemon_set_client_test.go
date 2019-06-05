@@ -149,11 +149,12 @@ func existingDaemonSetClient(t *testing.T, expectedListOpts *types.ListOpts) *da
 		}, nil
 	}
 	testClients.ProjectClient.DaemonSet = daemonSetOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newDaemonSetClient(
 		"existing-daemonSet",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -200,11 +201,12 @@ func notExistingDaemonSetClient(t *testing.T, expectedListOpts *types.ListOpts) 
 		return daemonSet, nil
 	}
 	testClients.ProjectClient.DaemonSet = daemonSetOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newDaemonSetClient(
 		"existing-daemonSet",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

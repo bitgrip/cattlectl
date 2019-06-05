@@ -149,11 +149,12 @@ func existingCronJobClient(t *testing.T, expectedListOpts *types.ListOpts) *cron
 		}, nil
 	}
 	testClients.ProjectClient.CronJob = cronJobOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newCronJobClient(
 		"existing-cronJob",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -200,11 +201,12 @@ func notExistingCronJobClient(t *testing.T, expectedListOpts *types.ListOpts) *c
 		return cronJob, nil
 	}
 	testClients.ProjectClient.CronJob = cronJobOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newCronJobClient(
 		"existing-cronJob",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

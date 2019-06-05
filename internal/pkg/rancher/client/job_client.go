@@ -19,7 +19,6 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +26,12 @@ func newJobClientWithData(
 	job projectModel.Job,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (JobClient, error) {
 	result, err := newJobClient(
 		job.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +44,6 @@ func newJobClientWithData(
 func newJobClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (JobClient, error) {
 	return &jobClient{
@@ -59,29 +55,20 @@ func newJobClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type jobClient struct {
 	namespacedResourceClient
-	job                  projectModel.Job
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *jobClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	job projectModel.Job
 }
 
 func (client *jobClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.Job.List(&types.ListOpts{
+	collection, err := backendClient.Job.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -101,7 +88,8 @@ func (client *jobClient) Exists() (bool, error) {
 }
 
 func (client *jobClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new job")
@@ -110,7 +98,7 @@ func (client *jobClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendProjectClient.Job.Create(&pattern)
+	_, err = backendClient.Job.Create(&pattern)
 	return err
 }
 

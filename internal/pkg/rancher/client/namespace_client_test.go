@@ -136,10 +136,12 @@ func existingNamespaceClient(t *testing.T, expectedListOpts *types.ListOpts) *na
 		}, nil
 	}
 	testClients.ClusterClient.Namespace = namespaceOperationsStub
+	clusterClient := simpleClusterClient()
+	clusterClient._backendClusterClient = testClients.ClusterClient
 	result, err := newNamespaceClient(
 		"existing-namespace",
 		nil,
-		testClients.ClusterClient,
+		clusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -174,10 +176,12 @@ func notExistingNamespaceClient(t *testing.T, expectedListOpts *types.ListOpts) 
 		return namespace, nil
 	}
 	testClients.ClusterClient.Namespace = namespaceOperationsStub
+	clusterClient := simpleClusterClient()
+	clusterClient._backendClusterClient = testClients.ClusterClient
 	result, err := newNamespaceClient(
 		"existing-namespace",
 		nil,
-		testClients.ClusterClient,
+		clusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

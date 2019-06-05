@@ -149,11 +149,12 @@ func existingStatefulSetClient(t *testing.T, expectedListOpts *types.ListOpts) *
 		}, nil
 	}
 	testClients.ProjectClient.StatefulSet = statefulSetOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newStatefulSetClient(
 		"existing-statefulSet",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -200,11 +201,12 @@ func notExistingStatefulSetClient(t *testing.T, expectedListOpts *types.ListOpts
 		return statefulSet, nil
 	}
 	testClients.ProjectClient.StatefulSet = statefulSetOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newStatefulSetClient(
 		"existing-statefulSet",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

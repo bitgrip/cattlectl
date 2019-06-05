@@ -149,11 +149,12 @@ func existingDeploymentClient(t *testing.T, expectedListOpts *types.ListOpts) *d
 		}, nil
 	}
 	testClients.ProjectClient.Deployment = deploymentOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newDeploymentClient(
 		"existing-deployment",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -200,11 +201,12 @@ func notExistingDeploymentClient(t *testing.T, expectedListOpts *types.ListOpts)
 		return deployment, nil
 	}
 	testClients.ProjectClient.Deployment = deploymentOperationsStub
+	projectClient := simpleProjectClient()
+	projectClient._backendProjectClient = testClients.ProjectClient
 	result, err := newDeploymentClient(
 		"existing-deployment",
 		"test-namespace",
-		nil,
-		testClients.ProjectClient,
+		projectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

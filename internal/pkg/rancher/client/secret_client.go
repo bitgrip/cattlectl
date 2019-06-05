@@ -27,14 +27,12 @@ func newSecretpClientWithData(
 	configMap projectModel.ConfigMap,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	result, err := newSecretClient(
 		configMap.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +45,6 @@ func newSecretpClientWithData(
 func newSecretClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	return &secretClient{
@@ -59,32 +56,29 @@ func newSecretClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type secretClient struct {
 	namespacedResourceClient
-	configMap            projectModel.ConfigMap
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *secretClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	configMap projectModel.ConfigMap
 }
 
 func (client *secretClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	if client.namespace != "" {
+		return client.existsInNamespace()
+	}
+	return client.existsInProject()
+}
+
+func (client *secretClient) existsInProject() (bool, error) {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.Secret.List(&types.ListOpts{
+	collection, err := backendClient.Secret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
-			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"name": client.name,
 		},
 	})
 	if nil != err {
@@ -100,13 +94,72 @@ func (client *secretClient) Exists() (bool, error) {
 	return false, nil
 }
 
+func (client *secretClient) existsInNamespace() (bool, error) {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return false, err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return false, err
+	}
+	collection, err := backendClient.NamespacedSecret.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        client.name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read configMap list")
+		return false, fmt.Errorf("Failed to read configMap list, %v", err)
+	}
+	for _, item := range collection.Data {
+		if item.Name == client.name && item.NamespaceId == namespaceID {
+			return true, nil
+		}
+	}
+	client.logger.Debug("Secret not found")
+	return false, nil
+}
+
 func (client *secretClient) Create() error {
-	if err := client.init(); err != nil {
+	if client.namespace != "" {
+		return client.createInNamespace()
+	}
+	return client.createInProject()
+}
+
+func (client *secretClient) createInProject() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	projectID, err := client.project.ID()
+	if err != nil {
+		return err
+	}
+	client.logger.Info("Create new Secret")
+	labels := make(map[string]string)
+	labels["cattlectl.io/hash"] = hashOf(client.configMap)
+	newSecret := &backendProjectClient.Secret{
+		Name:      client.configMap.Name,
+		Labels:    labels,
+		Data:      client.configMap.Data,
+		ProjectID: projectID,
+	}
+
+	_, err = backendClient.Secret.Create(newSecret)
+	return err
+}
+
+func (client *secretClient) createInNamespace() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return fmt.Errorf("Failed to read namespace ID, %v", err)
+		return err
 	}
 	projectID, err := client.project.ID()
 	if err != nil {
@@ -115,7 +168,7 @@ func (client *secretClient) Create() error {
 	client.logger.Info("Create new Secret")
 	labels := make(map[string]string)
 	labels["cattlectl.io/hash"] = hashOf(client.configMap)
-	newSecret := &backendProjectClient.Secret{
+	newSecret := &backendProjectClient.NamespacedSecret{
 		Name:        client.configMap.Name,
 		Labels:      labels,
 		Data:        client.configMap.Data,
@@ -123,7 +176,7 @@ func (client *secretClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = client.backendProjectClient.Secret.Create(newSecret)
+	_, err = backendClient.NamespacedSecret.Create(newSecret)
 	return err
 }
 

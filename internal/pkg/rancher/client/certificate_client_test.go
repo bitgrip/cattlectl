@@ -172,8 +172,8 @@ func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *
 				name: simpleProjectName,
 				id:   simpleProjectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -213,8 +213,8 @@ func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts
 				name: simpleProjectName,
 				id:   simpleProjectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -253,8 +253,8 @@ func existingNamespacedCertificateClient(t *testing.T, expectedListOpts *types.L
 				name: simpleProjectName,
 				id:   simpleProjectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -294,8 +294,8 @@ func notExistingNamespacedCertificateClient(t *testing.T, expectedListOpts *type
 				name: simpleProjectName,
 				id:   simpleProjectID,
 			},
+			_backendProjectClient: testClients.ProjectClient,
 		},
-		testClients.ProjectClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

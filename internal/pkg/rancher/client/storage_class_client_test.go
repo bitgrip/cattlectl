@@ -132,9 +132,11 @@ func existingStorageClassClient(t *testing.T, expectedListOpts *types.ListOpts) 
 		}, nil
 	}
 	testClients.ClusterClient.StorageClass = storageClassOperationsStub
+	clusterClient := simpleClusterClient()
+	clusterClient._backendClusterClient = testClients.ClusterClient
 	result, err := newStorageClassClient(
 		"existing-storageClass",
-		testClients.ClusterClient,
+		clusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
@@ -170,9 +172,11 @@ func notExistingStorageClassClient(t *testing.T, expectedListOpts *types.ListOpt
 		return storageClass, nil
 	}
 	testClients.ClusterClient.StorageClass = storageClassOperationsStub
+	clusterClient := simpleClusterClient()
+	clusterClient._backendClusterClient = testClients.ClusterClient
 	result, err := newStorageClassClient(
 		"existing-storageClass",
-		testClients.ClusterClient,
+		clusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)

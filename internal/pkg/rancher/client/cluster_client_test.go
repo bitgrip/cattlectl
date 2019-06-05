@@ -55,8 +55,10 @@ func Test_clusterClient_Project(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			got, err := tt.client.Project(tt.args.projectName)
 			if tt.wantErr {
@@ -100,8 +102,10 @@ func Test_clusterClient_Projects(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			projectOperationsStub := stubs.CreateProjectOperationsStub(t)
 			projectOperationsStub.DoList = foundProjects(tt.foundProjects)
@@ -143,8 +147,10 @@ func Test_clusterClient_StorageClass(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			got, err := tt.client.StorageClass(tt.args.name)
 			if tt.wantErr {
@@ -188,8 +194,10 @@ func Test_clusterClient_StorageClasses(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			storageClassOperationStub := stubs.CreateStorageClassOperationsStub(t)
 			storageClassOperationStub.DoList = foundStorageClasses(tt.foundStorageClasses)
@@ -231,8 +239,10 @@ func Test_clusterClient_PersistentVolume(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			got, err := tt.client.PersistentVolume(tt.args.name)
 			if tt.wantErr {
@@ -269,8 +279,10 @@ func Test_clusterClient_PersistentVolumes(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			persistentVolumeOperationStub := stubs.CreatePersistentVolumeOperationsStub(t)
 			persistentVolumeOperationStub.DoList = foundPersistentVolumes(tt.foundPersistentVolumes)
@@ -314,8 +326,10 @@ func Test_clusterClient_Namespace(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			got, err := tt.client.Namespace(tt.args.name, tt.args.projectName)
 			if tt.wantErr {
@@ -352,8 +366,10 @@ func Test_clusterClient_Namespaces(t *testing.T) {
 
 			// Arrange
 			testClients := stubs.CreateBackendStubs(t)
-			tt.client.backendRancherClient = testClients.ManagementClient
-			tt.client.backendClusterClient = testClients.ClusterClient
+			rancherClient := simpleRancherClient()
+			rancherClient._backendRancherClient = testClients.ManagementClient
+			tt.client.rancherClient = rancherClient
+			tt.client._backendClusterClient = testClients.ClusterClient
 
 			namespaceOperationStub := stubs.CreateNamespaceOperationsStub(t)
 			namespaceOperationStub.DoList = foundNamespaces(tt.foundNamespaces, simpleProjectID)

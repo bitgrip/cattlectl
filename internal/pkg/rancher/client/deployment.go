@@ -19,7 +19,6 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
-	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,14 +26,12 @@ func newDeploymentClientWithData(
 	deployment projectModel.Deployment,
 	namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DeploymentClient, error) {
 	result, err := newDeploymentClient(
 		deployment.Name,
 		namespace,
 		project,
-		backendProjectClient,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +44,6 @@ func newDeploymentClientWithData(
 func newDeploymentClient(
 	name, namespace string,
 	project ProjectClient,
-	backendProjectClient *backendProjectClient.Client,
 	logger *logrus.Entry,
 ) (DeploymentClient, error) {
 	return &deploymentClient{
@@ -59,29 +55,20 @@ func newDeploymentClient(
 			namespace: namespace,
 			project:   project,
 		},
-		backendProjectClient: backendProjectClient,
 	}, nil
 }
 
 type deploymentClient struct {
 	namespacedResourceClient
-	deployment           projectModel.Deployment
-	backendProjectClient *backendProjectClient.Client
-}
-
-func (client *deploymentClient) init() error {
-	namespaceID, err := client.NamespaceID()
-	if namespaceID == "" && err == nil {
-		return fmt.Errorf("Can not find namespace")
-	}
-	return err
+	deployment projectModel.Deployment
 }
 
 func (client *deploymentClient) Exists() (bool, error) {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return false, err
 	}
-	collection, err := client.backendProjectClient.Deployment.List(&types.ListOpts{
+	collection, err := backendClient.Deployment.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
 			"namespaceId": client.namespaceID,
@@ -101,7 +88,8 @@ func (client *deploymentClient) Exists() (bool, error) {
 }
 
 func (client *deploymentClient) Create() error {
-	if err := client.init(); err != nil {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
 		return err
 	}
 	client.logger.Info("Create new deployment")
@@ -110,7 +98,7 @@ func (client *deploymentClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = client.namespaceID
-	_, err = client.backendProjectClient.Deployment.Create(&pattern)
+	_, err = backendClient.Deployment.Create(&pattern)
 	return err
 }
 
