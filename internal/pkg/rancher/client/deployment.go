@@ -103,7 +103,8 @@ func (client *deploymentClient) Create() error {
 }
 
 func (client *deploymentClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Warn("deployment exists need to be removed manually")
+	return nil
 }
 
 func (client *deploymentClient) Data() (projectModel.Deployment, error) {

@@ -103,7 +103,8 @@ func (client *daemonSetClient) Create() error {
 }
 
 func (client *daemonSetClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Warn("daemonset exists need to be removed manually")
+	return nil
 }
 
 func (client *daemonSetClient) Data() (projectModel.DaemonSet, error) {

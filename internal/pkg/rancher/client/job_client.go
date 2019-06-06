@@ -103,7 +103,8 @@ func (client *jobClient) Create() error {
 }
 
 func (client *jobClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Warn("job exists need to be removed manually")
+	return nil
 }
 
 func (client *jobClient) Data() (projectModel.Job, error) {

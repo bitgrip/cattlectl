@@ -103,7 +103,8 @@ func (client *statefulSetClient) Create() error {
 }
 
 func (client *statefulSetClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Warn("statefulset exists need to be removed manually")
+	return nil
 }
 
 func (client *statefulSetClient) Data() (projectModel.StatefulSet, error) {

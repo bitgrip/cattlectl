@@ -103,7 +103,8 @@ func (client *cronJobClient) Create() error {
 }
 
 func (client *cronJobClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Warn("cronjob exists need to be removed manually")
+	return nil
 }
 
 func (client *cronJobClient) Data() (projectModel.CronJob, error) {
