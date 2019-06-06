@@ -105,6 +105,8 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("Unknown descriptor %s", kind)
 	}
 	return nil
 }

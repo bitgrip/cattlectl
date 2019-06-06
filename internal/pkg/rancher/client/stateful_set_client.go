@@ -68,10 +68,14 @@ func (client *statefulSetClient) Exists() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return false, err
+	}
 	collection, err := backendClient.StatefulSet.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"namespaceId": namespaceID,
 		},
 	})
 	if nil != err {
@@ -79,7 +83,7 @@ func (client *statefulSetClient) Exists() (bool, error) {
 		return false, fmt.Errorf("Failed to read statefulSet list, %v", err)
 	}
 	for _, item := range collection.Data {
-		if item.Name == client.name && item.NamespaceId == client.namespaceID {
+		if item.Name == client.name && item.NamespaceId == namespaceID {
 			return true, nil
 		}
 	}
@@ -97,7 +101,11 @@ func (client *statefulSetClient) Create() error {
 	if err != nil {
 		return err
 	}
-	pattern.NamespaceId = client.namespaceID
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
+	pattern.NamespaceId = namespaceID
 	_, err = backendClient.StatefulSet.Create(&pattern)
 	return err
 }

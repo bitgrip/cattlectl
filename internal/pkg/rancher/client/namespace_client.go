@@ -136,7 +136,7 @@ func (client *namespaceClient) Create() error {
 }
 
 func (client *namespaceClient) Upgrade() error {
-	client.logger.Debug("namespace exists need to be removed manually")
+	client.logger.Debug("Skip change existing namespace")
 	return nil
 }
 

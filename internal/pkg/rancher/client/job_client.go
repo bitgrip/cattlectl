@@ -68,10 +68,14 @@ func (client *jobClient) Exists() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return false, err
+	}
 	collection, err := backendClient.Job.List(&types.ListOpts{
 		Filters: map[string]interface{}{
 			"name":        client.name,
-			"namespaceId": client.namespaceID,
+			"namespaceId": namespaceID,
 		},
 	})
 	if nil != err {
@@ -79,7 +83,7 @@ func (client *jobClient) Exists() (bool, error) {
 		return false, fmt.Errorf("Failed to read job list, %v", err)
 	}
 	for _, item := range collection.Data {
-		if item.Name == client.name && item.NamespaceId == client.namespaceID {
+		if item.Name == client.name && item.NamespaceId == namespaceID {
 			return true, nil
 		}
 	}
@@ -92,12 +96,16 @@ func (client *jobClient) Create() error {
 	if err != nil {
 		return err
 	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
 	client.logger.Info("Create new job")
 	pattern, err := projectModel.ConvertJobToProjectAPI(client.job)
 	if err != nil {
 		return err
 	}
-	pattern.NamespaceId = client.namespaceID
+	pattern.NamespaceId = namespaceID
 	_, err = backendClient.Job.Create(&pattern)
 	return err
 }

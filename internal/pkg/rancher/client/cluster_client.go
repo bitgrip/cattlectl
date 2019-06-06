@@ -208,13 +208,16 @@ func (client *clusterClient) PersistentVolumes() ([]PersistentVolumeClient, erro
 func (client *clusterClient) Namespace(name, projectName string) (NamespaceClient, error) {
 	var (
 		projectClient ProjectClient
+		logger        *logrus.Entry
 		err           error
 	)
+	logger = client.logger
 	if projectName != "" {
 		projectClient, err = client.Project(projectName)
 		if err != nil {
 			return nil, err
 		}
+		logger = logger.WithField("project_name", projectName)
 	}
 	if cache, exists := client.namespaces[name]; exists {
 		if cache.projectName != projectName {
@@ -222,7 +225,7 @@ func (client *clusterClient) Namespace(name, projectName string) (NamespaceClien
 		}
 		return cache.namespace, nil
 	}
-	namespace, err := newNamespaceClient(name, projectClient, client, client.logger)
+	namespace, err := newNamespaceClient(name, projectClient, client, logger)
 	if err != nil {
 		return nil, err
 	}
