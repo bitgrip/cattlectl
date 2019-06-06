@@ -48,11 +48,15 @@ func newCertificateClient(
 	project ProjectClient,
 	logger *logrus.Entry,
 ) (CertificateClient, error) {
+	clientLogger := logger.WithField("certificate_name", name)
+	if namespace != "" {
+		clientLogger = clientLogger.WithField("namespace", namespace)
+	}
 	return &certificateClient{
 		namespacedResourceClient: namespacedResourceClient{
 			resourceClient: resourceClient{
 				name:   name,
-				logger: logger.WithField("certificate_name", name).WithField("namespace", namespace),
+				logger: clientLogger,
 			},
 			namespace: namespace,
 			project:   project,
@@ -172,7 +176,6 @@ func (client *certificateClient) createInNamespace(projectID string, labels map[
 		NamespaceId: namespaceID,
 		ProjectID:   projectID,
 	}
-
 	_, err = backendClient.NamespacedCertificate.Create(newCertificate)
 	return err
 }

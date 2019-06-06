@@ -451,3 +451,11 @@ func foundNamespaces(names []string, projectID string) func(opts *types.ListOpts
 		}, nil
 	}
 }
+
+func foundNamespace(name, id string, projectID string) func(opts *types.ListOpts) (*backendClusterClient.NamespaceCollection, error) {
+	return func(opts *types.ListOpts) (*backendClusterClient.NamespaceCollection, error) {
+		return &backendClusterClient.NamespaceCollection{
+			Data: []backendClusterClient.Namespace{backendClusterClient.Namespace{Resource: types.Resource{ID: id}, Name: name, ProjectID: projectID}},
+		}, nil
+	}
+}

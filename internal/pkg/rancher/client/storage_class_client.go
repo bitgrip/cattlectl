@@ -103,7 +103,8 @@ func (client *storageClassClient) Create() error {
 }
 
 func (client *storageClassClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Debug("storageclass exists need to be removed manually")
+	return nil
 }
 
 func (client *storageClassClient) Data() (projectModel.StorageClass, error) {

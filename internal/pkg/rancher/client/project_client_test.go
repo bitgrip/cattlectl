@@ -446,6 +446,10 @@ func Test_projectClient_Certificates(t *testing.T) {
 			certificateOperationStub.DoList = foundCertificates(tt.foundCertificates, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.NamespacedCertificate = certificateOperationStub
 
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
+
 			got, err := tt.client.Certificates(tt.namespaceName)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
@@ -549,6 +553,10 @@ func Test_projectClient_ConfigMaps(t *testing.T) {
 			configMapOperationStub := stubs.CreateConfigMapOperationsStub(t)
 			configMapOperationStub.DoList = foundConfigMaps(tt.foundConfigMaps, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.ConfigMap = configMapOperationStub
+
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
 
 			got, err := tt.client.ConfigMaps(tt.namespaceName)
 			if tt.wantErr {
@@ -761,6 +769,10 @@ func Test_projectClient_DockerCredentials(t *testing.T) {
 			dockerCredentialOperationStub.DoList = foundDockerCredentials(tt.foundDockerCredentials, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.NamespacedDockerCredential = dockerCredentialOperationStub
 
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
+
 			got, err := tt.client.DockerCredentials(tt.namespaceName)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
@@ -972,6 +984,10 @@ func Test_projectClient_Secrets(t *testing.T) {
 			secretOperationsStub.DoList = foundDockerSecrets(tt.foundSecrets, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.NamespacedSecret = secretOperationsStub
 
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
+
 			got, err := tt.client.Secrets(tt.namespaceName)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
@@ -1174,6 +1190,10 @@ func Test_projectClient_Jobs(t *testing.T) {
 			jobOperationsStub.DoList = foundJobs(tt.foundJobs, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.Job = jobOperationsStub
 
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
+
 			got, err := tt.client.Jobs(tt.namespaceName)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
@@ -1277,6 +1297,10 @@ func Test_projectClient_CronJobs(t *testing.T) {
 			cronJobOperationStub := stubs.CreateCronJobOperationsStub(t)
 			cronJobOperationStub.DoList = foundCronJobs(tt.foundCronJobs, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.CronJob = cronJobOperationStub
+
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
 
 			got, err := tt.client.CronJobs(tt.namespaceName)
 			if tt.wantErr {
@@ -1382,6 +1406,10 @@ func Test_projectClient_Deployments(t *testing.T) {
 			deploymentOperationsStub.DoList = foundDeployments(tt.foundDeployments, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.Deployment = deploymentOperationsStub
 
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
+
 			got, err := tt.client.Deployments(tt.namespaceName)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
@@ -1486,6 +1514,10 @@ func Test_projectClient_DaemonSets(t *testing.T) {
 			daemonSetOperationsStub.DoList = foundDaemonSets(tt.foundDaemonSets, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.DaemonSet = daemonSetOperationsStub
 
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
+
 			got, err := tt.client.DaemonSets(tt.namespaceName)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
@@ -1589,6 +1621,10 @@ func Test_projectClient_StatefulSets(t *testing.T) {
 			statefulSetOperationsStub := stubs.CreateStatefulSetOperationsStub(t)
 			statefulSetOperationsStub.DoList = foundStatefulSets(tt.foundStatefulSets, tt.namespaceID, simpleProjectID)
 			testClients.ProjectClient.StatefulSet = statefulSetOperationsStub
+
+			namespaceOperationsStub := stubs.CreateNamespaceOperationsStub(t)
+			namespaceOperationsStub.DoList = foundNamespace(tt.namespaceName, tt.namespaceID, simpleProjectID)
+			testClients.ClusterClient.Namespace = namespaceOperationsStub
 
 			got, err := tt.client.StatefulSets(tt.namespaceName)
 			if tt.wantErr {

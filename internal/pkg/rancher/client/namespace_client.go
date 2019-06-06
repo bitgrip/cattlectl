@@ -65,6 +65,31 @@ type namespaceClient struct {
 	clusterClient ClusterClient
 }
 
+func (client *namespaceClient) ID() (string, error) {
+	if client.id != "" {
+		return client.id, nil
+	}
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
+		return "", err
+	}
+	collection, err := backendClient.Namespace.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if err != nil {
+		client.logger.WithError(err).Error("Failed to read namespace list")
+		return "", fmt.Errorf("Failed to read namespace list, %v", err)
+	}
+	if len(collection.Data) < 1 {
+		client.logger.Debug("Unknown Namespace")
+		return "", nil
+	}
+	client.id = collection.Data[0].ID
+	return client.id, nil
+}
+
 func (client *namespaceClient) Exists() (bool, error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
@@ -75,7 +100,7 @@ func (client *namespaceClient) Exists() (bool, error) {
 			"name": client.name,
 		},
 	})
-	if nil != err {
+	if err != nil {
 		client.logger.WithError(err).Error("Failed to read namespace list")
 		return false, fmt.Errorf("Failed to read namespace list, %v", err)
 	}
@@ -111,7 +136,8 @@ func (client *namespaceClient) Create() error {
 }
 
 func (client *namespaceClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Debug("namespace exists need to be removed manually")
+	return nil
 }
 
 func (client *namespaceClient) HasProject() (bool, error) {

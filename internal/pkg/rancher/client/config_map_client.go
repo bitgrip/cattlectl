@@ -149,6 +149,7 @@ func (client *configMapClient) Upgrade() error {
 		return nil
 	}
 	client.logger.Info("Upgrade ConfigMap")
+	existingConfigMap.Labels["cattlectl.io/hash"] = hashOf(client.configMap)
 	existingConfigMap.Data = client.configMap.Data
 
 	_, err = backendClient.ConfigMap.Replace(&existingConfigMap)

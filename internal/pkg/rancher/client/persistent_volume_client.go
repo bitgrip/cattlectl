@@ -120,7 +120,8 @@ func (client *persistentVolumeClient) Create() error {
 }
 
 func (client *persistentVolumeClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	client.logger.Debug("persistentVolume exists need to be removed manually")
+	return nil
 }
 
 func (client *persistentVolumeClient) Data() (projectModel.PersistentVolume, error) {
