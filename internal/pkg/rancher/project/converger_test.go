@@ -13,34 +13,3 @@
 // limitations under the License.
 
 package project
-
-import (
-	"testing"
-
-	"github.com/bitgrip/cattlectl/internal/pkg/assert"
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher/clientstub"
-)
-
-func expectSetClusterForExisting(expectedClusterName, expectedClusterID string, client *clientstub.ClientStub, t *testing.T) {
-	client.DoHasClusterWithName = func(clusterName string) (bool, string, error) {
-		assert.Equals(t, expectedClusterName, clusterName)
-		return true, expectedClusterID, nil
-	}
-	client.DoSetCluster = func(clusterName, clusterID string) error {
-		assert.Equals(t, expectedClusterName, clusterName)
-		assert.Equals(t, expectedClusterID, clusterID)
-		return nil
-	}
-}
-
-func expectSetProjectForExisting(expectedProjectName, expectedProjectID string, client *clientstub.ClientStub, t *testing.T) {
-	client.DoHasProjectWithName = func(projectName string) (bool, string, error) {
-		assert.Equals(t, expectedProjectName, projectName)
-		return true, expectedProjectID, nil
-	}
-	client.DoSetProject = func(projectName, projectID string) error {
-		assert.Equals(t, expectedProjectName, projectName)
-		assert.Equals(t, expectedProjectID, projectID)
-		return nil
-	}
-}
