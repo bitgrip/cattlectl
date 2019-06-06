@@ -121,7 +121,38 @@ func (client *configMapClient) Create() error {
 }
 
 func (client *configMapClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.ConfigMap.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        client.name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read configMap list")
+		return fmt.Errorf("Failed to read configMap list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("ConfigMap %v not found", client.name)
+	}
+	existingConfigMap := collection.Data[0]
+	if isConfigMapUnchanged(existingConfigMap, client.configMap) {
+		client.logger.Debug("Skip upgrade configMap - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade ConfigMap")
+	existingConfigMap.Data = client.configMap.Data
+
+	_, err = backendClient.ConfigMap.Replace(&existingConfigMap)
+	return err
 }
 
 func (client *configMapClient) Data() (projectModel.ConfigMap, error) {
@@ -132,4 +163,12 @@ func (client *configMapClient) SetData(configMap projectModel.ConfigMap) error {
 	client.name = configMap.Name
 	client.configMap = configMap
 	return nil
+}
+
+func isConfigMapUnchanged(existingConfigMap backendProjectClient.ConfigMap, configMap projectModel.ConfigMap) bool {
+	hash, hashExists := existingConfigMap.Labels["cattlectl.io/hash"]
+	if !hashExists {
+		return false
+	}
+	return hash == hashOf(configMap)
 }

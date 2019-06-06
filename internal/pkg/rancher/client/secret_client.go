@@ -16,6 +16,7 @@ package client
 
 import (
 	"fmt"
+	"reflect"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
@@ -24,13 +25,13 @@ import (
 )
 
 func newSecretpClientWithData(
-	configMap projectModel.ConfigMap,
+	secret projectModel.ConfigMap,
 	namespace string,
 	project ProjectClient,
 	logger *logrus.Entry,
 ) (ConfigMapClient, error) {
 	result, err := newSecretClient(
-		configMap.Name,
+		secret.Name,
 		namespace,
 		project,
 		logger,
@@ -38,7 +39,7 @@ func newSecretpClientWithData(
 	if err != nil {
 		return nil, err
 	}
-	err = result.SetData(configMap)
+	err = result.SetData(secret)
 	return result, err
 }
 
@@ -51,7 +52,7 @@ func newSecretClient(
 		namespacedResourceClient: namespacedResourceClient{
 			resourceClient: resourceClient{
 				name:   name,
-				logger: logger.WithField("configMap_name", name).WithField("namespace", namespace),
+				logger: logger.WithField("secret_name", name).WithField("namespace", namespace),
 			},
 			namespace: namespace,
 			project:   project,
@@ -61,7 +62,7 @@ func newSecretClient(
 
 type secretClient struct {
 	namespacedResourceClient
-	configMap projectModel.ConfigMap
+	secret projectModel.ConfigMap
 }
 
 func (client *secretClient) Exists() (bool, error) {
@@ -82,8 +83,8 @@ func (client *secretClient) existsInProject() (bool, error) {
 		},
 	})
 	if nil != err {
-		client.logger.WithError(err).Error("Failed to read configMap list")
-		return false, fmt.Errorf("Failed to read configMap list, %v", err)
+		client.logger.WithError(err).Error("Failed to read secret list")
+		return false, fmt.Errorf("Failed to read secret list, %v", err)
 	}
 	for _, item := range collection.Data {
 		if item.Name == client.name && item.NamespaceId == client.namespaceID {
@@ -110,8 +111,8 @@ func (client *secretClient) existsInNamespace() (bool, error) {
 		},
 	})
 	if nil != err {
-		client.logger.WithError(err).Error("Failed to read configMap list")
-		return false, fmt.Errorf("Failed to read configMap list, %v", err)
+		client.logger.WithError(err).Error("Failed to read secret list")
+		return false, fmt.Errorf("Failed to read secret list, %v", err)
 	}
 	for _, item := range collection.Data {
 		if item.Name == client.name && item.NamespaceId == namespaceID {
@@ -140,11 +141,11 @@ func (client *secretClient) createInProject() error {
 	}
 	client.logger.Info("Create new Secret")
 	labels := make(map[string]string)
-	labels["cattlectl.io/hash"] = hashOf(client.configMap)
+	labels["cattlectl.io/hash"] = hashOf(client.secret)
 	newSecret := &backendProjectClient.Secret{
-		Name:      client.configMap.Name,
+		Name:      client.secret.Name,
 		Labels:    labels,
-		Data:      client.configMap.Data,
+		Data:      client.secret.Data,
 		ProjectID: projectID,
 	}
 
@@ -167,11 +168,11 @@ func (client *secretClient) createInNamespace() error {
 	}
 	client.logger.Info("Create new Secret")
 	labels := make(map[string]string)
-	labels["cattlectl.io/hash"] = hashOf(client.configMap)
+	labels["cattlectl.io/hash"] = hashOf(client.secret)
 	newSecret := &backendProjectClient.NamespacedSecret{
-		Name:        client.configMap.Name,
+		Name:        client.secret.Name,
 		Labels:      labels,
-		Data:        client.configMap.Data,
+		Data:        client.secret.Data,
 		NamespaceId: namespaceID,
 		ProjectID:   projectID,
 	}
@@ -181,15 +182,91 @@ func (client *secretClient) createInNamespace() error {
 }
 
 func (client *secretClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	if client.namespace != "" {
+		return client.upgradeInNamespace()
+	}
+	return client.upgradeInProject()
+}
+
+func (client *secretClient) upgradeInProject() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.Secret.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read secret list")
+		return fmt.Errorf("Failed to read secret list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("Secret %v not found", client.name)
+	}
+	existingSecret := collection.Data[0]
+	if isProjectSecretUnchanged(existingSecret, client.secret) {
+		client.logger.Debug("Skip upgrade secret - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade Secret")
+	existingSecret.Data = client.secret.Data
+
+	_, err = backendClient.Secret.Replace(&existingSecret)
+	return err
+}
+
+func (client *secretClient) upgradeInNamespace() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.NamespacedSecret.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        client.name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read secret list")
+		return fmt.Errorf("Failed to read secret list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("Secret %v not found", client.name)
+	}
+	existingSecret := collection.Data[0]
+	if isNamespacedSecretUnchanged(existingSecret, client.secret) {
+		client.logger.Debug("Skip upgrade secret - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade Secret")
+	existingSecret.Data = client.secret.Data
+
+	_, err = backendClient.NamespacedSecret.Replace(&existingSecret)
+	return err
 }
 
 func (client *secretClient) Data() (projectModel.ConfigMap, error) {
-	return client.configMap, nil
+	return client.secret, nil
 }
 
-func (client *secretClient) SetData(configMap projectModel.ConfigMap) error {
-	client.name = configMap.Name
-	client.configMap = configMap
+func (client *secretClient) SetData(secret projectModel.ConfigMap) error {
+	client.name = secret.Name
+	client.secret = secret
 	return nil
+}
+
+func isProjectSecretUnchanged(existingSecret backendProjectClient.Secret, secret projectModel.ConfigMap) bool {
+	return reflect.DeepEqual(existingSecret.Data, secret.Data)
+}
+
+func isNamespacedSecretUnchanged(existingSecret backendProjectClient.NamespacedSecret, secret projectModel.ConfigMap) bool {
+	return reflect.DeepEqual(existingSecret.Data, secret.Data)
 }

@@ -183,7 +183,91 @@ func (client *dockerCredentialClient) createInNamespace(registries map[string]ba
 }
 
 func (client *dockerCredentialClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	if client.namespace != "" {
+		return client.upgradeInNamespace()
+	}
+	return client.upgradeInProject()
+}
+
+func (client *dockerCredentialClient) upgradeInProject() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.DockerCredential.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read dockerCredential list")
+		return fmt.Errorf("Failed to read dockerCredential list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("DockerCredential %v not found", client.name)
+	}
+	existingDockerCredential := collection.Data[0]
+	if isProjectDockerCredentialUnchanged(existingDockerCredential, client.dockerCredential) {
+		client.logger.Debug("Skip upgrade DockerCredential - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade DockerCredential")
+	registries := make(map[string]backendProjectClient.RegistryCredential)
+	for _, registry := range client.dockerCredential.Registries {
+		registries[registry.Name] = backendProjectClient.RegistryCredential{
+			Username: registry.Username,
+			Password: registry.Password,
+		}
+	}
+	existingDockerCredential.Registries = registries
+	existingDockerCredential.Labels["cattlectl.io/hash"] = hashOf(client.dockerCredential)
+
+	_, err = backendClient.DockerCredential.Replace(&existingDockerCredential)
+	return err
+}
+
+func (client *dockerCredentialClient) upgradeInNamespace() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.NamespacedDockerCredential.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        client.name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read dockerCredential list")
+		return fmt.Errorf("Failed to read dockerCredential list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("DockerCredential %v not found", client.name)
+	}
+	existingDockerCredential := collection.Data[0]
+	if isNamespacedDockerCredentialUnchanged(existingDockerCredential, client.dockerCredential) {
+		client.logger.Debug("Skip upgrade DockerCredential - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade DockerCredential")
+	registries := make(map[string]backendProjectClient.RegistryCredential)
+	for _, registry := range client.dockerCredential.Registries {
+		registries[registry.Name] = backendProjectClient.RegistryCredential{
+			Username: registry.Username,
+			Password: registry.Password,
+		}
+	}
+	existingDockerCredential.Registries = registries
+	existingDockerCredential.Labels["cattlectl.io/hash"] = hashOf(client.dockerCredential)
+
+	_, err = backendClient.NamespacedDockerCredential.Replace(&existingDockerCredential)
+	return err
 }
 
 func (client *dockerCredentialClient) Data() (projectModel.DockerCredential, error) {
@@ -194,4 +278,20 @@ func (client *dockerCredentialClient) SetData(dockerCredential projectModel.Dock
 	client.name = dockerCredential.Name
 	client.dockerCredential = dockerCredential
 	return nil
+}
+
+func isProjectDockerCredentialUnchanged(existingDockerCredential backendProjectClient.DockerCredential, dockerCredential projectModel.DockerCredential) bool {
+	hash, hashExists := existingDockerCredential.Labels["cattlectl.io/hash"]
+	if !hashExists {
+		return false
+	}
+	return hash == hashOf(dockerCredential)
+}
+
+func isNamespacedDockerCredentialUnchanged(existingDockerCredential backendProjectClient.NamespacedDockerCredential, dockerCredential projectModel.DockerCredential) bool {
+	hash, hashExists := existingDockerCredential.Labels["cattlectl.io/hash"]
+	if !hashExists {
+		return false
+	}
+	return hash == hashOf(dockerCredential)
 }

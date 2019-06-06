@@ -45,8 +45,8 @@ func Test_dockerCredentialClient_Exists(t *testing.T) {
 				t,
 				&types.ListOpts{
 					Filters: map[string]interface{}{
-						"name":        "existing-dockerCredential",
-						"namespaceId": "test-namespace-id",
+						"name":        simpleDockerCredentialName,
+						"namespaceId": simpleNamespaceID,
 					},
 				},
 			),
@@ -59,8 +59,8 @@ func Test_dockerCredentialClient_Exists(t *testing.T) {
 				t,
 				&types.ListOpts{
 					Filters: map[string]interface{}{
-						"name":        "existing-dockerCredential",
-						"namespaceId": "test-namespace-id",
+						"name":        simpleDockerCredentialName,
+						"namespaceId": simpleNamespaceID,
 					},
 				},
 			),
@@ -109,20 +109,45 @@ func Test_dockerCredentialClient_Create(t *testing.T) {
 	}
 }
 
+func Test_dockerCredentialClient_Upgrade(t *testing.T) {
+	tests := []struct {
+		name      string
+		client    *dockerCredentialClient
+		wantErr   bool
+		wantedErr string
+	}{
+		{
+			name: "global",
+			client: existingDockerCredentialClient(
+				t,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name":        simpleDockerCredentialName,
+						"namespaceId": simpleNamespaceID,
+					},
+				},
+			),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.client.Upgrade()
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+			}
+		})
+	}
+}
+
 func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOpts) *dockerCredentialClient {
-	const (
-		projectID            = "test-project-id"
-		projectName          = "test-project-name"
-		namespaceID          = "test-namespace-id"
-		namespace            = "test-namespace"
-		clusterID            = "test-cluster-id"
-		dockerCredentialName = "test-dockerCredential"
-	)
 	var (
 		dockerCredential = projectModel.DockerCredential{}
 		testClients      = stubs.CreateBackendStubs(t)
 	)
-	dockerCredential.Name = dockerCredentialName
+	dockerCredential.Name = simpleDockerCredentialName
 
 	dockerCredentialOperationsStub := stubs.CreateDockerCredentialOperationsStub(t)
 	dockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DockerCredentialCollection, error) {
@@ -132,8 +157,9 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 		return &backendProjectClient.DockerCredentialCollection{
 			Data: []backendProjectClient.DockerCredential{
 				backendProjectClient.DockerCredential{
-					Name:        "existing-dockerCredential",
-					NamespaceId: "test-namespace-id",
+					Name:        simpleDockerCredentialName,
+					NamespaceId: simpleNamespaceID,
+					Labels:      map[string]string{},
 				},
 			},
 		}, nil
@@ -147,22 +173,26 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 		return &backendProjectClient.NamespacedDockerCredentialCollection{
 			Data: []backendProjectClient.NamespacedDockerCredential{
 				backendProjectClient.NamespacedDockerCredential{
-					Name:        "existing-dockerCredential",
-					NamespaceId: "test-namespace-id",
+					Name:        simpleDockerCredentialName,
+					NamespaceId: simpleNamespaceID,
+					Labels:      map[string]string{},
 				},
 			},
 		}, nil
+	}
+	namespacedDockerCredentialOperationsStub.DoReplace = func(existing *backendProjectClient.NamespacedDockerCredential) (*backendProjectClient.NamespacedDockerCredential, error) {
+		return existing, nil
 	}
 
 	testClients.ProjectClient.DockerCredential = dockerCredentialOperationsStub
 	testClients.ProjectClient.NamespacedDockerCredential = namespacedDockerCredentialOperationsStub
 	result, err := newDockerCredentialClient(
-		"existing-dockerCredential",
-		"test-namespace",
+		simpleDockerCredentialName,
+		simpleNamespaceName,
 		&projectClient{
 			resourceClient: resourceClient{
-				name: projectName,
-				id:   projectID,
+				name: simpleProjectName,
+				id:   simpleProjectID,
 			},
 			_backendProjectClient: testClients.ProjectClient,
 		},
@@ -170,24 +200,16 @@ func existingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOp
 	)
 	assert.Ok(t, err)
 	dockerCredentialClientResult := result.(*dockerCredentialClient)
-	dockerCredentialClientResult.namespaceID = "test-namespace-id"
+	dockerCredentialClientResult.namespaceID = simpleNamespaceID
 	return dockerCredentialClientResult
 }
 
 func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.ListOpts) *dockerCredentialClient {
-	const (
-		projectID            = "test-project-id"
-		projectName          = "test-project-name"
-		namespaceID          = "test-namespace-id"
-		namespace            = "test-namespace"
-		clusterID            = "test-cluster-id"
-		dockerCredentialName = "test-dockerCredential"
-	)
 	var (
 		dockerCredential = projectModel.DockerCredential{}
 		testClients      = stubs.CreateBackendStubs(t)
 	)
-	dockerCredential.Name = dockerCredentialName
+	dockerCredential.Name = simpleDockerCredentialName
 
 	dockerCredentialOperationsStub := stubs.CreateDockerCredentialOperationsStub(t)
 	dockerCredentialOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.DockerCredentialCollection, error) {
@@ -217,12 +239,12 @@ func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.Lis
 	testClients.ProjectClient.DockerCredential = dockerCredentialOperationsStub
 	testClients.ProjectClient.NamespacedDockerCredential = namespacedDockerCredentialOperationsStub
 	result, err := newDockerCredentialClient(
-		"existing-dockerCredential",
-		"test-namespace",
+		simpleDockerCredentialName,
+		simpleNamespaceName,
 		&projectClient{
 			resourceClient: resourceClient{
-				name: projectName,
-				id:   projectID,
+				name: simpleProjectName,
+				id:   simpleProjectID,
 			},
 			_backendProjectClient: testClients.ProjectClient,
 		},
@@ -230,6 +252,6 @@ func notExistingDockerCredentialClient(t *testing.T, expectedListOpts *types.Lis
 	)
 	assert.Ok(t, err)
 	dockerCredentialClientResult := result.(*dockerCredentialClient)
-	dockerCredentialClientResult.namespaceID = "test-namespace-id"
+	dockerCredentialClientResult.namespaceID = simpleNamespaceID
 	return dockerCredentialClientResult
 }

@@ -16,6 +16,7 @@ package client
 
 import (
 	"fmt"
+	"strings"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
@@ -177,7 +178,77 @@ func (client *certificateClient) createInNamespace(projectID string, labels map[
 }
 
 func (client *certificateClient) Upgrade() error {
-	return fmt.Errorf("upgrade statefulset not supported")
+	if client.namespace != "" {
+		return client.upgradeInNamespace()
+	}
+	return client.upgradeInProject()
+}
+
+func (client *certificateClient) upgradeInProject() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.Certificate.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read certificate list")
+		return fmt.Errorf("Failed to read certificate list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("Certificate %v not found", client.name)
+	}
+	existingCertificate := collection.Data[0]
+	if strings.TrimSpace(existingCertificate.Certs) == strings.TrimSpace(client.certificate.Certs) {
+		client.logger.Debug("Skip upgrade certificate - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade Certificate")
+	existingCertificate.Key = client.certificate.Key
+	existingCertificate.Certs = client.certificate.Certs
+
+	_, err = backendClient.Certificate.Replace(&existingCertificate)
+	return err
+}
+
+func (client *certificateClient) upgradeInNamespace() error {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return err
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return err
+	}
+	collection, err := backendClient.NamespacedCertificate.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        client.name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read certificate list")
+		return fmt.Errorf("Failed to read certificate list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return fmt.Errorf("Certificate %v not found", client.name)
+	}
+	existingCertificate := collection.Data[0]
+	if strings.TrimSpace(existingCertificate.Certs) == strings.TrimSpace(client.certificate.Certs) {
+		client.logger.Debug("Skip upgrade certificate - no changes")
+		return nil
+	}
+	client.logger.Info("Upgrade Certificate")
+	existingCertificate.Key = client.certificate.Key
+	existingCertificate.Certs = client.certificate.Certs
+
+	_, err = backendClient.NamespacedCertificate.Replace(&existingCertificate)
+	return err
 }
 
 func (client *certificateClient) Data() (projectModel.Certificate, error) {

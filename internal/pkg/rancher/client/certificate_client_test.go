@@ -118,7 +118,12 @@ func Test_certificateClient_Create(t *testing.T) {
 			name: "Create",
 			client: notExistingCertificateClient(
 				t,
-				nil,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name":   simpleCertificateName,
+						"system": false,
+					},
+				},
 			),
 			wantErr: false,
 		},
@@ -126,7 +131,12 @@ func Test_certificateClient_Create(t *testing.T) {
 			name: "Create_namespaces",
 			client: notExistingNamespacedCertificateClient(
 				t,
-				nil,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name":        simpleCertificateName,
+						"namespaceId": simpleNamespaceID,
+					},
+				},
 			),
 			wantErr: false,
 		},
@@ -134,6 +144,51 @@ func Test_certificateClient_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.client.Create()
+			if tt.wantErr {
+				assert.NotOk(t, err, tt.wantedErr)
+			} else {
+				assert.Ok(t, err)
+			}
+		})
+	}
+}
+
+func Test_certificateClient_Upgrade(t *testing.T) {
+	tests := []struct {
+		name      string
+		client    *certificateClient
+		wantErr   bool
+		wantedErr string
+	}{
+		{
+			name: "global",
+			client: existingCertificateClient(
+				t,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name": simpleCertificateName,
+					},
+				},
+			),
+			wantErr: false,
+		},
+		{
+			name: "namespaced",
+			client: existingNamespacedCertificateClient(
+				t,
+				&types.ListOpts{
+					Filters: map[string]interface{}{
+						"name":        simpleCertificateName,
+						"namespaceId": simpleNamespaceID,
+					},
+				},
+			),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.client.Upgrade()
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {
@@ -153,7 +208,7 @@ func existingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts) *
 	certificateOperationsStub := stubs.CreateCertificateOperationsStub(t)
 	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
-			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+			return nil, fmt.Errorf("Unexpected ListOpts\n%v\n%v", opts, expectedListOpts)
 		}
 		return &backendProjectClient.CertificateCollection{
 			Data: []backendProjectClient.Certificate{
@@ -192,7 +247,7 @@ func notExistingCertificateClient(t *testing.T, expectedListOpts *types.ListOpts
 	certificateOperationsStub := stubs.CreateCertificateOperationsStub(t)
 	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.CertificateCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
-			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+			return nil, fmt.Errorf("Unexpected ListOpts\n%v\n%v", opts, expectedListOpts)
 		}
 		return &backendProjectClient.CertificateCollection{
 			Data: []backendProjectClient.Certificate{},
@@ -233,7 +288,7 @@ func existingNamespacedCertificateClient(t *testing.T, expectedListOpts *types.L
 	certificateOperationsStub := stubs.CreateNamespacedCertificateOperationsStub(t)
 	certificateOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.NamespacedCertificateCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
-			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
+			return nil, fmt.Errorf("Unexpected ListOpts\n%v\n%v", opts, expectedListOpts)
 		}
 		return &backendProjectClient.NamespacedCertificateCollection{
 			Data: []backendProjectClient.NamespacedCertificate{
