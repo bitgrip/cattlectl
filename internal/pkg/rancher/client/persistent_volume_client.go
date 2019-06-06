@@ -120,7 +120,7 @@ func (client *persistentVolumeClient) Create() error {
 }
 
 func (client *persistentVolumeClient) Upgrade() error {
-	client.logger.Debug("persistentVolume exists need to be removed manually")
+	client.logger.Debug("Skip change existing persistent volume")
 	return nil
 }
 

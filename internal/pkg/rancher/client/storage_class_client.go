@@ -103,7 +103,7 @@ func (client *storageClassClient) Create() error {
 }
 
 func (client *storageClassClient) Upgrade() error {
-	client.logger.Debug("storageclass exists need to be removed manually")
+	client.logger.Debug("Skip change existing storage class")
 	return nil
 }
 

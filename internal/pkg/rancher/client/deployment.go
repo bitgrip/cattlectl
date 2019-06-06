@@ -103,7 +103,7 @@ func (client *deploymentClient) Create() error {
 }
 
 func (client *deploymentClient) Upgrade() error {
-	client.logger.Warn("deployment exists need to be removed manually")
+	client.logger.Warn("Skip change existing deployment")
 	return nil
 }
 

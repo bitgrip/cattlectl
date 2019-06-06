@@ -103,7 +103,7 @@ func (client *cronJobClient) Create() error {
 }
 
 func (client *cronJobClient) Upgrade() error {
-	client.logger.Warn("cronjob exists need to be removed manually")
+	client.logger.Warn("Skip change existing cronjob")
 	return nil
 }
 

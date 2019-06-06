@@ -103,7 +103,7 @@ func (client *daemonSetClient) Create() error {
 }
 
 func (client *daemonSetClient) Upgrade() error {
-	client.logger.Warn("daemonset exists need to be removed manually")
+	client.logger.Warn("Skip change existing daemonset")
 	return nil
 }
 

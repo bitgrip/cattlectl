@@ -103,7 +103,7 @@ func (client *jobClient) Create() error {
 }
 
 func (client *jobClient) Upgrade() error {
-	client.logger.Warn("job exists need to be removed manually")
+	client.logger.Warn("Skip change existing job")
 	return nil
 }
 

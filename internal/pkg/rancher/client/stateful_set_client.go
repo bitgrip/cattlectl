@@ -103,7 +103,7 @@ func (client *statefulSetClient) Create() error {
 }
 
 func (client *statefulSetClient) Upgrade() error {
-	client.logger.Warn("statefulset exists need to be removed manually")
+	client.logger.Warn("Skip change existing statefulset")
 	return nil
 }
 
