@@ -15,54 +15,22 @@
 package project
 
 import (
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
-	"github.com/sirupsen/logrus"
 )
 
 // NewDeploymentConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewDeploymentConverger(deploymentDescriptor projectModel.DeploymentDescriptor) descriptor.Converger {
-	return descriptor.DescriptorConverger{
-		InitCluster: func(client rancher.Client) error {
-			return rancher.InitCluster(
-				deploymentDescriptor.Metadata.ClusterID,
-				deploymentDescriptor.Metadata.ClusterName,
-				client,
-			)
-		},
-		InitProject: func(client rancher.Client) error {
-			return rancher.InitProject(
-				deploymentDescriptor.Metadata.ProjectName,
-				client,
-			)
-		},
-		PartConvergers: []descriptor.Converger{
-			newDeploymentPartConverger(
-				deploymentDescriptor.Metadata.ProjectName,
-				deploymentDescriptor.Metadata.Namespace,
-				deploymentDescriptor.Spec,
-			),
-		},
+func NewDeploymentConverger(deploymentDescriptor projectModel.DeploymentDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
+	deploymentClient, err := projectClient.Deployment(deploymentDescriptor.Spec.Name, deploymentDescriptor.Metadata.Namespace)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func newDeploymentPartConverger(projectName, namespace string, deployment projectModel.Deployment) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "Deployment",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasDeployment(namespace, deployment)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithFields(logrus.Fields{
-				"project_name":    projectName,
-				"namespace":       namespace,
-				"deployment_name": deployment.Name,
-			}).Warn("Deployment exists need to be removed manually")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateDeployment(namespace, deployment)
-		},
+	err = deploymentClient.SetData(deploymentDescriptor.Spec)
+	if err != nil {
+		return nil, err
 	}
+	return &descriptor.ResourceClientConverger{
+		Client: deploymentClient,
+	}, nil
 }

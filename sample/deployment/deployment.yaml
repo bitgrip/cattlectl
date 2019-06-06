@@ -1,0 +1,17 @@
+---
+api_version: v1.1
+kind: Deployment
+metadata:
+  project_name: {{ .project_name }}
+  namespace: {{ .project_name }}-first-namespace
+spec:
+  name: nginx-deployment
+  scale: 2
+  labels:
+    app: nginx
+  containers:
+  - name: nginx
+    image: nginx:1.7.9
+    ports:
+    - name: http
+      containerPort: 80

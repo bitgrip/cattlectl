@@ -1,0 +1,15 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+persistent_volumes:
+  - name: {{ .project_name }}-persistent-volume
+    type: local
+    node: {{ .pv_node  }}
+    path: /var/data/{{ .project_name }}-persistent-volume
+    storage_class_name: {{ .project_name }}-storage-class
+    capacity: "3Gi"
+    access_modes:
+      - "ReadWriteOnce"
+    init_script: ssh ${node} sudo mkdir -p ${path}

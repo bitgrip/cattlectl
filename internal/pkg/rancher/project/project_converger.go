@@ -15,239 +15,100 @@
 package project
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
-	"github.com/sirupsen/logrus"
 )
 
 // NewProjectConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.Project
-func NewProjectConverger(project projectModel.Project) descriptor.Converger {
-	partConvergers := []descriptor.Converger{
-		newProjectPartConverger(project),
+func NewProjectConverger(project projectModel.Project, clusterClient client.ClusterClient) (descriptor.Converger, error) {
+	projectClient, err := clusterClient.Project(project.Metadata.Name)
+	if err != nil {
+		return nil, err
 	}
+	childConvergers := make([]descriptor.Converger, 0)
 	for _, namespace := range project.Namespaces {
-		partConvergers = append(partConvergers, newNamespacePartConverger(namespace))
+		namespaceClient, err := projectClient.Namespace(namespace.Name)
+		if err != nil {
+			return nil, err
+		}
+		namespaceClient.SetData(namespace)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: namespaceClient,
+		})
 	}
-
 	for _, certificate := range project.Resources.Certificates {
-		partConvergers = append(partConvergers, newCertificatePartConverger(certificate))
+		certificateClient, err := projectClient.Certificate(certificate.Name, certificate.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		certificateClient.SetData(certificate)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: certificateClient,
+		})
 	}
 	for _, configMap := range project.Resources.ConfigMaps {
-		partConvergers = append(partConvergers, newConfigMapPartConverger(configMap))
+		configMapClient, err := projectClient.ConfigMap(configMap.Name, configMap.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		configMapClient.SetData(configMap)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: configMapClient,
+		})
 	}
 	for _, dockerCredential := range project.Resources.DockerCredentials {
-		partConvergers = append(partConvergers, newDockerCredentialPartConverger(dockerCredential))
+		dockerCredentialClient, err := projectClient.DockerCredential(dockerCredential.Name, dockerCredential.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		dockerCredentialClient.SetData(dockerCredential)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: dockerCredentialClient,
+		})
 	}
 	for _, secret := range project.Resources.Secrets {
-		partConvergers = append(partConvergers, newSecretPartConverger(secret))
+		secretClient, err := projectClient.Secret(secret.Name, secret.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		secretClient.SetData(secret)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: secretClient,
+		})
 	}
 	for _, storageClass := range project.StorageClasses {
-		partConvergers = append(partConvergers, newStorageClassPartConverger(storageClass))
+		storageClassClient, err := clusterClient.StorageClass(storageClass.Name)
+		if err != nil {
+			return nil, err
+		}
+		storageClassClient.SetData(storageClass)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: storageClassClient,
+		})
 	}
 	for _, persistentVolume := range project.PersistentVolumes {
-		partConvergers = append(partConvergers, newPersistentVolumePartConverger(persistentVolume))
+		persistentVolumeClient, err := clusterClient.PersistentVolume(persistentVolume.Name)
+		if err != nil {
+			return nil, err
+		}
+		persistentVolumeClient.SetData(persistentVolume)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: persistentVolumeClient,
+		})
 	}
 	for _, app := range project.Apps {
-		partConvergers = append(partConvergers, newAppPartConverger(app))
+		appClient, err := projectClient.App(app.Name)
+		if err != nil {
+			return nil, err
+		}
+		appClient.SetData(app)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: appClient,
+		})
 	}
-	return descriptor.ClusterResourceDescriptorConverger(
-		project.Metadata.ClusterName,
-		partConvergers,
-	)
-}
-
-func newProjectPartConverger(project projectModel.Project) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "Project",
-		HasPart: func(client rancher.Client) (bool, error) {
-			if hasProject, projectID, err := client.HasProjectWithName(project.Metadata.Name); hasProject {
-				return true, client.SetProject(project.Metadata.Name, projectID)
-			} else if err != nil {
-				return false, fmt.Errorf("Failed to check for project, %v", err)
-			}
-			return false, nil
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithField("project", project.Metadata.Name).Debug("Project exists")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			projectID, err := client.CreateProject(project.Metadata.Name)
-			if err != nil {
-				return err
-			}
-			return client.SetProject(project.Metadata.Name, projectID)
-		},
-	}
-}
-
-func newNamespacePartConverger(namespace projectModel.Namespace) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "Namespace",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasNamespace(namespace)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithField("namespace", namespace.Name).Debug("Skip change existing namespace")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateNamespace(namespace)
-		},
-	}
-}
-
-func newCertificatePartConverger(certificate projectModel.Certificate) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "Certificate",
-		HasPart: func(client rancher.Client) (bool, error) {
-			if certificate.Namespace == "" {
-				return client.HasCertificate(certificate)
-			}
-			return client.HasNamespacedCertificate(certificate)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			if certificate.Namespace == "" {
-				return client.UpgradeCertificate(certificate)
-			}
-			return client.UpgradeNamespacedCertificate(certificate)
-		},
-		CreatePart: func(client rancher.Client) error {
-			if certificate.Namespace == "" {
-				return client.CreateCertificate(certificate)
-			}
-			return client.CreateNamespacedCertificate(certificate)
-		},
-	}
-}
-
-func newConfigMapPartConverger(configMap projectModel.ConfigMap) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "ConfigMap",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasConfigMap(configMap)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			return client.UpgradeConfigMap(configMap)
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateConfigMap(configMap)
-		},
-	}
-}
-
-func newDockerCredentialPartConverger(dockerCredential projectModel.DockerCredential) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "DockerCredential",
-		HasPart: func(client rancher.Client) (bool, error) {
-			if dockerCredential.Namespace == "" {
-				return client.HasDockerCredential(dockerCredential)
-			}
-			return client.HasNamespacedDockerCredential(dockerCredential)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			if dockerCredential.Namespace == "" {
-				return client.UpgradeDockerCredential(dockerCredential)
-			}
-			return client.UpgradeNamespacedDockerCredential(dockerCredential)
-		},
-		CreatePart: func(client rancher.Client) error {
-			if dockerCredential.Namespace == "" {
-				return client.CreateDockerCredential(dockerCredential)
-			}
-			return client.CreateNamespacedDockerCredential(dockerCredential)
-		},
-	}
-}
-
-func newSecretPartConverger(secret projectModel.ConfigMap) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "Secret",
-		HasPart: func(client rancher.Client) (bool, error) {
-			if secret.Namespace == "" {
-				return client.HasSecret(secret)
-			}
-			return client.HasNamespacedSecret(secret)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			if secret.Namespace == "" {
-				return client.UpgradeSecret(secret)
-			}
-			return client.UpgradeNamespacedSecret(secret)
-		},
-		CreatePart: func(client rancher.Client) error {
-			if secret.Namespace == "" {
-				return client.CreateSecret(secret)
-			}
-			return client.CreateNamespacedSecret(secret)
-		},
-	}
-}
-
-func newPersistentVolumePartConverger(persistentVolume projectModel.PersistentVolume) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "PersistentVolume",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasPersistentVolume(persistentVolume)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithFields(logrus.Fields{
-				"persistent_volume": persistentVolume.Name,
-			}).Debug("Skip change existing persistent volume")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			err := client.CreatePersistentVolume(persistentVolume)
-			if err != nil {
-				return err
-			}
-			initScript := persistentVolume.InitScript
-			initScript = strings.Replace(initScript, "${node}", persistentVolume.Node, -1)
-			initScript = strings.Replace(initScript, "${path}", persistentVolume.Path, -1)
-			logrus.Info(
-				"Make sure host directory exists by running:\n",
-				strings.Repeat("-", len(initScript)+4), "\n",
-				strings.Repeat(" ", 4), initScript, "\n",
-				strings.Repeat("-", len(initScript)+4),
-			)
-			return nil
-		},
-	}
-}
-
-func newStorageClassPartConverger(storageClass projectModel.StorageClass) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "StorageClass",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasStorageClass(storageClass)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			logrus.WithFields(logrus.Fields{
-				"storage_class": storageClass.Name,
-			}).Debug("Skip change existing storage class")
-			return nil
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateStorageClass(storageClass)
-		},
-	}
-}
-
-func newAppPartConverger(app projectModel.App) descriptor.Converger {
-	return descriptor.PartConverger{
-		PartName: "App",
-		HasPart: func(client rancher.Client) (bool, error) {
-			return client.HasApp(app)
-		},
-		UpdatePart: func(client rancher.Client) error {
-			return client.UpgradeApp(app)
-		},
-		CreatePart: func(client rancher.Client) error {
-			return client.CreateApp(app)
-		},
-	}
+	return &descriptor.ResourceClientConverger{
+		Client:   projectClient,
+		Children: childConvergers,
+	}, nil
 }

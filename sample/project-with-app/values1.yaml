@@ -1,0 +1,5 @@
+project_name: test-project
+wordpress:
+  username: 'my-wordpress-user'
+  password: 'a-simple-password-to-be-changed'
+  email: 'info@my-wordpress-blog'

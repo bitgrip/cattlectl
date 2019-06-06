@@ -15,92 +15,40 @@
 package descriptor
 
 import (
-	"fmt"
-
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 )
 
-func ClusterResourceDescriptorConverger(clusterName string, partConvergers []Converger) Converger {
-	return DescriptorConverger{
-		InitCluster: DefaultInitCluster(
-			clusterName,
-		),
-		InitProject: func(client rancher.Client) error {
-			return nil
-		},
-		PartConvergers: partConvergers,
-	}
-}
-
-func ProjectResourceDescriptorConverger(clusterName, projectName string, partConvergers []Converger) Converger {
-	return DescriptorConverger{
-		InitCluster: DefaultInitCluster(
-			clusterName,
-		),
-		InitProject: DefaultInitProject(
-			projectName,
-		),
-		PartConvergers: partConvergers,
-	}
-}
-
-// Converger is a object which can converge github.com/bitgrip/cattlectl/internal/pkg/projectModel.Project
 type Converger interface {
-	Converge(client rancher.Client) error
+	Converge() error
 }
 
-type DescriptorConverger struct {
-	InitCluster    func(client rancher.Client) error
-	InitProject    func(client rancher.Client) error
-	PartConvergers []Converger
+type ResourceClientConverger struct {
+	Client   client.ResourceClient
+	Children []Converger
 }
 
-func (converger DescriptorConverger) Converge(client rancher.Client) error {
-	if err := converger.InitCluster(client); err != nil {
+func (converger *ResourceClientConverger) Converge() error {
+	var (
+		exists bool
+		err    error
+	)
+	exists, err = converger.Client.Exists()
+	if err != nil {
 		return err
 	}
-	if err := converger.InitProject(client); err != nil {
+	if exists {
+		err = converger.Client.Upgrade()
+	} else {
+		err = converger.Client.Create()
+	}
+	if err != nil {
 		return err
 	}
-	for _, partConverger := range converger.PartConvergers {
-		if err := partConverger.Converge(client); err != nil {
+	for _, child := range converger.Children {
+		err = child.Converge()
+		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-type PartConverger struct {
-	PartName   string
-	HasPart    func(client rancher.Client) (bool, error)
-	CreatePart func(client rancher.Client) error
-	UpdatePart func(client rancher.Client) error
-}
-
-func (converger PartConverger) Converge(client rancher.Client) error {
-	if hasPart, err := converger.HasPart(client); hasPart {
-		return converger.UpdatePart(client)
-	} else if err != nil {
-		return fmt.Errorf("Failed to check for %s, %v", converger.PartName, err)
-	}
-	return converger.CreatePart(client)
-}
-
-func DefaultInitCluster(clusterName string) func(client rancher.Client) error {
-	return func(client rancher.Client) error {
-		return rancher.InitCluster(
-			"",
-			clusterName,
-			client,
-		)
-	}
-}
-
-func DefaultInitProject(projectName string) func(client rancher.Client) error {
-	return func(client rancher.Client) error {
-		return rancher.InitProject(
-			projectName,
-			client,
-		)
-	}
 }

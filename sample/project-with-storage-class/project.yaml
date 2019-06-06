@@ -1,0 +1,10 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: {{ .project_name }}
+storage_classes:
+- name: "{{ .project_name }}-storage-class"
+  provisioner: kubernetes.io/no-provisioner
+  reclaim_policy: Delete
+  volume_bind_mode: WaitForFirstConsumer

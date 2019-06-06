@@ -8,7 +8,9 @@ require (
 	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
+	github.com/hhatto/gocloc v0.2.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.8.1 // indirect
@@ -22,9 +24,12 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/toqueteos/trie v1.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20190130090550-b01c7a725664 // indirect
 	golang.org/x/sys v0.0.0-20190129075346-302c3dd5f1cc // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	gopkg.in/src-d/enry.v1 v1.7.3 // indirect
+	gopkg.in/toqueteos/substring.v1 v1.0.2 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/apimachinery v0.0.0-20190126155707-0e6dcdd1b5ce
 	k8s.io/klog v0.1.0 // indirect

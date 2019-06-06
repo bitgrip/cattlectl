@@ -1,0 +1,17 @@
+---
+api_version: v1.1
+kind: Job
+metadata:
+  project_name: {{ .project_name }}
+  namespace: {{ .project_name }}-first-namespace
+spec:
+  name: pi
+  containers:
+  - name: pi
+    image: perl
+    imagePullPolicy: Always
+    command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+  jobConfig:
+    backoffLimit: 2
+    completions: 1
+    parallelism: 1
