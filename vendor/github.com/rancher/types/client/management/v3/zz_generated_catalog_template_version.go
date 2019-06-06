@@ -18,6 +18,8 @@ const (
 	CatalogTemplateVersionFieldName                 = "name"
 	CatalogTemplateVersionFieldOwnerReferences      = "ownerReferences"
 	CatalogTemplateVersionFieldQuestions            = "questions"
+	CatalogTemplateVersionFieldRancherMaxVersion    = "rancherMaxVersion"
+	CatalogTemplateVersionFieldRancherMinVersion    = "rancherMinVersion"
 	CatalogTemplateVersionFieldRancherVersion       = "rancherVersion"
 	CatalogTemplateVersionFieldReadme               = "readme"
 	CatalogTemplateVersionFieldRemoved              = "removed"
@@ -29,6 +31,9 @@ const (
 	CatalogTemplateVersionFieldUUID                 = "uuid"
 	CatalogTemplateVersionFieldUpgradeVersionLinks  = "upgradeVersionLinks"
 	CatalogTemplateVersionFieldVersion              = "version"
+	CatalogTemplateVersionFieldVersionDir           = "versionDir"
+	CatalogTemplateVersionFieldVersionName          = "versionName"
+	CatalogTemplateVersionFieldVersionURLs          = "versionUrls"
 )
 
 type CatalogTemplateVersion struct {
@@ -45,6 +50,8 @@ type CatalogTemplateVersion struct {
 	Name                 string                 `json:"name,omitempty" yaml:"name,omitempty"`
 	OwnerReferences      []OwnerReference       `json:"ownerReferences,omitempty" yaml:"ownerReferences,omitempty"`
 	Questions            []Question             `json:"questions,omitempty" yaml:"questions,omitempty"`
+	RancherMaxVersion    string                 `json:"rancherMaxVersion,omitempty" yaml:"rancherMaxVersion,omitempty"`
+	RancherMinVersion    string                 `json:"rancherMinVersion,omitempty" yaml:"rancherMinVersion,omitempty"`
 	RancherVersion       string                 `json:"rancherVersion,omitempty" yaml:"rancherVersion,omitempty"`
 	Readme               string                 `json:"readme,omitempty" yaml:"readme,omitempty"`
 	Removed              string                 `json:"removed,omitempty" yaml:"removed,omitempty"`
@@ -56,6 +63,9 @@ type CatalogTemplateVersion struct {
 	UUID                 string                 `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 	UpgradeVersionLinks  map[string]string      `json:"upgradeVersionLinks,omitempty" yaml:"upgradeVersionLinks,omitempty"`
 	Version              string                 `json:"version,omitempty" yaml:"version,omitempty"`
+	VersionDir           string                 `json:"versionDir,omitempty" yaml:"versionDir,omitempty"`
+	VersionName          string                 `json:"versionName,omitempty" yaml:"versionName,omitempty"`
+	VersionURLs          []string               `json:"versionUrls,omitempty" yaml:"versionUrls,omitempty"`
 }
 
 type CatalogTemplateVersionCollection struct {

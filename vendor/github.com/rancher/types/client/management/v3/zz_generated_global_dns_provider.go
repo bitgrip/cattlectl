@@ -6,6 +6,7 @@ import (
 
 const (
 	GlobalDNSProviderType                          = "globalDnsProvider"
+	GlobalDNSProviderFieldAlidnsProviderConfig     = "alidnsProviderConfig"
 	GlobalDNSProviderFieldAnnotations              = "annotations"
 	GlobalDNSProviderFieldCloudflareProviderConfig = "cloudflareProviderConfig"
 	GlobalDNSProviderFieldCreated                  = "created"
@@ -15,12 +16,14 @@ const (
 	GlobalDNSProviderFieldName                     = "name"
 	GlobalDNSProviderFieldOwnerReferences          = "ownerReferences"
 	GlobalDNSProviderFieldRemoved                  = "removed"
+	GlobalDNSProviderFieldRootDomain               = "rootDomain"
 	GlobalDNSProviderFieldRoute53ProviderConfig    = "route53ProviderConfig"
 	GlobalDNSProviderFieldUUID                     = "uuid"
 )
 
 type GlobalDNSProvider struct {
 	types.Resource
+	AlidnsProviderConfig     *AlidnsProviderConfig     `json:"alidnsProviderConfig,omitempty" yaml:"alidnsProviderConfig,omitempty"`
 	Annotations              map[string]string         `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	CloudflareProviderConfig *CloudflareProviderConfig `json:"cloudflareProviderConfig,omitempty" yaml:"cloudflareProviderConfig,omitempty"`
 	Created                  string                    `json:"created,omitempty" yaml:"created,omitempty"`
@@ -30,6 +33,7 @@ type GlobalDNSProvider struct {
 	Name                     string                    `json:"name,omitempty" yaml:"name,omitempty"`
 	OwnerReferences          []OwnerReference          `json:"ownerReferences,omitempty" yaml:"ownerReferences,omitempty"`
 	Removed                  string                    `json:"removed,omitempty" yaml:"removed,omitempty"`
+	RootDomain               string                    `json:"rootDomain,omitempty" yaml:"rootDomain,omitempty"`
 	Route53ProviderConfig    *Route53ProviderConfig    `json:"route53ProviderConfig,omitempty" yaml:"route53ProviderConfig,omitempty"`
 	UUID                     string                    `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 }

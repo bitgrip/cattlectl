@@ -146,6 +146,7 @@ type App struct {
 	Chart       string
 	Version     string
 	Namespace   string
-	SkipUpgrade bool `yaml:"skip_upgrade,omitempty"`
-	Answers     map[string]string
+	SkipUpgrade bool              `yaml:"skip_upgrade,omitempty"`
+	Answers     map[string]string `yaml:"answers,omitempty"`
+	ValuesYaml  string            `yaml:"values_yaml,omitempty"`
 }

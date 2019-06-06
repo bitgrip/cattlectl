@@ -97,7 +97,11 @@ func (client *appClient) Create() error {
 		Name:            client.app.Name,
 		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
 		TargetNamespace: client.app.Namespace,
-		Answers:         client.app.Answers,
+	}
+	if client.app.ValuesYaml != "" {
+		pattern.ValuesYaml = client.app.ValuesYaml
+	} else {
+		pattern.Answers = client.app.Answers
 	}
 	_, err = backendClient.App.Create(pattern)
 	return err
@@ -124,10 +128,21 @@ func (client *appClient) Upgrade() error {
 	}
 
 	installedApp := collection.Data[0]
-
-	if reflect.DeepEqual(installedApp.Answers, client.app.Answers) {
-		client.logger.Debug("Skip upgrade app - no changes")
-		return nil
+	au := &backendProjectClient.AppUpgradeConfig{
+		ExternalID: fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
+	}
+	if client.app.ValuesYaml != "" {
+		if installedApp.ValuesYaml == client.app.ValuesYaml {
+			client.logger.Debug("Skip upgrade app - no changes")
+			return nil
+		}
+		au.ValuesYaml = client.app.ValuesYaml
+	} else {
+		if reflect.DeepEqual(installedApp.Answers, client.app.Answers) {
+			client.logger.Debug("Skip upgrade app - no changes")
+			return nil
+		}
+		au.Answers = client.app.Answers
 	}
 	if client.app.SkipUpgrade {
 		client.logger.Info("Suppress upgrade app - by config")
@@ -135,10 +150,6 @@ func (client *appClient) Upgrade() error {
 	}
 
 	client.logger.Info("Upgrade app")
-	au := &backendProjectClient.AppUpgradeConfig{
-		Answers:    client.app.Answers,
-		ExternalID: fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
-	}
 	return backendClient.App.ActionUpgrade(&installedApp, au)
 }
 
@@ -147,6 +158,9 @@ func (client *appClient) Data() (projectModel.App, error) {
 }
 
 func (client *appClient) SetData(app projectModel.App) error {
+	if len(app.Answers) != 0 && app.ValuesYaml != "" {
+		return fmt.Errorf("Answers AND ValuesYaml is not supported")
+	}
 	client.name = app.Name
 	client.app = app
 	return nil

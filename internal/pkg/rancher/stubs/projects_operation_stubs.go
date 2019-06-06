@@ -91,11 +91,23 @@ func (stub ProjectOperationsStub) ActionDisableMonitoring(resource *managementCl
 
 }
 
+// ActionEditMonitoring implements github.com/rancher/types/client/management/v3/ProjectOperations.ActionEditMonitoring(...)
+func (stub ProjectOperationsStub) ActionEditMonitoring(resource *managementClient.Project, input *managementClient.MonitoringInput) error {
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
+	return nil
+}
+
 // ActionEnableMonitoring implements github.com/rancher/types/client/management/v3/ProjectOperations.ActionEnableMonitoring(...)
 func (stub ProjectOperationsStub) ActionEnableMonitoring(resource *managementClient.Project, input *managementClient.MonitoringInput) error {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
 	return nil
 
+}
+
+// ActionEnableMonitoring implements github.com/rancher/types/client/management/v3/ProjectOperations.ActionEnableMonitoring(...)
+func (stub ProjectOperationsStub) ActionViewMonitoring(resource *managementClient.Project) (*managementClient.MonitoringOutput, error) {
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
+	return nil, nil
 }
 
 // ActionExportYaml implements github.com/rancher/types/client/management/v3/ProjectOperations.ActionExportYaml(...)
