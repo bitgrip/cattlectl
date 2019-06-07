@@ -64,6 +64,7 @@ type ClusterClient interface {
 // ProjectClient interacts with a Rancher project resource
 type ProjectClient interface {
 	ResourceClient
+	ClusterID() (string, error)
 	Namespace(name string) (NamespaceClient, error)
 	Namespaces() ([]NamespaceClient, error)
 	GlobalCertificate(name string) (CertificateClient, error)

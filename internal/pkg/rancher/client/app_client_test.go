@@ -60,9 +60,12 @@ func Test_appClient_Exists(t *testing.T) {
 			name: "Not_Existing",
 			client: notExistingAppClient(
 				t,
+				simpleClusterID,
+				simpleProjectID,
 				simpleAppName,
 				simpleNamespaceName,
 				simpleCatalog,
+				globalCatalogType,
 				"1.1.1",
 				map[string]string{},
 				"",
@@ -95,9 +98,44 @@ func Test_appClient_Create(t *testing.T) {
 			name: "simple",
 			client: notExistingAppClient(
 				t,
+				simpleClusterID,
+				simpleProjectID,
 				simpleAppName,
 				simpleNamespaceName,
 				simpleCatalog,
+				globalCatalogType,
+				"1.1.1",
+				map[string]string{},
+				"",
+			),
+			wantErr: false,
+		},
+		{
+			name: "cluster-catalog",
+			client: notExistingAppClient(
+				t,
+				simpleClusterID,
+				simpleProjectID,
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				clusterCatalogType,
+				"1.1.1",
+				map[string]string{},
+				"",
+			),
+			wantErr: false,
+		},
+		{
+			name: "project-catalog",
+			client: notExistingAppClient(
+				t,
+				simpleClusterID,
+				simpleProjectID,
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				projectCatalogType,
 				"1.1.1",
 				map[string]string{},
 				"",
@@ -284,12 +322,15 @@ func existingAppClient(t *testing.T, name, namespace, catalog, version string, a
 	return appClientResult
 }
 
-func notExistingAppClient(t *testing.T, name, namespace, catalog, version string, answers map[string]string, valuesYaml string) *appClient {
-	var (
-		app         = projectModel.App{}
-		testClients = stubs.CreateBackendStubs(t)
-	)
-	app.Name = name
+func notExistingAppClient(t *testing.T, clusterID, projectID, name, namespace, catalog, catalogType, version string, answers map[string]string, valuesYaml string) *appClient {
+	testClients := stubs.CreateBackendStubs(t)
+	externalID := fmt.Sprintf(globalCatalogExternalID, catalog, name, version)
+	switch catalogType {
+	case projectCatalogType:
+		externalID = fmt.Sprintf(projectCatalogExternalID, projectID, catalog, name, version)
+	case clusterCatalogType:
+		externalID = fmt.Sprintf(clusterCatalogExternalID, clusterID, catalog, name, version)
+	}
 	expectedListOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
 			"name": name,
@@ -297,7 +338,7 @@ func notExistingAppClient(t *testing.T, name, namespace, catalog, version string
 	}
 	expectedApp := &backendProjectClient.App{
 		Name:            name,
-		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", catalog, name, version),
+		ExternalID:      externalID,
 		TargetNamespace: namespace,
 		Answers:         answers,
 		ValuesYaml:      valuesYaml,
@@ -320,15 +361,26 @@ func notExistingAppClient(t *testing.T, name, namespace, catalog, version string
 	testClients.ProjectClient.App = appOperationsStub
 	result, err := newAppClientWithData(
 		projectModel.App{
-			Name:       name,
-			Namespace:  namespace,
-			Catalog:    catalog,
-			Version:    version,
-			Chart:      name,
-			Answers:    answers,
-			ValuesYaml: valuesYaml,
+			Name:        name,
+			Namespace:   namespace,
+			Catalog:     catalog,
+			CatalogType: catalogType,
+			Version:     version,
+			Chart:       name,
+			Answers:     answers,
+			ValuesYaml:  valuesYaml,
 		},
 		&projectClient{
+			resourceClient: resourceClient{
+				name: simpleProjectName,
+				id:   simpleProjectID,
+			},
+			clusterClient: &clusterClient{
+				resourceClient: resourceClient{
+					name: simpleClusterName,
+					id:   simpleClusterID,
+				},
+			},
 			_backendProjectClient: testClients.ProjectClient,
 		},
 		logrus.New().WithFields(logrus.Fields{}),

@@ -97,7 +97,7 @@ func (client *projectClient) ID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	clusterID, err := client.clusterClient.ID()
+	clusterID, err := client.ClusterID()
 	if err != nil {
 		return "", err
 	}
@@ -116,6 +116,10 @@ func (client *projectClient) ID() (string, error) {
 	}
 	client.id = collection.Data[0].ID
 	return client.id, nil
+}
+
+func (client *projectClient) ClusterID() (string, error) {
+	return client.clusterClient.ID()
 }
 
 func (client *projectClient) Exists() (bool, error) {
