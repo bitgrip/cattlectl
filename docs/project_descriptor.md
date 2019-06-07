@@ -122,14 +122,15 @@ ProjectDescriptor Structur:
 
 #### apps
 
-| Field         | Description                                           |
-|---------------|-------------------------------------------------------|
-| __name__      | The name of the app/deployment                        |
-| __catalog__   | The catalog to find the rancher chart in              |
-| __template__  | The name of the rancher chart to be used              |
-| __version__   | The version of the rancher chart                      |
-| __namespace__ | The namespace to deploy the app in                    |
-| __answers__   | The answers to the rancher questions as key-value map |
+| Field          | Description                                           |
+|----------------|-------------------------------------------------------|
+| __name__       | The name of the app/deployment                        |
+| __catalog__    | The catalog to find the rancher chart in              |
+| __template__   | The name of the rancher chart to be used              |
+| __version__    | The version of the rancher chart                      |
+| __namespace__  | The namespace to deploy the app in                    |
+| __answers__    | The answers to the rancher questions as key-value map |
+| __valuesYaml__ | The values to apply with the template                 |
 
 Example:
 --------

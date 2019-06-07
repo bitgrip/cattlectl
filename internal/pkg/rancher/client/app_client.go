@@ -26,7 +26,6 @@ import (
 
 func newAppClientWithData(
 	app projectModel.App,
-	namespace string,
 	project ProjectClient,
 	logger *logrus.Entry,
 ) (AppClient, error) {

@@ -35,7 +35,7 @@ func CreateAppOperationsStub(tb testing.TB) *AppOperationsStub {
 			return nil, nil
 		},
 		DoActionUpgrade: func(resource *projectClient.App, input *projectClient.AppUpgradeConfig) error {
-			assert.FailInStub(tb, 2, "Unexpected call of List")
+			assert.FailInStub(tb, 2, "Unexpected call of ActionUpgrade")
 			return nil
 		},
 	}
