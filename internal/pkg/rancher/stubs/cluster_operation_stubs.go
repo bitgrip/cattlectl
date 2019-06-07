@@ -98,11 +98,22 @@ func (stub ClusterOperationsStub) ActionDisableMonitoring(resource *managementCl
 
 }
 
+// ActionEditMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionEditMonitoring(...)
+func (stub ClusterOperationsStub) ActionEditMonitoring(resource *managementClient.Cluster, input *managementClient.MonitoringInput) error {
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
+	return nil
+}
+
 // ActionEnableMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionEnableMonitoring(...)
 func (stub ClusterOperationsStub) ActionEnableMonitoring(resource *managementClient.Cluster, input *managementClient.MonitoringInput) error {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
 	return nil
+}
 
+// ActionEnableMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionEnableMonitoring(...)
+func (stub ClusterOperationsStub) ActionViewMonitoring(resource *managementClient.Cluster) (*managementClient.MonitoringOutput, error) {
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
+	return nil, nil
 }
 
 // ActionExportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionExportYaml(...)
@@ -134,8 +145,8 @@ func (stub ClusterOperationsStub) ActionRestoreFromEtcdBackup(resource *manageme
 }
 
 // ActionExportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionRotateCertificates(...)
-func (stub ClusterOperationsStub) ActionRotateCertificates(resource *managementClient.Cluster, input *managementClient.RotateCertificateInput) error {
+func (stub ClusterOperationsStub) ActionRotateCertificates(resource *managementClient.Cluster, input *managementClient.RotateCertificateInput) (*managementClient.RotateCertificateOutput, error) {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionRotateCertificates")
-	return nil
+	return nil, nil
 
 }

@@ -29,6 +29,7 @@ import (
 
 const (
 	simpleAppName = "simple-app"
+	simpleCatalog = "simple-catalog"
 )
 
 func Test_appClient_Exists(t *testing.T) {
@@ -44,8 +45,13 @@ func Test_appClient_Exists(t *testing.T) {
 			client: existingAppClient(
 				t,
 				simpleAppName,
-				simpleNamespaceID,
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
 				map[string]string{},
+				map[string]string{},
+				"",
+				"",
 			),
 			wanted:  true,
 			wantErr: false,
@@ -54,11 +60,12 @@ func Test_appClient_Exists(t *testing.T) {
 			name: "Not_Existing",
 			client: notExistingAppClient(
 				t,
-				&types.ListOpts{
-					Filters: map[string]interface{}{
-						"name": "existing-app",
-					},
-				},
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
+				map[string]string{},
+				"",
 			),
 			wanted:  false,
 			wantErr: false,
@@ -85,10 +92,15 @@ func Test_appClient_Create(t *testing.T) {
 		wantedErr string
 	}{
 		{
-			name: "Create",
+			name: "simple",
 			client: notExistingAppClient(
 				t,
-				nil,
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
+				map[string]string{},
+				"",
 			),
 			wantErr: false,
 		},
@@ -113,12 +125,78 @@ func Test_appClient_Upgrade(t *testing.T) {
 		wantedErr string
 	}{
 		{
-			name: "Create",
+			name: "upgrade-answers",
 			client: existingAppClient(
 				t,
 				simpleAppName,
-				simpleNamespaceID,
-				map[string]string{},
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
+				map[string]string{
+					"key": "value",
+				},
+				map[string]string{
+					"key": "changed-value",
+				},
+				"",
+				"",
+			),
+			wantErr: false,
+		},
+		{
+			name: "unchanged-answers",
+			client: existingAppClient(
+				t,
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
+				map[string]string{
+					"key": "value",
+				},
+				map[string]string{
+					"key": "value",
+				},
+				"",
+				"",
+			),
+			wantErr: false,
+		},
+		{
+			name: "upgrade-values-yaml",
+			client: existingAppClient(
+				t,
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
+				nil,
+				nil,
+				`---
+key: value
+				`,
+				`---
+key: changed-value
+				`,
+			),
+			wantErr: false,
+		},
+		{
+			name: "unchanged-values-yaml",
+			client: existingAppClient(
+				t,
+				simpleAppName,
+				simpleNamespaceName,
+				simpleCatalog,
+				"1.1.1",
+				nil,
+				nil,
+				`---
+key: value
+				`,
+				`---
+key: value
+				`,
 			),
 			wantErr: false,
 		},
@@ -135,17 +213,26 @@ func Test_appClient_Upgrade(t *testing.T) {
 	}
 }
 
-func existingAppClient(t *testing.T, appName, namespaceID string, answers map[string]string) *appClient {
-	var (
-		app         = projectModel.App{}
-		testClients = stubs.CreateBackendStubs(t)
-	)
-	app.Name = appName
-	app.Answers = answers
+func existingAppClient(t *testing.T, name, namespace, catalog, version string, answers, changedAnswers map[string]string, valuesYaml, changedValuesYaml string) *appClient {
+	testClients := stubs.CreateBackendStubs(t)
 	expectedListOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
-			"name": appName,
+			"name": name,
 		},
+	}
+	expectedApp := &backendProjectClient.App{
+		Name:            name,
+		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", catalog, name, version),
+		TargetNamespace: namespace,
+		Answers:         answers,
+		ValuesYaml:      valuesYaml,
+	}
+	expectedUpgradeConfig := &backendProjectClient.AppUpgradeConfig{
+		ExternalID: fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", catalog, name, version),
+		ValuesYaml: changedValuesYaml,
+	}
+	if changedValuesYaml == "" {
+		expectedUpgradeConfig.Answers = changedAnswers
 	}
 
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
@@ -156,15 +243,37 @@ func existingAppClient(t *testing.T, appName, namespaceID string, answers map[st
 		return &backendProjectClient.AppCollection{
 			Data: []backendProjectClient.App{
 				backendProjectClient.App{
-					Name:        appName,
-					NamespaceId: namespaceID,
+					Name:            name,
+					ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", catalog, name, version),
+					TargetNamespace: namespace,
+					Answers:         answers,
+					ValuesYaml:      valuesYaml,
 				},
 			},
 		}, nil
 	}
+	if !reflect.DeepEqual(answers, changedAnswers) || valuesYaml != changedValuesYaml {
+		appOperationsStub.DoActionUpgrade = func(resource *backendProjectClient.App, input *backendProjectClient.AppUpgradeConfig) error {
+			if !reflect.DeepEqual(expectedApp, resource) {
+				return fmt.Errorf("Unexpected target App\n%v\n%v", expectedApp, resource)
+			}
+			if !reflect.DeepEqual(expectedUpgradeConfig, input) {
+				return fmt.Errorf("Unexpected upgrade config\n%v\n%v", expectedUpgradeConfig, input)
+			}
+			return nil
+		}
+	}
 	testClients.ProjectClient.App = appOperationsStub
-	result, err := newAppClient(
-		appName,
+	result, err := newAppClientWithData(
+		projectModel.App{
+			Name:       name,
+			Namespace:  namespace,
+			Catalog:    catalog,
+			Version:    version,
+			Chart:      name,
+			Answers:    changedAnswers,
+			ValuesYaml: changedValuesYaml,
+		},
 		&projectClient{
 			_backendProjectClient: testClients.ProjectClient,
 		},
@@ -175,21 +284,24 @@ func existingAppClient(t *testing.T, appName, namespaceID string, answers map[st
 	return appClientResult
 }
 
-func notExistingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appClient {
-	const (
-		projectID   = "test-project-id"
-		projectName = "test-project-name"
-		namespaceID = "test-namespace-id"
-		namespace   = "test-namespace"
-		clusterID   = "test-cluster-id"
-		appName     = "test-app"
-	)
+func notExistingAppClient(t *testing.T, name, namespace, catalog, version string, answers map[string]string, valuesYaml string) *appClient {
 	var (
 		app         = projectModel.App{}
 		testClients = stubs.CreateBackendStubs(t)
 	)
-	app.Name = appName
-
+	app.Name = name
+	expectedListOpts := &types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": name,
+		},
+	}
+	expectedApp := &backendProjectClient.App{
+		Name:            name,
+		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", catalog, name, version),
+		TargetNamespace: namespace,
+		Answers:         answers,
+		ValuesYaml:      valuesYaml,
+	}
 	appOperationsStub := stubs.CreateAppOperationsStub(t)
 	appOperationsStub.DoList = func(opts *types.ListOpts) (*backendProjectClient.AppCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
@@ -200,11 +312,22 @@ func notExistingAppClient(t *testing.T, expectedListOpts *types.ListOpts) *appCl
 		}, nil
 	}
 	appOperationsStub.DoCreate = func(app *backendProjectClient.App) (*backendProjectClient.App, error) {
+		if !reflect.DeepEqual(expectedApp, app) {
+			return nil, fmt.Errorf("Unexpected App %v", app)
+		}
 		return app, nil
 	}
 	testClients.ProjectClient.App = appOperationsStub
-	result, err := newAppClient(
-		"existing-app",
+	result, err := newAppClientWithData(
+		projectModel.App{
+			Name:       name,
+			Namespace:  namespace,
+			Catalog:    catalog,
+			Version:    version,
+			Chart:      name,
+			Answers:    answers,
+			ValuesYaml: valuesYaml,
+		},
 		&projectClient{
 			_backendProjectClient: testClients.ProjectClient,
 		},
