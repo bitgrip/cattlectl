@@ -20,8 +20,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// IntOrString is a helper type to marshal/unmarshal intorstring fields in YAML
 type IntOrString intstr.IntOrString
 
+// UnmarshalYAML unmarshals a intorstring field from a YAML string or int
 func (intorstr *IntOrString) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&intorstr.IntVal); err == nil {
 		intorstr.Type = intstr.Int
@@ -34,6 +36,7 @@ func (intorstr *IntOrString) UnmarshalYAML(unmarshal func(interface{}) error) er
 	return nil
 }
 
+// MarshalYAML marshals a intorstring field to a YAML string or int
 func (intorstr IntOrString) MarshalYAML() (interface{}, error) {
 
 	switch intorstr.Type {

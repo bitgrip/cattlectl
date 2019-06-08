@@ -14,6 +14,7 @@
 
 package model
 
+// Types of Descriptors which are expected values of the field Cluster.Kind
 const (
 	ProjectKind     = "Project"
 	JobKind         = "Job"
@@ -141,11 +142,12 @@ type PersistentVolume struct {
 
 // App deployment using a Helm- or Rancher-Chart
 type App struct {
-	Name        string
-	Catalog     string
-	Chart       string
-	Version     string
-	Namespace   string
+	Name        string            `yaml:"name,omitempty"`
+	Catalog     string            `yaml:"catalog,omitempty"`
+	CatalogType string            `yaml:"catalog_type,omitempty"`
+	Chart       string            `yaml:"chart,omitempty"`
+	Version     string            `yaml:"version,omitempty"`
+	Namespace   string            `yaml:"namespace,omitempty"`
 	SkipUpgrade bool              `yaml:"skip_upgrade,omitempty"`
 	Answers     map[string]string `yaml:"answers,omitempty"`
 	ValuesYaml  string            `yaml:"values_yaml,omitempty"`

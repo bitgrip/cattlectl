@@ -24,6 +24,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	projectCatalogType       = "projectCatalog"
+	clusterCatalogType       = "clusterCatalog"
+	globalCatalogType        = ""
+	projectCatalogExternalID = "catalog://?catalog=%s/%s&type=projectCatalog&template=%s&version=%s"
+	clusterCatalogExternalID = "catalog://?catalog=%s/%s&type=clusterCatalog&template=%s&version=%s"
+	globalCatalogExternalID  = "catalog://?catalog=%s&template=%s&version=%s"
+)
+
 func newAppClientWithData(
 	app projectModel.App,
 	project ProjectClient,
@@ -91,10 +100,14 @@ func (client *appClient) Create() error {
 		return err
 	}
 
+	externalID, err := client.externalID(client.app.Catalog, client.app.CatalogType, client.app.Chart, client.app.Version)
+	if err != nil {
+		return err
+	}
 	client.logger.Info("Create new app")
 	pattern := &backendProjectClient.App{
 		Name:            client.app.Name,
-		ExternalID:      fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
+		ExternalID:      externalID,
 		TargetNamespace: client.app.Namespace,
 	}
 	if client.app.ValuesYaml != "" {
@@ -127,8 +140,12 @@ func (client *appClient) Upgrade() error {
 	}
 
 	installedApp := collection.Data[0]
+	externalID, err := client.externalID(client.app.Catalog, client.app.CatalogType, client.app.Chart, client.app.Version)
+	if err != nil {
+		return err
+	}
 	au := &backendProjectClient.AppUpgradeConfig{
-		ExternalID: fmt.Sprintf("catalog://?catalog=%v&template=%v&version=%v", client.app.Catalog, client.app.Chart, client.app.Version),
+		ExternalID: externalID,
 	}
 	if client.app.ValuesYaml != "" {
 		if installedApp.ValuesYaml == client.app.ValuesYaml {
@@ -163,4 +180,25 @@ func (client *appClient) SetData(app projectModel.App) error {
 	client.name = app.Name
 	client.app = app
 	return nil
+}
+
+func (client *appClient) externalID(catalog, catalogType, chart, version string) (string, error) {
+	switch catalogType {
+	case projectCatalogType:
+		projectID, err := client.projectClient.ID()
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf(projectCatalogExternalID, projectID, catalog, chart, version), nil
+	case clusterCatalogType:
+		clusterID, err := client.projectClient.ClusterID()
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf(clusterCatalogExternalID, clusterID, catalog, chart, version), nil
+	case globalCatalogType:
+		return fmt.Sprintf(globalCatalogExternalID, catalog, chart, version), nil
+	default:
+		return "", fmt.Errorf("Unknown catalog type %s", catalogType)
+	}
 }
