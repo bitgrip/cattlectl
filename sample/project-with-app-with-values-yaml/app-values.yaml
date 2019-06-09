@@ -1,0 +1,15 @@
+---
+wordpressUsername: "{{ .wordpress.username }}"
+wordpressPassword: "{{ .wordpress.password }}"
+wordpressEmail: "{{ .wordpress.email }}"
+mariadb:
+  master:
+    persistence:
+      enabled: false
+persistence:
+  enabled: false
+ingress:
+  enabled: true
+  hosts:
+  - name: xip.io
+serviceType: ClusterIP

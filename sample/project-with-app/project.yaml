@@ -2,21 +2,21 @@
 api_version: v1.0
 kind: Project
 metadata:
-  name: {{ .project_name }}
+  name: "{{ .project_name }}"
 namespaces:
-  - name: {{ .project_name }}-web
+  - name: "{{ .project_name }}-web"
 apps:
 - name: blog-wordpress
   catalog: library
   chart: wordpress
   version: "2.1.10"
-  namespace: {{ .project_name }}-web
+  namespace: "{{ .project_name }}-web"
   answers:
-    wordpressUsername: {{ .wordpress.username }}
-    wordpressPassword: {{ .wordpress.password }}
-    wordpressEmail: {{ .wordpress.email }}
-    mariadb.master.persistence.enabled: 'false'
-    persistence.enabled: 'false'
+    wordpressUsername: "{{ .wordpress.username }}"
+    wordpressPassword: "{{ .wordpress.password }}"
+    wordpressEmail: "{{ .wordpress.email }}"
+    mariadb.master.persistence.enabled: "false"
+    persistence.enabled: "false"
     ingress.enabled: true
     'ingress.hosts[0].name': xip.io
     serviceType: ClusterIP

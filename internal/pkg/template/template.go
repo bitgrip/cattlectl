@@ -41,9 +41,11 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, baseDir s
 	}
 	descriptorTemplate := template.New("data-template")
 	descriptorTemplate.Funcs(template.FuncMap{
-		"read":   readFunc(absBaseDir),
-		"indent": indent,
-		"toYaml": toYaml,
+		"read":             readFunc(absBaseDir),
+		"readWithTemplate": readTemplateFunc(baseDir, values),
+		"indent":           indent,
+		"trim":             trim,
+		"toYaml":           toYaml,
 	})
 	if truncated {
 		descriptorTemplate.Funcs(template.FuncMap{
@@ -84,6 +86,41 @@ func readFunc(baseDir string) func(fileName string) []byte {
 	}
 }
 
+func readTemplateFunc(baseDir string, values map[string]interface{}) func(fileName string) string {
+	return func(fileName string) string {
+
+		var absFileName string
+		if filepath.IsAbs(fileName) {
+			absFileName = fileName
+		} else {
+			absFileName = filepath.Clean(fmt.Sprintf("%s/%s", baseDir, fileName))
+		}
+
+		fileContent, err := ioutil.ReadFile(absFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		descriptorTemplate := template.New(absFileName)
+		descriptorTemplate.Funcs(template.FuncMap{
+			"read":   readFunc(filepath.Dir(absFileName)),
+			"indent": indent,
+			"toYaml": toYaml,
+			"base64": toBase64,
+		})
+		descriptorTemplate, err = descriptorTemplate.Parse(string(fileContent))
+		if err != nil {
+			log.Fatal(err)
+		}
+		descriptorTemplate = descriptorTemplate.Option("missingkey=error")
+		var templateBuffer bytes.Buffer
+		if err := descriptorTemplate.Execute(&templateBuffer, values); err != nil {
+			log.Fatal(err)
+		}
+		return string(templateBuffer.Bytes())
+	}
+}
+
 func toBase64(data interface{}) string {
 	var encoded string
 	if bytes, isBytes := data.([]byte); isBytes {
@@ -111,6 +148,16 @@ func indent(indents int, data interface{}) string {
 	}
 	result := strings.TrimSpace(strings.Join(strings.Split(toIndent, "\n"), "\n"+prefix))
 	return prefix + result
+}
+
+func trim(data interface{}) string {
+	var toTrim string
+	if bytes, isBytes := data.([]byte); isBytes {
+		toTrim = string(bytes)
+	} else {
+		toTrim = fmt.Sprint(data)
+	}
+	return strings.TrimSpace(toTrim)
 }
 
 func toYaml(data interface{}) (string, error) {
