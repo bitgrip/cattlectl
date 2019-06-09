@@ -20,7 +20,7 @@ RUN go test -mod=vendor -v ./...
 #build the binary
 RUN echo "Building VERSION=$(git describe --tags)" 1>&2 && \
 go build \
--ldflags "-X github.com/bitgrip/cattlectl/cmd.Version=$(git describe --tags) -d -s -w -extldflags \"-static\"" \
+-ldflags "-X github.com/bitgrip/cattlectl/internal/pkg/ctl.Version=$(git describe --tags) -d -s -w -extldflags \"-static\"" \
 -a -tags netgo -installsuffix netgo \
 -mod=vendor \
 -o /go/bin/cattlectl

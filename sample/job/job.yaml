@@ -2,8 +2,8 @@
 api_version: v1.1
 kind: Job
 metadata:
-  project_name: {{ .project_name }}
-  namespace: {{ .project_name }}-first-namespace
+  project_name: "{{ .project_name }}"
+  namespace: "{{ .project_name }}-first-namespace"
 spec:
   name: pi
   containers:

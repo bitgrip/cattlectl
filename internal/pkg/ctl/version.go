@@ -12,21 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package ctl
 
 import (
 	"fmt"
 
-	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
-	"github.com/spf13/cobra"
+	"github.com/Masterminds/semver"
 )
 
-// versionCmd represents the version command
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "version of cattlectl",
-	Long:  `Prints the version of cattlectl to stdout`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(ctl.Version)
-	},
+// Version is the current build version
+var Version = "v1.2.0-local"
+
+func isSupportedAPIVersion(apiVersion string) bool {
+	v, err := semver.NewVersion(Version)
+	if err != nil {
+		return false
+	}
+	c, err := semver.NewConstraint(fmt.Sprintf("<= %v.%v", v.Major(), v.Minor()))
+	if err != nil {
+		return false
+	}
+
+	av, err := semver.NewVersion(apiVersion)
+	if err != nil {
+		return false
+	}
+	return c.Check(av)
 }
