@@ -36,6 +36,15 @@ docker run --rm \
 bitgrip/cattlectl apply
 ```
 
+Build from source
+-----------------
+
+```bash
+go install \
+-ldflags "-X github.com/bitgrip/cattlectl/internal/pkg/ctl.Version=$(git describe --tags) -s -w" \
+-a -tags netgo -installsuffix netgo -mod=vendor
+```
+
 Docs
 ----
 
