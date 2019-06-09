@@ -17,6 +17,7 @@ package client
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
 	"github.com/rancher/norman/types"
@@ -148,7 +149,7 @@ func (client *appClient) Upgrade() error {
 		ExternalID: externalID,
 	}
 	if client.app.ValuesYaml != "" {
-		if installedApp.ValuesYaml == client.app.ValuesYaml {
+		if strings.TrimSpace(installedApp.ValuesYaml) == strings.TrimSpace(client.app.ValuesYaml) {
 			client.logger.Debug("Skip upgrade app - no changes")
 			return nil
 		}
