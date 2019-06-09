@@ -24,6 +24,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Supported descriptor expected in the field 'kind'
 const (
 	ProjectKind     = "Project"
 	JobKind         = "Job"
@@ -51,10 +52,14 @@ var (
 	newStatefulSetParser = project.NewStatefulSetParser
 )
 
+// ApplyDescriptor the the CTL perform a apply action
 func ApplyDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
-	kind, err := GetKind(data)
+	apiVersion, kind, err := GetAPIVersionAndKind(data)
 	if err != nil {
 		return err
+	}
+	if !isSupportedAPIVersion(apiVersion) {
+		return fmt.Errorf("Unsupported api version %s", apiVersion)
 	}
 	switch kind {
 	case ProjectKind:
@@ -111,6 +116,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 	return nil
 }
 
+// ApplyCronJob the the CTL perform a apply action to a cronjob descriptor
 func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) error {
 	_, _, projectClient, err := fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
 	if err != nil {
@@ -123,6 +129,7 @@ func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config confi
 	return converger.Converge()
 }
 
+// ApplyJob the the CTL perform a apply action to a job descriptor
 func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) error {
 	_, _, projectClient, err := fillWorkloadMetadata(&jobDescriptor.Metadata, config)
 	if err != nil {
@@ -135,6 +142,7 @@ func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) er
 	return converger.Converge()
 }
 
+// ApplyDeployment the the CTL perform a apply action to a deployment descriptor
 func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) error {
 	_, _, projectClient, err := fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
 	if err != nil {
@@ -147,6 +155,7 @@ func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, con
 	return converger.Converge()
 }
 
+// ApplyDaemonSet the the CTL perform a apply action to a daemon set descriptor
 func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) error {
 	_, _, projectClient, err := fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
 	if err != nil {
@@ -159,6 +168,7 @@ func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config
 	return converger.Converge()
 }
 
+// ApplyStatefulSet the the CTL perform a apply action to a stateful set descriptor
 func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, config config.Config) error {
 	_, _, projectClient, err := fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
 	if err != nil {
@@ -171,6 +181,7 @@ func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, 
 	return converger.Converge()
 }
 
+// ApplyProject the the CTL perform a apply action to a project descriptor
 func ApplyProject(project projectModel.Project, config config.Config) error {
 	_, clusterClient, err := fillProjectMetadata(&project.Metadata, config)
 	if err != nil {
@@ -183,22 +194,36 @@ func ApplyProject(project projectModel.Project, config config.Config) error {
 	return converger.Converge()
 }
 
-func GetKind(data []byte) (string, error) {
+// GetAPIVersionAndKind reads API version and kind from the data
+func GetAPIVersionAndKind(data []byte) (string, string, error) {
 	structure := make(map[string]interface{})
+	apiVersion := "UNKNOWN"
+	kind := "UNKNOWN"
 	if err := yaml.Unmarshal(data, &structure); err != nil {
-		return "", err
+		return apiVersion, kind, err
 	}
-	if kind, exists := structure["kind"]; exists {
-		return fmt.Sprint(kind), nil
+	if foundKind, exists := structure["kind"]; exists {
+		kind = fmt.Sprint(foundKind)
+	} else {
+		return apiVersion, kind, fmt.Errorf("Kind is undefined")
+	}
+	if foundAPIVersion, exists := structure["api_version"]; exists {
+		apiVersion = fmt.Sprint(foundAPIVersion)
+	} else {
+		return apiVersion, kind, fmt.Errorf("Kind is undefined")
 	}
 
-	return "UNKNOWN", fmt.Errorf("Kind is undefined")
+	return apiVersion, kind, nil
 }
 
+// ParseAndPrintDescriptor parse and print the 'data'
 func ParseAndPrintDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
-	kind, err := GetKind(data)
+	apiVersion, kind, err := GetAPIVersionAndKind(data)
 	if err != nil {
 		return err
+	}
+	if !isSupportedAPIVersion(apiVersion) {
+		return fmt.Errorf("Unsupported api version %s", apiVersion)
 	}
 	var descriptor interface{}
 	switch kind {
