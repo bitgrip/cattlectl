@@ -16,19 +16,19 @@ package rancher
 
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
+	clusterModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 )
 
-// NewRancherConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/rancher/model.Rancher
-func NewRancherConverger(rancher rancherModel.Rancher, rancherConfig client.RancherConfig) (descriptor.Converger, error) {
-	rancherClient, err := client.NewRancherClient(rancherConfig)
+// NewClusterConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model.Cluster
+func NewClusterConverger(cluster clusterModel.Cluster, rancherClient client.RancherClient) (descriptor.Converger, error) {
+	clusterClient, err := rancherClient.Cluster(cluster.Metadata.Name)
 	if err != nil {
 		return nil, err
 	}
 	childConvergers := make([]descriptor.Converger, 0)
-	for _, catalog := range rancher.Catalogs {
-		catalogClient, err := rancherClient.Catalog(catalog.Name)
+	for _, catalog := range cluster.Catalogs {
+		catalogClient, err := clusterClient.Catalog(catalog.Name)
 		if err != nil {
 			return nil, err
 		}

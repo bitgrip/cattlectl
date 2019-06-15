@@ -104,10 +104,12 @@ func (stub RancherCatalogOperationsStub) Delete(container *rancherClient.Catalog
 	return stub.DoDelete(container)
 }
 
+// ActionRefresh implements github.com/rancher/types/client/project/v3/ClusterCatalogOperations.ActionRefresh(...)
 func (stub RancherCatalogOperationsStub) ActionRefresh(resource *rancherClient.Catalog) error {
 	return stub.DoActionRefresh(resource)
 }
 
+// CollectionActionRefresh implements github.com/rancher/types/client/project/v3/ClusterCatalogOperations.CollectionActionRefresh(...)
 func (stub RancherCatalogOperationsStub) CollectionActionRefresh(resource *rancherClient.CatalogCollection) error {
 	return stub.DoCollectionActionRefresh(resource)
 }

@@ -401,6 +401,7 @@ func simpleClusterClient() *clusterClient {
 		storageClasses:    make(map[string]StorageClassClient),
 		persistentVolumes: make(map[string]PersistentVolumeClient),
 		namespaces:        make(map[string]namespaceCacheEntry),
+		catalogClients: make(map[string]CatalogClient),
 	}
 }
 

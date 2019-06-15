@@ -41,6 +41,7 @@ func newClusterClient(
 		storageClasses:    make(map[string]StorageClassClient),
 		persistentVolumes: make(map[string]PersistentVolumeClient),
 		namespaces:        make(map[string]namespaceCacheEntry),
+		catalogClients:    make(map[string]CatalogClient),
 	}, nil
 }
 
@@ -54,6 +55,7 @@ type clusterClient struct {
 	storageClasses        map[string]StorageClassClient
 	persistentVolumes     map[string]PersistentVolumeClient
 	namespaces            map[string]namespaceCacheEntry
+	catalogClients        map[string]CatalogClient
 }
 
 type namespaceCacheEntry struct {
@@ -279,4 +281,38 @@ func (client *clusterClient) backendClusterClient() (*backendClusterClient.Clien
 		return nil, err
 	}
 	return client._backendClusterClient, nil
+}
+
+func (client *clusterClient) Catalog(catalogName string) (CatalogClient, error) {
+	if cache, exists := client.catalogClients[catalogName]; exists {
+		return cache, nil
+	}
+	result, err := newClusterCatalogClient(catalogName, client, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.catalogClients[catalogName] = result
+	return result, nil
+}
+
+func (client *clusterClient) Catalogs() ([]CatalogClient, error) {
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
+		return nil, err
+	}
+	collection, err := backendRancherClient.Catalog.List(&types.ListOpts{
+		Filters: map[string]interface{}{},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]CatalogClient, len(collection.Data))
+	for i, backendCatalog := range collection.Data {
+		catalog, err := client.Catalog(backendCatalog.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = catalog
+	}
+	return result, nil
 }

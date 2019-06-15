@@ -23,14 +23,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func newRancherCatalogClientWithData(
+func newClusterCatalogClientWithData(
 	catalog rancherModel.Catalog,
-	rancherClient RancherClient,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (CatalogClient, error) {
-	result, err := newRancherCatalogClient(
+	result, err := newClusterCatalogClient(
 		catalog.Name,
-		rancherClient,
+		clusterClient,
 		logger,
 	)
 	if err != nil {
@@ -40,34 +40,39 @@ func newRancherCatalogClientWithData(
 	return result, err
 }
 
-func newRancherCatalogClient(
+func newClusterCatalogClient(
 	name string,
-	rancherClient RancherClient,
+	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (CatalogClient, error) {
-	return &rancherCatalogClient{
+	return &clusterCatalogClient{
 		resourceClient: resourceClient{
 			name:   name,
 			logger: logger.WithField("catalog_name", name),
 		},
-		rancherClient: rancherClient,
+		clusterClient: clusterClient,
 	}, nil
 }
 
-type rancherCatalogClient struct {
+type clusterCatalogClient struct {
 	resourceClient
 	catalog       rancherModel.Catalog
-	rancherClient RancherClient
+	clusterClient ClusterClient
 }
 
-func (client *rancherCatalogClient) Exists() (bool, error) {
-	backendClient, err := client.rancherClient.backendRancherClient()
+func (client *clusterCatalogClient) Exists() (bool, error) {
+	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
 		return false, err
 	}
-	collection, err := backendClient.Catalog.List(&types.ListOpts{
+	clusterID, err := client.clusterClient.ID()
+	if err != nil {
+		return false, err
+	}
+	collection, err := backendClient.ClusterCatalog.List(&types.ListOpts{
 		Filters: map[string]interface{}{
-			"name": client.name,
+			"name":      client.name,
+			"clusterId": clusterID,
 		},
 	})
 	if nil != err {
@@ -83,32 +88,41 @@ func (client *rancherCatalogClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *rancherCatalogClient) Create() error {
-	backendClient, err := client.rancherClient.backendRancherClient()
+func (client *clusterCatalogClient) Create() error {
+	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
 		return err
 	}
-
+	clusterID, err := client.clusterClient.ID()
+	if err != nil {
+		return err
+	}
 	client.logger.Info("Create new catalog")
-	_, err = backendClient.Catalog.Create(&backendRancherClient.Catalog{
-		Name:     client.catalog.Name,
-		URL:      client.catalog.URL,
-		Branch:   client.catalog.Branch,
-		Username: client.catalog.Username,
-		Password: client.catalog.Password,
+	_, err = backendClient.ClusterCatalog.Create(&backendRancherClient.ClusterCatalog{
+		Name:      client.catalog.Name,
+		ClusterID: clusterID,
+		URL:       client.catalog.URL,
+		Branch:    client.catalog.Branch,
+		Username:  client.catalog.Username,
+		Password:  client.catalog.Password,
 	})
 	return err
 }
 
-func (client *rancherCatalogClient) Upgrade() error {
-	backendClient, err := client.rancherClient.backendRancherClient()
+func (client *clusterCatalogClient) Upgrade() error {
+	backendClient, err := client.clusterClient.backendRancherClient()
+	if err != nil {
+		return err
+	}
+	clusterID, err := client.clusterClient.ID()
 	if err != nil {
 		return err
 	}
 	client.logger.Trace("Load from rancher")
-	collection, err := backendClient.Catalog.List(&types.ListOpts{
+	collection, err := backendClient.ClusterCatalog.List(&types.ListOpts{
 		Filters: map[string]interface{}{
-			"name": client.name,
+			"name":      client.name,
+			"clusterId": clusterID,
 		},
 	})
 	if nil != err {
@@ -121,32 +135,32 @@ func (client *rancherCatalogClient) Upgrade() error {
 	}
 
 	existingCatalog := collection.Data[0]
-	if isRancherCatalogUnchanged(existingCatalog, client.catalog) {
+	if isClusterCatalogUnchanged(existingCatalog, client.catalog) {
 		client.logger.Debug("Skip upgrade catalog - no changes")
 		return nil
 	}
-	client.logger.Info("Upgrade Catalog")
+	client.logger.Info("Upgrade ClusterCatalog")
 	existingCatalog.Labels["cattlectl.io/hash"] = hashOf(client.catalog)
 	existingCatalog.URL = client.catalog.URL
 	existingCatalog.Branch = client.catalog.Branch
 	existingCatalog.Username = client.catalog.Username
 	existingCatalog.Password = client.catalog.Password
 
-	_, err = backendClient.Catalog.Replace(&existingCatalog)
+	_, err = backendClient.ClusterCatalog.Replace(&existingCatalog)
 	return err
 }
 
-func (client *rancherCatalogClient) Data() (rancherModel.Catalog, error) {
+func (client *clusterCatalogClient) Data() (rancherModel.Catalog, error) {
 	return client.catalog, nil
 }
 
-func (client *rancherCatalogClient) SetData(catalog rancherModel.Catalog) error {
+func (client *clusterCatalogClient) SetData(catalog rancherModel.Catalog) error {
 	client.name = catalog.Name
 	client.catalog = catalog
 	return nil
 }
 
-func isRancherCatalogUnchanged(existingCatalog backendRancherClient.Catalog, catalog rancherModel.Catalog) bool {
+func isClusterCatalogUnchanged(existingCatalog backendRancherClient.ClusterCatalog, catalog rancherModel.Catalog) bool {
 	hash, hashExists := existingCatalog.Labels["cattlectl.io/hash"]
 	if !hashExists {
 		return false

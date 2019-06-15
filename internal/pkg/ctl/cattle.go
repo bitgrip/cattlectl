@@ -18,25 +18,21 @@ import (
 	"fmt"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
+	rancher "github.com/bitgrip/cattlectl/internal/pkg/rancher"
 	rancher_client "github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
+	cluster "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster"
+	clusterModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	yaml "gopkg.in/yaml.v2"
-)
-
-// Supported descriptor expected in the field 'kind'
-const (
-	ProjectKind     = "Project"
-	JobKind         = "Job"
-	CronJobKind     = "CronJob"
-	DeploymentKind  = "Deployment"
-	DaemonSetKind   = "DaemonSet"
-	StatefulSetKind = "StatefulSet"
 )
 
 var (
 	newRancherClient = rancher_client.NewRancherClient
 
+	newRancherConverger     = rancher.NewRancherConverger
+	newClusterConverger     = cluster.NewClusterConverger
 	newProjectConverger     = project.NewProjectConverger
 	newJobConverger         = project.NewJobConverger
 	newCronJobConverger     = project.NewCronJobConverger
@@ -44,6 +40,8 @@ var (
 	newDaemonSetConverger   = project.NewDaemonSetConverger
 	newStatefulSetConverger = project.NewStatefulSetConverger
 
+	newRancherParser     = rancher.NewRancherParser
+	newClusterParser     = cluster.NewClusterParser
 	newProjectParser     = project.NewProjectParser
 	newJobParser         = project.NewJobParser
 	newCronJobParser     = project.NewCronJobParser
@@ -62,7 +60,23 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		return fmt.Errorf("Unsupported api version %s", apiVersion)
 	}
 	switch kind {
-	case ProjectKind:
+	case rancherModel.RancherKind:
+		descriptor := rancherModel.Rancher{}
+		if err := newRancherParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+		if err := ApplyRancher(descriptor, config); err != nil {
+			return err
+		}
+	case rancherModel.ClusterKind:
+		descriptor := clusterModel.Cluster{}
+		if err := newClusterParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+		if err := ApplyCluster(descriptor, config); err != nil {
+			return err
+		}
+	case rancherModel.ProjectKind:
 		project := projectModel.Project{}
 		if err := newProjectParser(file, values).Parse(data, &project); err != nil {
 			return err
@@ -70,7 +84,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyProject(project, config); err != nil {
 			return err
 		}
-	case JobKind:
+	case rancherModel.JobKind:
 		jobDescriptor := projectModel.JobDescriptor{}
 		if err := newJobParser(file, values).Parse(data, &jobDescriptor); err != nil {
 			return err
@@ -78,7 +92,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyJob(jobDescriptor, config); err != nil {
 			return err
 		}
-	case CronJobKind:
+	case rancherModel.CronJobKind:
 		cronJobDescriptor := projectModel.CronJobDescriptor{}
 		if err := newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
 			return err
@@ -86,7 +100,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
 			return err
 		}
-	case DeploymentKind:
+	case rancherModel.DeploymentKind:
 		deploymentDescriptor := projectModel.DeploymentDescriptor{}
 		if err := newDeploymentParser(file, values).Parse(data, &deploymentDescriptor); err != nil {
 			return err
@@ -94,7 +108,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
 			return err
 		}
-	case DaemonSetKind:
+	case rancherModel.DaemonSetKind:
 		daemonSetDescriptor := projectModel.DaemonSetDescriptor{}
 		if err := newDaemonSetParser(file, values).Parse(data, &daemonSetDescriptor); err != nil {
 			return err
@@ -102,7 +116,7 @@ func ApplyDescriptor(file string, data []byte, values map[string]interface{}, co
 		if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
 			return err
 		}
-	case StatefulSetKind:
+	case rancherModel.StatefulSetKind:
 		statefulSetDescriptor := projectModel.StatefulSetDescriptor{}
 		if err := newStatefulSetParser(file, values).Parse(data, &statefulSetDescriptor); err != nil {
 			return err
@@ -194,6 +208,32 @@ func ApplyProject(project projectModel.Project, config config.Config) error {
 	return converger.Converge()
 }
 
+// ApplyCluster the the CTL perform a apply action to a cluster descriptor
+func ApplyCluster(cluster clusterModel.Cluster, config config.Config) error {
+	rancherClient, err := fillClusterMetadata(&cluster.Metadata, config)
+	if err != nil {
+		return err
+	}
+	converger, err := newClusterConverger(cluster, rancherClient)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
+}
+
+// ApplyRancher the the CTL perform a apply action to a cluster descriptor
+func ApplyRancher(rancher rancherModel.Rancher, config config.Config) error {
+	rancherConfig, err := fillRancherMetadata(&rancher.Metadata, config)
+	if err != nil {
+		return err
+	}
+	converger, err := newRancherConverger(rancher, rancherConfig)
+	if err != nil {
+		return err
+	}
+	return converger.Converge()
+}
+
 // GetAPIVersionAndKind reads API version and kind from the data
 func GetAPIVersionAndKind(data []byte) (string, string, error) {
 	structure := make(map[string]interface{})
@@ -227,24 +267,51 @@ func ParseAndPrintDescriptor(file string, data []byte, values map[string]interfa
 	}
 	var descriptor interface{}
 	switch kind {
-	case ProjectKind:
+	case rancherModel.RancherKind:
+		descriptor = rancherModel.Rancher{}
+		if err = newRancherParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+	case rancherModel.ClusterKind:
+		descriptor = clusterModel.Cluster{}
+		if err = newRancherParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+	case rancherModel.ProjectKind:
 		project := projectModel.Project{}
 		if err = newProjectParser(file, values).Parse(data, &project); err != nil {
 			return err
 		}
 		descriptor = project
-	case JobKind:
+	case rancherModel.JobKind:
 		jobDescriptor := projectModel.JobDescriptor{}
 		if err = newJobParser(file, values).Parse(data, &jobDescriptor); err != nil {
 			return err
 		}
 		descriptor = jobDescriptor
-	case CronJobKind:
+	case rancherModel.CronJobKind:
 		cronJobDescriptor := projectModel.CronJobDescriptor{}
 		if err = newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
 			return err
 		}
 		descriptor = cronJobDescriptor
+	case rancherModel.DeploymentKind:
+		descriptor = projectModel.Deployment{}
+		if err = newDeploymentParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+	case rancherModel.StatefulSetKind:
+		descriptor = projectModel.StatefulSet{}
+		if err = newStatefulSetParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+	case rancherModel.DaemonSetKind:
+		descriptor = projectModel.DaemonSet{}
+		if err = newDaemonSetParser(file, values).Parse(data, &descriptor); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("Unknown descriptor %s", kind)
 	}
 	out, err := yaml.Marshal(descriptor)
 	if err != nil {
@@ -332,4 +399,60 @@ func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.C
 		return nil, nil, err
 	}
 	return rancherClient, clusterClient, nil
+}
+
+func fillClusterMetadata(metadata *clusterModel.ClusterMetadata, config config.Config) (rancher_client.RancherClient, error) {
+	if config.RancherURL() != "" {
+		metadata.RancherURL = config.RancherURL()
+	}
+	if config.AccessKey() != "" {
+		metadata.AccessKey = config.AccessKey()
+	}
+	if config.SecretKey() != "" {
+		metadata.SecretKey = config.SecretKey()
+	}
+	if config.TokenKey() != "" {
+		metadata.TokenKey = config.TokenKey()
+	}
+	if config.ClusterName() != "" {
+		metadata.Name = config.ClusterName()
+	}
+	if config.ClusterID() != "" {
+		metadata.ID = config.ClusterID()
+	}
+
+	rancherClient, err := newRancherClient(rancher_client.RancherConfig{
+		RancherURL: metadata.RancherURL,
+		AccessKey:  metadata.AccessKey,
+		SecretKey:  metadata.SecretKey,
+		Insecure:   config.InsecureAPI(),
+		CACerts:    config.CACerts(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return rancherClient, nil
+}
+
+func fillRancherMetadata(metadata *rancherModel.RancherMetadata, config config.Config) (rancher_client.RancherConfig, error) {
+	if config.RancherURL() != "" {
+		metadata.RancherURL = config.RancherURL()
+	}
+	if config.AccessKey() != "" {
+		metadata.AccessKey = config.AccessKey()
+	}
+	if config.SecretKey() != "" {
+		metadata.SecretKey = config.SecretKey()
+	}
+	if config.TokenKey() != "" {
+		metadata.TokenKey = config.TokenKey()
+	}
+
+	return rancher_client.RancherConfig{
+		RancherURL: metadata.RancherURL,
+		AccessKey:  metadata.AccessKey,
+		SecretKey:  metadata.SecretKey,
+		Insecure:   config.InsecureAPI(),
+		CACerts:    config.CACerts(),
+	}, nil
 }

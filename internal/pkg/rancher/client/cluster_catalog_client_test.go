@@ -27,27 +27,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	simpleCatalogName = "simple-catalog"
-	simpleURL         = "http://simple-url"
-	simpleBranch      = "simple-branch"
-	simpleUsername    = "simple-username"
-	simplePassword    = "simplePassword"
-)
-
-func Test_rancherCatalogClient_Exists(t *testing.T) {
+func Test_clusterCatalogClient_Exists(t *testing.T) {
 	tests := []struct {
 		name      string
-		client    *rancherCatalogClient
+		client    *clusterCatalogClient
 		wanted    bool
 		wantErr   bool
 		wantedErr string
 	}{
 		{
 			name: "Existing",
-			client: existingRancherCatalogClient(
+			client: existingClusterCatalogClient(
 				t,
 				simpleCatalogName,
+				simpleClusterID,
 				simpleURL,
 				simpleBranch,
 				simpleUsername,
@@ -58,9 +51,10 @@ func Test_rancherCatalogClient_Exists(t *testing.T) {
 		},
 		{
 			name: "Not_Existing",
-			client: notExistingRancherCatalogClient(
+			client: notExistingClusterCatalogClient(
 				t,
 				simpleCatalogName,
+				simpleClusterID,
 				simpleURL,
 				simpleBranch,
 				simpleUsername,
@@ -83,18 +77,19 @@ func Test_rancherCatalogClient_Exists(t *testing.T) {
 	}
 }
 
-func Test_rancherCatalogClient_Create(t *testing.T) {
+func Test_clusterCatalogClient_Create(t *testing.T) {
 	tests := []struct {
 		name      string
-		client    *rancherCatalogClient
+		client    *clusterCatalogClient
 		wantErr   bool
 		wantedErr string
 	}{
 		{
 			name: "Create",
-			client: notExistingRancherCatalogClient(
+			client: notExistingClusterCatalogClient(
 				t,
 				simpleCatalogName,
+				simpleClusterID,
 				simpleURL,
 				simpleBranch,
 				simpleUsername,
@@ -115,18 +110,19 @@ func Test_rancherCatalogClient_Create(t *testing.T) {
 	}
 }
 
-func Test_rancherCatalogClient_Upgrade(t *testing.T) {
+func Test_clusterCatalogClient_Upgrade(t *testing.T) {
 	tests := []struct {
 		name      string
-		client    *rancherCatalogClient
+		client    *clusterCatalogClient
 		wantErr   bool
 		wantedErr string
 	}{
 		{
 			name: "Create",
-			client: existingRancherCatalogClient(
+			client: existingClusterCatalogClient(
 				t,
 				simpleCatalogName,
+				simpleClusterID,
 				simpleURL,
 				simpleBranch,
 				simpleUsername,
@@ -147,111 +143,120 @@ func Test_rancherCatalogClient_Upgrade(t *testing.T) {
 	}
 }
 
-func existingRancherCatalogClient(t *testing.T, name, url, branch, username, password string) *rancherCatalogClient {
+func existingClusterCatalogClient(t *testing.T, name, clusterID, url, branch, username, password string) *clusterCatalogClient {
 	testClients := stubs.CreateBackendStubs(t)
 	expectedListOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
-			"name": name,
+			"name":      name,
+			"clusterId": clusterID,
 		},
 	}
-	rancherCatalogData := rancherModel.Catalog{
+	clusterCatalogData := rancherModel.Catalog{
 		Name:     name,
 		URL:      url,
 		Branch:   branch,
 		Username: username,
 		Password: password,
 	}
-	expectedBackendrCatalog := &backendRancherClient.Catalog{
-		Name:     name,
-		URL:      url,
-		Branch:   branch,
-		Username: username,
-		Password: password,
-		Labels:   map[string]string{"cattlectl.io/hash": "d20875c8c699ed126b385992bf8fc7c384f18e85"},
+	expectedBackendrCatalog := &backendRancherClient.ClusterCatalog{
+		Name:      name,
+		ClusterID: clusterID,
+		URL:       url,
+		Branch:    branch,
+		Username:  username,
+		Password:  password,
+		Labels:    map[string]string{"cattlectl.io/hash": "d20875c8c699ed126b385992bf8fc7c384f18e85"},
 	}
 
-	rancherCatalogOperationsStub := stubs.CreateRancherCatalogOperationsStub(t)
-	rancherCatalogOperationsStub.DoList = func(opts *types.ListOpts) (*backendRancherClient.CatalogCollection, error) {
+	clusterCatalogOperationsStub := stubs.CreateClusterCatalogOperationsStub(t)
+	clusterCatalogOperationsStub.DoList = func(opts *types.ListOpts) (*backendRancherClient.ClusterCatalogCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendRancherClient.CatalogCollection{
-			Data: []backendRancherClient.Catalog{
-				backendRancherClient.Catalog{
-					Name:   name,
-					Labels: map[string]string{},
+		return &backendRancherClient.ClusterCatalogCollection{
+			Data: []backendRancherClient.ClusterCatalog{
+				backendRancherClient.ClusterCatalog{
+					Name:      name,
+					ClusterID: clusterID,
+					Labels:    map[string]string{},
 				},
 			},
 		}, nil
 	}
-	rancherCatalogOperationsStub.DoReplace = func(existing *backendRancherClient.Catalog) (*backendRancherClient.Catalog, error) {
+	clusterCatalogOperationsStub.DoReplace = func(existing *backendRancherClient.ClusterCatalog) (*backendRancherClient.ClusterCatalog, error) {
 		if !reflect.DeepEqual(expectedBackendrCatalog, existing) {
-			return nil, fmt.Errorf("Unexpected ListOpts %v", existing)
+			return nil, fmt.Errorf("Unexpected ClusterCatalog %v", existing)
 		}
 		return existing, nil
 	}
-	testClients.ManagementClient.Catalog = rancherCatalogOperationsStub
+	testClients.ManagementClient.ClusterCatalog = clusterCatalogOperationsStub
 	rancherClient := simpleRancherClient()
 	rancherClient._backendRancherClient = testClients.ManagementClient
-	result, err := newRancherCatalogClient(
+	clusterClient := simpleClusterClient()
+	clusterClient.rancherClient = rancherClient
+	result, err := newClusterCatalogClient(
 		name,
-		rancherClient,
+		clusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
-	rancherCatalogClientResult := result.(*rancherCatalogClient)
-	rancherCatalogClientResult.catalog = rancherCatalogData
-	return rancherCatalogClientResult
+	clusterCatalogClientResult := result.(*clusterCatalogClient)
+	clusterCatalogClientResult.catalog = clusterCatalogData
+	return clusterCatalogClientResult
 }
 
-func notExistingRancherCatalogClient(t *testing.T, name, url, branch, username, password string) *rancherCatalogClient {
+func notExistingClusterCatalogClient(t *testing.T, name, clusterID, url, branch, username, password string) *clusterCatalogClient {
 	testClients := stubs.CreateBackendStubs(t)
 	expectedListOpts := &types.ListOpts{
 		Filters: map[string]interface{}{
-			"name": name,
+			"name":      name,
+			"clusterId": clusterID,
 		},
 	}
-	rancherCatalogData := rancherModel.Catalog{
+	clusterCatalogData := rancherModel.Catalog{
 		Name:     name,
 		URL:      url,
 		Branch:   branch,
 		Username: username,
 		Password: password,
 	}
-	expectedBackendrCatalog := &backendRancherClient.Catalog{
-		Name:     name,
-		URL:      url,
-		Branch:   branch,
-		Username: username,
-		Password: password,
+	expectedBackendrCatalog := &backendRancherClient.ClusterCatalog{
+		Name:      name,
+		ClusterID: clusterID,
+		URL:       url,
+		Branch:    branch,
+		Username:  username,
+		Password:  password,
 	}
 
-	rancherCatalogOperationsStub := stubs.CreateRancherCatalogOperationsStub(t)
-	rancherCatalogOperationsStub.DoList = func(opts *types.ListOpts) (*backendRancherClient.CatalogCollection, error) {
+	clusterCatalogOperationsStub := stubs.CreateClusterCatalogOperationsStub(t)
+	clusterCatalogOperationsStub.DoList = func(opts *types.ListOpts) (*backendRancherClient.ClusterCatalogCollection, error) {
 		if !reflect.DeepEqual(expectedListOpts, opts) {
 			return nil, fmt.Errorf("Unexpected ListOpts %v", opts)
 		}
-		return &backendRancherClient.CatalogCollection{
-			Data: []backendRancherClient.Catalog{},
+		return &backendRancherClient.ClusterCatalogCollection{
+			Data: []backendRancherClient.ClusterCatalog{},
 		}, nil
 	}
-	rancherCatalogOperationsStub.DoCreate = func(rancherCatalog *backendRancherClient.Catalog) (*backendRancherClient.Catalog, error) {
-		if !reflect.DeepEqual(expectedBackendrCatalog, rancherCatalog) {
-			return nil, fmt.Errorf("Unexpected Catalog %v", rancherCatalog)
+	clusterCatalogOperationsStub.DoCreate = func(clusterCatalog *backendRancherClient.ClusterCatalog) (*backendRancherClient.ClusterCatalog, error) {
+		if !reflect.DeepEqual(expectedBackendrCatalog, clusterCatalog) {
+			return nil, fmt.Errorf("Unexpected Catalog %v", clusterCatalog)
 		}
 
-		return rancherCatalog, nil
+		return clusterCatalog, nil
 	}
-	testClients.ManagementClient.Catalog = rancherCatalogOperationsStub
+	testClients.ManagementClient.ClusterCatalog = clusterCatalogOperationsStub
 	rancherClient := simpleRancherClient()
 	rancherClient._backendRancherClient = testClients.ManagementClient
-	result, err := newRancherCatalogClient(
+	clusterClient := simpleClusterClient()
+	clusterClient.rancherClient = rancherClient
+	result, err := newClusterCatalogClient(
 		name,
-		rancherClient,
+		clusterClient,
 		logrus.New().WithFields(logrus.Fields{}),
 	)
 	assert.Ok(t, err)
-	rancherCatalogClientResult := result.(*rancherCatalogClient)
-	rancherCatalogClientResult.catalog = rancherCatalogData
-	return rancherCatalogClientResult
+	clusterCatalogClientResult := result.(*clusterCatalogClient)
+	clusterCatalogClientResult.catalog = clusterCatalogData
+	return clusterCatalogClientResult
 }

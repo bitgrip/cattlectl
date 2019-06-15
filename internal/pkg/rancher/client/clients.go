@@ -59,6 +59,8 @@ type ClusterClient interface {
 	PersistentVolumes() ([]PersistentVolumeClient, error)
 	Namespace(name, projectName string) (NamespaceClient, error)
 	Namespaces(projectName string) ([]NamespaceClient, error)
+	Catalog(string) (CatalogClient, error)
+	Catalogs() ([]CatalogClient, error)
 
 	backendRancherClient() (*backendRancherClient.Client, error)
 	backendClusterClient() (*backendClusterClient.Client, error)
