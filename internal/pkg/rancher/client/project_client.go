@@ -17,7 +17,7 @@ package client
 import (
 	"fmt"
 
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/rancher/norman/types"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"

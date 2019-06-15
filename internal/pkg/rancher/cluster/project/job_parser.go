@@ -16,14 +16,14 @@ package project
 
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/sirupsen/logrus"
 )
 
-// NewCronJobParser creates a Parser that is printing prettified representations
-func NewCronJobParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
+// NewJobParser creates a Parser that is printing prettified representations
+func NewJobParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return descriptor.NewLogginParser(projectModel.CronJobKind, logger, values)
+	return descriptor.NewLogginParser(rancherModel.JobKind, logger, values)
 }

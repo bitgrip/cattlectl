@@ -14,16 +14,6 @@
 
 package model
 
-// Types of Descriptors which are expected values of the field Cluster.Kind
-const (
-	ProjectKind     = "Project"
-	JobKind         = "Job"
-	CronJobKind     = "CronJob"
-	DeploymentKind  = "Deployment"
-	DaemonSetKind   = "DaemonSet"
-	StatefulSetKind = "StatefulSet"
-)
-
 // Cluster is WIP
 type Cluster struct {
 	APIVersion        string `yaml:"api_version"`

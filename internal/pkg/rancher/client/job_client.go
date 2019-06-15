@@ -17,7 +17,7 @@ package client
 import (
 	"fmt"
 
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/rancher/norman/types"
 	"github.com/sirupsen/logrus"
 )

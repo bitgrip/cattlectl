@@ -22,7 +22,7 @@ import (
 	"sort"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/rancher/norman/types/slice"
 	"github.com/sirupsen/logrus"

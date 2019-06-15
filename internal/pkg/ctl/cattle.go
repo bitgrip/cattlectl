@@ -19,8 +19,8 @@ import (
 
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	rancher_client "github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	yaml "gopkg.in/yaml.v2"
 )
 

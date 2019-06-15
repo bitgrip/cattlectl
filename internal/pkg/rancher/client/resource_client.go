@@ -20,6 +20,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// EmptyResourceClient is a ResourceClient with always exists and dose nothing
+var EmptyResourceClient = emptyResourceClient{}
+
 type resourceClient struct {
 	id     string
 	name   string
@@ -72,4 +75,23 @@ func (client *namespacedResourceClient) NamespaceID() (string, error) {
 }
 func (client *namespacedResourceClient) Namespace() (string, error) {
 	return client.namespace, nil
+}
+
+type emptyResourceClient struct{}
+
+func (client emptyResourceClient) ID() (string, error) {
+	return "", nil
+}
+func (client emptyResourceClient) Name() (string, error) {
+	return "", nil
+}
+
+func (client emptyResourceClient) Exists() (bool, error) {
+	return true, nil
+}
+func (client emptyResourceClient) Create() error {
+	return nil
+}
+func (client emptyResourceClient) Upgrade() error {
+	return nil
 }

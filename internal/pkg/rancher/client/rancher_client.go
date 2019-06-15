@@ -26,6 +26,7 @@ func NewRancherClient(config RancherConfig) (RancherClient, error) {
 		config:         config,
 		logger:         logrus.WithFields(logrus.Fields{}),
 		clusterClients: make(map[string]ClusterClient),
+		catalogClients: make(map[string]CatalogClient),
 	}, nil
 }
 
@@ -44,6 +45,7 @@ type rancherClient struct {
 	_backendRancherClient *backendRancherClient.Client
 	logger                *logrus.Entry
 	clusterClients        map[string]ClusterClient
+	catalogClients        map[string]CatalogClient
 }
 
 func (client *rancherClient) init() error {
@@ -88,6 +90,40 @@ func (client *rancherClient) Clusters() ([]ClusterClient, error) {
 			return nil, err
 		}
 		result[i] = cluster
+	}
+	return result, nil
+}
+
+func (client *rancherClient) Catalog(catalogName string) (CatalogClient, error) {
+	if cache, exists := client.catalogClients[catalogName]; exists {
+		return cache, nil
+	}
+	result, err := newRancherCatalogClient(catalogName, client, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.catalogClients[catalogName] = result
+	return result, nil
+}
+
+func (client *rancherClient) Catalogs() ([]CatalogClient, error) {
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
+		return nil, err
+	}
+	collection, err := backendRancherClient.Catalog.List(&types.ListOpts{
+		Filters: map[string]interface{}{},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]CatalogClient, len(collection.Data))
+	for i, backendCatalog := range collection.Data {
+		catalog, err := client.Catalog(backendCatalog.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = catalog
 	}
 	return result, nil
 }

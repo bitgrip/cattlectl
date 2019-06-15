@@ -15,22 +15,15 @@
 package project
 
 import (
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
+	"github.com/sirupsen/logrus"
 )
 
-// NewJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewJobConverger(jobDescriptor projectModel.JobDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
-	jobClient, err := projectClient.Job(jobDescriptor.Spec.Name, jobDescriptor.Metadata.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	err = jobClient.SetData(jobDescriptor.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return &descriptor.ResourceClientConverger{
-		Client: jobClient,
-	}, nil
+// NewDaemonSetParser creates a Parser that is printing prettified representations
+func NewDaemonSetParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
+	logger := logrus.WithFields(logrus.Fields{
+		"descriptor_file": descriptorFile,
+	})
+	return descriptor.NewLogginParser(rancherModel.DaemonSetKind, logger, values)
 }

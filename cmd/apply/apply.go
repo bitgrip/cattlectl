@@ -21,7 +21,7 @@ import (
 	"github.com/bitgrip/cattlectl/cmd/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher/project"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project"
 	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
