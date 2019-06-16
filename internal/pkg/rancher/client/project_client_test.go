@@ -1654,6 +1654,7 @@ func simpleProjectClient() *projectClient {
 		deploymentClients:       make(map[string]DeploymentClient),
 		daemonSetClients:        make(map[string]DaemonSetClient),
 		statefulSetClients:      make(map[string]StatefulSetClient),
+		catalogClients:          make(map[string]CatalogClient),
 	}
 }
 

@@ -17,7 +17,7 @@ package client
 import (
 	"fmt"
 
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	clusterModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
@@ -50,7 +50,7 @@ type clusterClient struct {
 	config                RancherConfig
 	rancherClient         RancherClient
 	_backendClusterClient *backendClusterClient.Client
-	cluster               projectModel.Cluster
+	cluster               clusterModel.Cluster
 	projectClients        map[string]ProjectClient
 	storageClasses        map[string]StorageClassClient
 	persistentVolumes     map[string]PersistentVolumeClient
@@ -300,8 +300,10 @@ func (client *clusterClient) Catalogs() ([]CatalogClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	collection, err := backendRancherClient.Catalog.List(&types.ListOpts{
-		Filters: map[string]interface{}{},
+	collection, err := backendRancherClient.ClusterCatalog.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"clusterId": client.id,
+		},
 	})
 	if err != nil {
 		return nil, err

@@ -16,8 +16,8 @@ package project
 
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
-	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 )
 
 // NewProjectConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.Project
@@ -27,6 +27,16 @@ func NewProjectConverger(project projectModel.Project, clusterClient client.Clus
 		return nil, err
 	}
 	childConvergers := make([]descriptor.Converger, 0)
+	for _, catalog := range project.Catalogs {
+		catalogClient, err := projectClient.Catalog(catalog.Name)
+		if err != nil {
+			return nil, err
+		}
+		catalogClient.SetData(catalog)
+		childConvergers = append(childConvergers, &descriptor.ResourceClientConverger{
+			Client: catalogClient,
+		})
+	}
 	for _, namespace := range project.Namespaces {
 		namespaceClient, err := projectClient.Namespace(namespace.Name)
 		if err != nil {

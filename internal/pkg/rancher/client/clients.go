@@ -98,7 +98,11 @@ type ProjectClient interface {
 	DaemonSets(namespaceName string) ([]DaemonSetClient, error)
 	StatefulSet(name, namespaceName string) (StatefulSetClient, error)
 	StatefulSets(namespaceName string) ([]StatefulSetClient, error)
+	Catalog(string) (CatalogClient, error)
+	Catalogs() ([]CatalogClient, error)
 
+	backendRancherClient() (*backendRancherClient.Client, error)
+	backendClusterClient() (*backendClusterClient.Client, error)
 	backendProjectClient() (*backendProjectClient.Client, error)
 	config() RancherConfig
 }
