@@ -24,4 +24,5 @@ type Config interface {
 	TokenKey() string
 	ClusterName() string
 	ClusterID() string
+	MergeAnswers() bool
 }

@@ -26,7 +26,7 @@ import (
 
 func newProjectClient(
 	name string,
-	config RancherConfig,
+	rancherConfig RancherConfig,
 	clusterClient ClusterClient,
 	logger *logrus.Entry,
 ) (ProjectClient, error) {
@@ -37,7 +37,7 @@ func newProjectClient(
 			name:   name,
 			logger: projectLogger,
 		},
-		config:                  config,
+		rancherConfig:           rancherConfig,
 		clusterClient:           clusterClient,
 		certificateClients:      make(map[string]CertificateClient),
 		configMapClients:        make(map[string]ConfigMapClient),
@@ -54,7 +54,7 @@ func newProjectClient(
 
 type projectClient struct {
 	resourceClient
-	config                  RancherConfig
+	rancherConfig           RancherConfig
 	clusterClient           ClusterClient
 	_backendProjectClient   *backendProjectClient.Client
 	project                 projectModel.Project
@@ -85,7 +85,7 @@ func (client *projectClient) init() error {
 	if clusterID, err = client.clusterClient.ID(); err != nil {
 		return err
 	}
-	client._backendProjectClient, err = createProjectClient(client.config, clusterID, projectID)
+	client._backendProjectClient, err = createProjectClient(client.rancherConfig, clusterID, projectID)
 	return err
 }
 
@@ -695,4 +695,8 @@ func (client *projectClient) backendProjectClient() (*backendProjectClient.Clien
 		return nil, err
 	}
 	return client._backendProjectClient, nil
+}
+
+func (client *projectClient) config() RancherConfig {
+	return client.rancherConfig
 }

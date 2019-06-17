@@ -26,6 +26,7 @@ cattlectl apply [flags]
 ```
   -f, --file string      project file to apply (default "project.yaml")
   -h, --help             help for apply
+      --merge-answers    If answers of existing apps should be merged with the new apply answers
       --values strings   values file(s) to apply (default [values.yaml])
 ```
 

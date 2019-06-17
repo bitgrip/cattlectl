@@ -31,11 +31,12 @@ func NewRancherClient(config RancherConfig) (RancherClient, error) {
 
 // RancherConfig holds the configuration data to interact with a rancher server
 type RancherConfig struct {
-	RancherURL string
-	AccessKey  string
-	SecretKey  string
-	Insecure   bool
-	CACerts    string
+	RancherURL   string
+	AccessKey    string
+	SecretKey    string
+	Insecure     bool
+	CACerts      string
+	MergeAnswers bool
 }
 
 type rancherClient struct {

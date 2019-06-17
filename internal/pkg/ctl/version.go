@@ -21,7 +21,7 @@ import (
 )
 
 // Version is the current build version
-var Version = "v1.2.0-local"
+var Version = "v1.3.0-local"
 
 func isSupportedAPIVersion(apiVersion string) bool {
 	v, err := semver.NewVersion(Version)
