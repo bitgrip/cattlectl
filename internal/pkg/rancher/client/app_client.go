@@ -155,11 +155,20 @@ func (client *appClient) Upgrade() error {
 		}
 		au.ValuesYaml = client.app.ValuesYaml
 	} else {
-		if reflect.DeepEqual(installedApp.Answers, client.app.Answers) {
+		resultAnswers := map[string]string{}
+		if client.projectClient.config().MergeAnswers {
+			for key, value := range installedApp.Answers {
+				resultAnswers[key] = value
+			}
+		}
+		for key, value := range client.app.Answers {
+			resultAnswers[key] = value
+		}
+		if reflect.DeepEqual(installedApp.Answers, resultAnswers) {
 			client.logger.Debug("Skip upgrade app - no changes")
 			return nil
 		}
-		au.Answers = client.app.Answers
+		au.Answers = resultAnswers
 	}
 	if client.app.SkipUpgrade {
 		client.logger.Info("Suppress upgrade app - by config")

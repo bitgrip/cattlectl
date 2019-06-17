@@ -95,6 +95,7 @@ type ProjectClient interface {
 	StatefulSets(namespaceName string) ([]StatefulSetClient, error)
 
 	backendProjectClient() (*backendProjectClient.Client, error)
+	config() RancherConfig
 }
 
 // NamespaceClient interacts with a Rancher namespace resource

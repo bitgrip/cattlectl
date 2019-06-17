@@ -56,3 +56,7 @@ func (config) ClusterName() string {
 func (config) ClusterID() string {
 	return viper.GetString("rancher.cluster_id")
 }
+
+func (config) MergeAnswers() bool {
+	return viper.GetBool("rancher.merge_answers")
+}

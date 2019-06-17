@@ -275,11 +275,12 @@ func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config
 	}
 
 	rancherClient, err := newRancherClient(rancher_client.RancherConfig{
-		RancherURL: metadata.RancherURL,
-		AccessKey:  metadata.AccessKey,
-		SecretKey:  metadata.SecretKey,
-		Insecure:   config.InsecureAPI(),
-		CACerts:    config.CACerts(),
+		RancherURL:   metadata.RancherURL,
+		AccessKey:    metadata.AccessKey,
+		SecretKey:    metadata.SecretKey,
+		Insecure:     config.InsecureAPI(),
+		CACerts:      config.CACerts(),
+		MergeAnswers: config.MergeAnswers(),
 	})
 	if err != nil {
 		return nil, nil, nil, err
@@ -316,11 +317,12 @@ func fillProjectMetadata(metadata *projectModel.ProjectMetadata, config config.C
 	}
 
 	rancherClient, err := newRancherClient(rancher_client.RancherConfig{
-		RancherURL: metadata.RancherURL,
-		AccessKey:  metadata.AccessKey,
-		SecretKey:  metadata.SecretKey,
-		Insecure:   config.InsecureAPI(),
-		CACerts:    config.CACerts(),
+		RancherURL:   metadata.RancherURL,
+		AccessKey:    metadata.AccessKey,
+		SecretKey:    metadata.SecretKey,
+		Insecure:     config.InsecureAPI(),
+		CACerts:      config.CACerts(),
+		MergeAnswers: config.MergeAnswers(),
 	})
 	if err != nil {
 		return nil, nil, err

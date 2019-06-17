@@ -25,6 +25,7 @@ import (
 	"github.com/bitgrip/cattlectl/internal/pkg/template"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -83,4 +84,8 @@ func apply(cmd *cobra.Command, args []string) {
 func init() {
 	applyCmd.Flags().StringVarP(&applyFile, "file", "f", "project.yaml", "project file to apply")
 	applyCmd.Flags().StringSliceVar(&valuesFiles, "values", []string{"values.yaml"}, "values file(s) to apply")
+
+	applyCmd.Flags().Bool("merge-answers", false, "If answers of existing apps should be merged with the new apply answers")
+	viper.BindPFlag("rancher.merge_answers", applyCmd.Flags().Lookup("merge-answers"))
+	viper.BindEnv("rancher.merge_answers", "RANCHER_MERGE_ANSWERS")
 }
