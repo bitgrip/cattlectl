@@ -1,0 +1,9 @@
+---
+api_version: v1.0
+kind: Project
+metadata:
+  name: "{{ .project_name }}"
+catalogs:
+  - name: test-project-catalog
+    url: https://charts.bitnami.com/bitnami
+    branch: "{{ .catalog_branch }}"

@@ -82,5 +82,7 @@ Finding more informations
 -------------------------
 
 * [Descriptor templates](descriptor_templates.md)
+* [RancherDescriptor data model](rancher_descriptor.md)
+* [ClusterDescriptor data model](cluster_descriptor.md)
 * [ProjectDescriptor data model](project_descriptor.md)
 * [cattlectl CLI documentation](cattlectl.md)

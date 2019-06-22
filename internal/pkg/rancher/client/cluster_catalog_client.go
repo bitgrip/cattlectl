@@ -105,6 +105,9 @@ func (client *clusterCatalogClient) Create() error {
 		Branch:    client.catalog.Branch,
 		Username:  client.catalog.Username,
 		Password:  client.catalog.Password,
+		Labels: map[string]string{
+			"cattlectl.io/hash": hashOf(client.catalog),
+		},
 	})
 	return err
 }

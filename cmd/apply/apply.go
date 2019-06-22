@@ -48,6 +48,7 @@ var (
 	newProjectParser  = project.NewProjectParser
 )
 
+// BaseCommand is accessor to the package base command
 func BaseCommand(config config.Config, init func()) *cobra.Command {
 	rootConfig = config
 	initCommand = init

@@ -31,7 +31,7 @@ type Rancher struct {
 	APIVersion string          `yaml:"api_version"`
 	Kind       string          `yaml:"kind"`
 	Metadata   RancherMetadata `yaml:"metadata"`
-	Catalogs   []Catalog       `yaml:"catalog,omitempty"`
+	Catalogs   []Catalog       `yaml:"catalogs,omitempty"`
 }
 
 // RancherMetadata are global meta informations

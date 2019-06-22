@@ -23,7 +23,7 @@ type Cluster struct {
 	APIVersion string                 `yaml:"api_version"`
 	Kind       string                 `yaml:"kind"`
 	Metadata   ClusterMetadata        `yaml:"metadata"`
-	Catalogs   []rancherModel.Catalog `yaml:"catalog,omitempty"`
+	Catalogs   []rancherModel.Catalog `yaml:"catalogs,omitempty"`
 }
 
 // ClusterrMetadata are global meta informations
