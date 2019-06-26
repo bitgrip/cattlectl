@@ -224,6 +224,7 @@ func notExistingRancherCatalogClient(t *testing.T, name, url, branch, username, 
 		Branch:   branch,
 		Username: username,
 		Password: password,
+		Labels:    map[string]string{"cattlectl.io/hash": hashOf(rancherCatalogData)},
 	}
 
 	rancherCatalogOperationsStub := stubs.CreateRancherCatalogOperationsStub(t)

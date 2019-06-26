@@ -230,6 +230,7 @@ func notExistingProjectCatalogClient(t *testing.T, name, projectID, url, branch,
 		Branch:    branch,
 		Username:  username,
 		Password:  password,
+		Labels:    map[string]string{"cattlectl.io/hash": hashOf(projectCatalogData)},
 	}
 
 	projectCatalogOperationsStub := stubs.CreateProjectCatalogOperationsStub(t)

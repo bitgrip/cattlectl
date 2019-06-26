@@ -165,7 +165,7 @@ func existingClusterCatalogClient(t *testing.T, name, clusterID, url, branch, us
 		Branch:    branch,
 		Username:  username,
 		Password:  password,
-		Labels:    map[string]string{"cattlectl.io/hash": "d20875c8c699ed126b385992bf8fc7c384f18e85"},
+		Labels:    map[string]string{"cattlectl.io/hash": hashOf(clusterCatalogData)},
 	}
 
 	clusterCatalogOperationsStub := stubs.CreateClusterCatalogOperationsStub(t)
@@ -227,6 +227,7 @@ func notExistingClusterCatalogClient(t *testing.T, name, clusterID, url, branch,
 		Branch:    branch,
 		Username:  username,
 		Password:  password,
+		Labels:    map[string]string{"cattlectl.io/hash": hashOf(clusterCatalogData)},
 	}
 
 	clusterCatalogOperationsStub := stubs.CreateClusterCatalogOperationsStub(t)
@@ -240,7 +241,7 @@ func notExistingClusterCatalogClient(t *testing.T, name, clusterID, url, branch,
 	}
 	clusterCatalogOperationsStub.DoCreate = func(clusterCatalog *backendRancherClient.ClusterCatalog) (*backendRancherClient.ClusterCatalog, error) {
 		if !reflect.DeepEqual(expectedBackendrCatalog, clusterCatalog) {
-			return nil, fmt.Errorf("Unexpected Catalog %v", clusterCatalog)
+			return nil, fmt.Errorf("Unexpected Catalog\n%v\n%v", expectedBackendrCatalog, clusterCatalog)
 		}
 
 		return clusterCatalog, nil
