@@ -17,20 +17,20 @@ package project
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 )
 
-// NewStatefulSetConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewStatefulSetConverger(statefulSetDescriptor projectModel.StatefulSetDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
-	statefulSetClient, err := projectClient.StatefulSet(statefulSetDescriptor.Spec.Name, statefulSetDescriptor.Metadata.Namespace)
+// NewDaemonSetConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
+func NewDaemonSetConverger(daemonSetDescriptor projectModel.DaemonSetDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
+	daemonSetClient, err := projectClient.DaemonSet(daemonSetDescriptor.Spec.Name, daemonSetDescriptor.Metadata.Namespace)
 	if err != nil {
 		return nil, err
 	}
-	err = statefulSetClient.SetData(statefulSetDescriptor.Spec)
+	err = daemonSetClient.SetData(daemonSetDescriptor.Spec)
 	if err != nil {
 		return nil, err
 	}
 	return &descriptor.ResourceClientConverger{
-		Client: statefulSetClient,
+		Client: daemonSetClient,
 	}, nil
 }

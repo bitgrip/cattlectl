@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
@@ -29,7 +29,6 @@ import (
 
 const (
 	simpleAppName = "simple-app"
-	simpleCatalog = "simple-catalog"
 )
 
 func Test_appClient_Exists(t *testing.T) {
@@ -46,7 +45,7 @@ func Test_appClient_Exists(t *testing.T) {
 				t,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				"1.1.1",
 				map[string]string{},
 				map[string]string{},
@@ -64,7 +63,7 @@ func Test_appClient_Exists(t *testing.T) {
 				simpleProjectID,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				globalCatalogType,
 				"1.1.1",
 				map[string]string{},
@@ -102,7 +101,7 @@ func Test_appClient_Create(t *testing.T) {
 				simpleProjectID,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				globalCatalogType,
 				"1.1.1",
 				map[string]string{},
@@ -118,7 +117,7 @@ func Test_appClient_Create(t *testing.T) {
 				simpleProjectID,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				clusterCatalogType,
 				"1.1.1",
 				map[string]string{},
@@ -134,7 +133,7 @@ func Test_appClient_Create(t *testing.T) {
 				simpleProjectID,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				projectCatalogType,
 				"1.1.1",
 				map[string]string{},
@@ -168,7 +167,7 @@ func Test_appClient_Upgrade(t *testing.T) {
 				t,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				"1.1.1",
 				map[string]string{
 					"key": "value",
@@ -187,7 +186,7 @@ func Test_appClient_Upgrade(t *testing.T) {
 				t,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				"1.1.1",
 				map[string]string{
 					"key": "value",
@@ -206,7 +205,7 @@ func Test_appClient_Upgrade(t *testing.T) {
 				t,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				"1.1.1",
 				nil,
 				nil,
@@ -225,7 +224,7 @@ key: changed-value
 				t,
 				simpleAppName,
 				simpleNamespaceName,
-				simpleCatalog,
+				simpleCatalogName,
 				"1.1.1",
 				nil,
 				nil,

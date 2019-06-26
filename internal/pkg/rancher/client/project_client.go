@@ -17,8 +17,9 @@ package client
 import (
 	"fmt"
 
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/rancher/norman/types"
+	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -49,6 +50,7 @@ func newProjectClient(
 		deploymentClients:       make(map[string]DeploymentClient),
 		daemonSetClients:        make(map[string]DaemonSetClient),
 		statefulSetClients:      make(map[string]StatefulSetClient),
+		catalogClients:          make(map[string]CatalogClient),
 	}, nil
 }
 
@@ -68,6 +70,7 @@ type projectClient struct {
 	deploymentClients       map[string]DeploymentClient
 	daemonSetClients        map[string]DaemonSetClient
 	statefulSetClients      map[string]StatefulSetClient
+	catalogClients          map[string]CatalogClient
 }
 
 func (client *projectClient) init() error {
@@ -688,6 +691,56 @@ func (client *projectClient) StatefulSets(namespaceName string) ([]StatefulSetCl
 		result[i] = statefulSet
 	}
 	return result, nil
+}
+
+func (client *projectClient) Catalog(catalogName string) (CatalogClient, error) {
+	if cache, exists := client.catalogClients[catalogName]; exists {
+		return cache, nil
+	}
+	result, err := newProjectCatalogClient(catalogName, client, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.catalogClients[catalogName] = result
+	return result, nil
+}
+
+func (client *projectClient) Catalogs() ([]CatalogClient, error) {
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
+		return nil, err
+	}
+	collection, err := backendRancherClient.ProjectCatalog.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"projectId": client.id,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]CatalogClient, len(collection.Data))
+	for i, backendCatalog := range collection.Data {
+		catalog, err := client.Catalog(backendCatalog.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = catalog
+	}
+	return result, nil
+}
+
+func (client *projectClient) backendRancherClient() (*backendRancherClient.Client, error) {
+	if err := client.init(); err != nil {
+		return nil, err
+	}
+	return client.clusterClient.backendRancherClient()
+}
+
+func (client *projectClient) backendClusterClient() (*backendClusterClient.Client, error) {
+	if err := client.init(); err != nil {
+		return nil, err
+	}
+	return client.clusterClient.backendClusterClient()
 }
 
 func (client *projectClient) backendProjectClient() (*backendProjectClient.Client, error) {

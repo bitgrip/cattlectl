@@ -1,4 +1,4 @@
-// Copyright © 2018 Bitgrip <berlin@bitgrip.de>
+// Copyright © 2019 Bitgrip <berlin@bitgrip.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package project
+package rancher
 
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/sirupsen/logrus"
 )
 
-// NewJobParser creates a Parser that is printing prettified representations
-func NewJobParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
+// NewRancherParser creates a Parser that is printing prettified representations
+func NewRancherParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return descriptor.NewLogginParser(projectModel.JobKind, logger, values)
+	return descriptor.NewLogginParser(rancherModel.RancherKind, logger, values)
 }

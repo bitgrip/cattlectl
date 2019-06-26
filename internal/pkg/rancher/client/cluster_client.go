@@ -17,7 +17,7 @@ package client
 import (
 	"fmt"
 
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	clusterModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
@@ -41,6 +41,7 @@ func newClusterClient(
 		storageClasses:    make(map[string]StorageClassClient),
 		persistentVolumes: make(map[string]PersistentVolumeClient),
 		namespaces:        make(map[string]namespaceCacheEntry),
+		catalogClients:    make(map[string]CatalogClient),
 	}, nil
 }
 
@@ -49,11 +50,12 @@ type clusterClient struct {
 	config                RancherConfig
 	rancherClient         RancherClient
 	_backendClusterClient *backendClusterClient.Client
-	cluster               projectModel.Cluster
+	cluster               clusterModel.Cluster
 	projectClients        map[string]ProjectClient
 	storageClasses        map[string]StorageClassClient
 	persistentVolumes     map[string]PersistentVolumeClient
 	namespaces            map[string]namespaceCacheEntry
+	catalogClients        map[string]CatalogClient
 }
 
 type namespaceCacheEntry struct {
@@ -279,4 +281,40 @@ func (client *clusterClient) backendClusterClient() (*backendClusterClient.Clien
 		return nil, err
 	}
 	return client._backendClusterClient, nil
+}
+
+func (client *clusterClient) Catalog(catalogName string) (CatalogClient, error) {
+	if cache, exists := client.catalogClients[catalogName]; exists {
+		return cache, nil
+	}
+	result, err := newClusterCatalogClient(catalogName, client, client.logger)
+	if err != nil {
+		return nil, err
+	}
+	client.catalogClients[catalogName] = result
+	return result, nil
+}
+
+func (client *clusterClient) Catalogs() ([]CatalogClient, error) {
+	backendRancherClient, err := client.backendRancherClient()
+	if err != nil {
+		return nil, err
+	}
+	collection, err := backendRancherClient.ClusterCatalog.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"clusterId": client.id,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]CatalogClient, len(collection.Data))
+	for i, backendCatalog := range collection.Data {
+		catalog, err := client.Catalog(backendCatalog.Name)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = catalog
+	}
+	return result, nil
 }

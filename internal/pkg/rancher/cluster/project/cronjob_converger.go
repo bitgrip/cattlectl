@@ -17,20 +17,20 @@ package project
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/client"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 )
 
-// NewDeploymentConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
-func NewDeploymentConverger(deploymentDescriptor projectModel.DeploymentDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
-	deploymentClient, err := projectClient.Deployment(deploymentDescriptor.Spec.Name, deploymentDescriptor.Metadata.Namespace)
+// NewCronJobConverger creates a Converger for a given github.com/bitgrip/cattlectl/internal/pkg/projectModel.JobDescriptor
+func NewCronJobConverger(cronJobDescriptor projectModel.CronJobDescriptor, projectClient client.ProjectClient) (descriptor.Converger, error) {
+	cronJobClient, err := projectClient.CronJob(cronJobDescriptor.Spec.Name, cronJobDescriptor.Metadata.Namespace)
 	if err != nil {
 		return nil, err
 	}
-	err = deploymentClient.SetData(deploymentDescriptor.Spec)
+	err = cronJobClient.SetData(cronJobDescriptor.Spec)
 	if err != nil {
 		return nil, err
 	}
 	return &descriptor.ResourceClientConverger{
-		Client: deploymentClient,
+		Client: cronJobClient,
 	}, nil
 }

@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/assert"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/stubs"
 	"github.com/rancher/norman/types"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
@@ -1654,6 +1654,7 @@ func simpleProjectClient() *projectClient {
 		deploymentClients:       make(map[string]DeploymentClient),
 		daemonSetClients:        make(map[string]DaemonSetClient),
 		statefulSetClients:      make(map[string]StatefulSetClient),
+		catalogClients:          make(map[string]CatalogClient),
 	}
 }
 

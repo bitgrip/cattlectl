@@ -14,46 +14,21 @@
 
 package model
 
-// Types of Descriptors which are expected values of the field Cluster.Kind
-const (
-	ProjectKind     = "Project"
-	JobKind         = "Job"
-	CronJobKind     = "CronJob"
-	DeploymentKind  = "Deployment"
-	DaemonSetKind   = "DaemonSet"
-	StatefulSetKind = "StatefulSet"
+import (
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 )
-
-// Cluster is WIP
-type Cluster struct {
-	APIVersion        string `yaml:"api_version"`
-	Kind              string
-	Metadata          ClusterMetadata
-	StorageClasses    []StorageClass     `yaml:"storage_classes,omitempty"`
-	PersistentVolumes []PersistentVolume `yaml:"storage_class,omitempty"`
-	Projects          []Project
-}
-
-// ClusterMetadata is WIP
-type ClusterMetadata struct {
-	Name       string
-	ID         string `yaml:"id,omitempty"`
-	RancherURL string `yaml:"rancher_url,omitempty"`
-	AccessKey  string `yaml:"access_key,omitempty"`
-	SecretKey  string `yaml:"secret_key,omitempty"`
-	TokenKey   string `yaml:"token_key,omitempty"`
-}
 
 // Project is a subsection of a cluster
 type Project struct {
-	APIVersion        string `yaml:"api_version"`
-	Kind              string
-	Metadata          ProjectMetadata
-	Namespaces        []Namespace        `yaml:"namespaces,omitempty"`
-	Resources         Resources          `yaml:"resources,omitempty"`
-	StorageClasses    []StorageClass     `yaml:"storage_classes,omitempty"`
-	PersistentVolumes []PersistentVolume `yaml:"persistent_volumes,omitempty"`
-	Apps              []App
+	APIVersion        string                 `yaml:"api_version"`
+	Kind              string                 `yaml:"kind,omitempty"`
+	Metadata          ProjectMetadata        `yaml:"metadata,omitempty"`
+	Catalogs          []rancherModel.Catalog `yaml:"catalogs,omitempty"`
+	Namespaces        []Namespace            `yaml:"namespaces,omitempty"`
+	Resources         Resources              `yaml:"resources,omitempty"`
+	StorageClasses    []StorageClass         `yaml:"storage_classes,omitempty"`
+	PersistentVolumes []PersistentVolume     `yaml:"persistent_volumes,omitempty"`
+	Apps              []App                  `yaml:"apps,omitempty"`
 }
 
 // ProjectMetadata the meta informations about a Project

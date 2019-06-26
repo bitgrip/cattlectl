@@ -16,14 +16,14 @@ package project
 
 import (
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/sirupsen/logrus"
 )
 
-// NewDaemonSetParser creates a Parser that is printing prettified representations
-func NewDaemonSetParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
+// NewStatefulSetParser creates a Parser that is printing prettified representations
+func NewStatefulSetParser(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 	logger := logrus.WithFields(logrus.Fields{
 		"descriptor_file": descriptorFile,
 	})
-	return descriptor.NewLogginParser(projectModel.DaemonSetKind, logger, values)
+	return descriptor.NewLogginParser(rancherModel.StatefulSetKind, logger, values)
 }

@@ -15,7 +15,8 @@
 package client
 
 import (
-	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/project/model"
+	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
@@ -25,6 +26,8 @@ import (
 type RancherClient interface {
 	Cluster(clusterName string) (ClusterClient, error)
 	Clusters() ([]ClusterClient, error)
+	Catalog(string) (CatalogClient, error)
+	Catalogs() ([]CatalogClient, error)
 
 	backendRancherClient() (*backendRancherClient.Client, error)
 }
@@ -56,6 +59,8 @@ type ClusterClient interface {
 	PersistentVolumes() ([]PersistentVolumeClient, error)
 	Namespace(name, projectName string) (NamespaceClient, error)
 	Namespaces(projectName string) ([]NamespaceClient, error)
+	Catalog(string) (CatalogClient, error)
+	Catalogs() ([]CatalogClient, error)
 
 	backendRancherClient() (*backendRancherClient.Client, error)
 	backendClusterClient() (*backendClusterClient.Client, error)
@@ -93,9 +98,20 @@ type ProjectClient interface {
 	DaemonSets(namespaceName string) ([]DaemonSetClient, error)
 	StatefulSet(name, namespaceName string) (StatefulSetClient, error)
 	StatefulSets(namespaceName string) ([]StatefulSetClient, error)
+	Catalog(string) (CatalogClient, error)
+	Catalogs() ([]CatalogClient, error)
 
+	backendRancherClient() (*backendRancherClient.Client, error)
+	backendClusterClient() (*backendClusterClient.Client, error)
 	backendProjectClient() (*backendProjectClient.Client, error)
 	config() RancherConfig
+}
+
+// CatalogClient interacts with a Rancher catalog resource
+type CatalogClient interface {
+	ResourceClient
+	Data() (rancherModel.Catalog, error)
+	SetData(catalog rancherModel.Catalog) error
 }
 
 // NamespaceClient interacts with a Rancher namespace resource
@@ -103,7 +119,7 @@ type NamespaceClient interface {
 	ResourceClient
 	HasProject() (bool, error)
 	Data() (projectModel.Namespace, error)
-	SetData(storageClass projectModel.Namespace) error
+	SetData(namespace projectModel.Namespace) error
 }
 
 // StorageClassClient interacts with a Rancher storage class resource
