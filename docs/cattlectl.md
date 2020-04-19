@@ -31,6 +31,7 @@ deployement, if you run cattlectl twice.
 
 * [cattlectl apply](cattlectl_apply.md)	 - Apply a project descriptor to your rancher
 * [cattlectl completion](cattlectl_completion.md)	 - Generates bash completion scripts
+* [cattlectl delete](cattlectl_delete.md)	 - Deletes an rancher resouce
 * [cattlectl gen-doc](cattlectl_gen-doc.md)	 - genrates the markdown documentation
 * [cattlectl show](cattlectl_show.md)	 - Show the resulting project descriptor
 * [cattlectl version](cattlectl_version.md)	 - version of cattlectl

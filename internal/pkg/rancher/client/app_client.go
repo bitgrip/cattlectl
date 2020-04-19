@@ -120,27 +120,18 @@ func (client *appClient) Create() error {
 	return err
 }
 
-func (client *appClient) Upgrade() error {
+func (client *appClient) Upgrade() (err error) {
+
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
-	client.logger.Trace("Load from rancher")
-	collection, err := backendClient.App.List(&types.ListOpts{
-		Filters: map[string]interface{}{
-			"name": client.name,
-		},
-	})
-	if nil != err {
-		client.logger.WithError(err).Error("Failed to read app list")
-		return fmt.Errorf("Failed to read app list, %v", err)
-	}
+	installedApp, err := client.loadInstalledApp()
 
-	if len(collection.Data) == 0 {
+	if installedApp == nil {
 		return fmt.Errorf("App %v not found", client.name)
 	}
 
-	installedApp := collection.Data[0]
 	externalID, err := client.externalID(client.app.Catalog, client.app.CatalogType, client.app.Chart, client.app.Version)
 	if err != nil {
 		return err
@@ -176,7 +167,16 @@ func (client *appClient) Upgrade() error {
 	}
 
 	client.logger.Info("Upgrade app")
-	return backendClient.App.ActionUpgrade(&installedApp, au)
+	return backendClient.App.ActionUpgrade(installedApp, au)
+}
+
+func (client *appClient) Delete() (err error) {
+	backendClient, err := client.projectClient.backendProjectClient()
+	if err != nil {
+		return
+	}
+	installedApp, err := client.loadInstalledApp()
+	return backendClient.App.Delete(installedApp)
 }
 
 func (client *appClient) Data() (projectModel.App, error) {
@@ -190,6 +190,31 @@ func (client *appClient) SetData(app projectModel.App) error {
 	client.name = app.Name
 	client.app = app
 	return nil
+}
+
+func (client *appClient) loadInstalledApp() (installedApp *backendProjectClient.App, err error) {
+	backendClient, err := client.projectClient.backendProjectClient()
+	if err != nil {
+		return
+	}
+	client.logger.Trace("Load from rancher")
+	collection, err := backendClient.App.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read app list")
+		err = fmt.Errorf("Failed to read app list, %v", err)
+		return
+	}
+
+	if len(collection.Data) == 0 {
+		return
+	}
+
+	installedApp = &collection.Data[0]
+	return
 }
 
 func (client *appClient) externalID(catalog, catalogType, chart, version string) (string, error) {

@@ -1,4 +1,5 @@
 # github.com/Masterminds/semver v1.4.2
+## explicit
 github.com/Masterminds/semver
 # github.com/cpuguy83/go-md2man v1.0.10
 github.com/cpuguy83/go-md2man/md2man
@@ -9,75 +10,92 @@ github.com/ghodss/yaml
 # github.com/gogo/protobuf v1.2.1
 github.com/gogo/protobuf/proto
 # github.com/google/gofuzz v1.0.0
+## explicit
 github.com/google/gofuzz
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
-github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
-github.com/hashicorp/hcl/hcl/token
-github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/hcl/printer
 github.com/hashicorp/hcl/hcl/scanner
 github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
+## explicit
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/magiconair/properties v1.8.1
+## explicit
 github.com/magiconair/properties
 # github.com/mitchellh/go-homedir v1.1.0
+## explicit
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
 # github.com/pelletier/go-toml v1.4.0
+## explicit
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.1
+## explicit
 github.com/pkg/errors
 # github.com/rancher/norman v0.0.0-20190529014815-f5744043a6fb
+## explicit
 github.com/rancher/norman/clientbase
-github.com/rancher/norman/types
-github.com/rancher/norman/types/slice
 github.com/rancher/norman/httperror
 github.com/rancher/norman/name
+github.com/rancher/norman/types
 github.com/rancher/norman/types/convert
 github.com/rancher/norman/types/definition
+github.com/rancher/norman/types/slice
 github.com/rancher/norman/types/values
 # github.com/rancher/types v0.0.0-20190605225901-9125ab265f1b
+## explicit
 github.com/rancher/types/client/cluster/v3
 github.com/rancher/types/client/management/v3
 github.com/rancher/types/client/project/v3
 # github.com/russross/blackfriday v1.5.2
 github.com/russross/blackfriday
 # github.com/sergi/go-diff v1.0.0
+## explicit
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/sirupsen/logrus v1.4.2
+## explicit
 github.com/sirupsen/logrus
 # github.com/spf13/afero v1.2.2
+## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
 # github.com/spf13/cobra v0.0.4
+## explicit
 github.com/spf13/cobra
 github.com/spf13/cobra/doc
 # github.com/spf13/jwalterweatherman v1.1.0
+## explicit
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
 # github.com/spf13/viper v1.4.0
+## explicit
 github.com/spf13/viper
 # golang.org/x/sys v0.0.0-20190606122018-79a91cf218c4
+## explicit
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.2
+# golang.org/x/text v0.3.1-0.20181227161524-e6919f6577db
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 # gopkg.in/yaml.v2 v2.2.2
+## explicit
 gopkg.in/yaml.v2
 # k8s.io/apimachinery v0.0.0-20190602183612-63a6072eb563
+## explicit
 k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/util/rand
 # k8s.io/klog v0.3.2

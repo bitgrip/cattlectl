@@ -45,6 +45,9 @@ func (client *resourceClient) Create() error {
 func (client *resourceClient) Upgrade() error {
 	return fmt.Errorf("Upgrade not supported")
 }
+func (client *resourceClient) Delete() error {
+	return fmt.Errorf("Delete not supported")
+}
 
 type namespacedResourceClient struct {
 	resourceClient
@@ -93,5 +96,8 @@ func (client emptyResourceClient) Create() error {
 	return nil
 }
 func (client emptyResourceClient) Upgrade() error {
+	return nil
+}
+func (client emptyResourceClient) Delete() error {
 	return nil
 }
