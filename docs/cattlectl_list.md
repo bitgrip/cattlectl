@@ -1,34 +1,21 @@
-## cattlectl delete
+## cattlectl list
 
-Deletes an rancher resouce
+Lists an rancher resouce
 
 ### Synopsis
 
-Deletes an rancher resouce.
-
-### Supported resource types:
-
-* namespace
-* certificate - NOT YET IMPLEMENTED
-* config-map - NOT YET IMPLEMENTED
-* docker-credential - NOT YET IMPLEMENTED
-* secret - NOT YET IMPLEMENTED
-* app
-* job
-* cron-job - NOT YET IMPLEMENTED
-* deployment - NOT YET IMPLEMENTED
-* daemon-set - NOT YET IMPLEMENTED
-* stateful-set - NOT YET IMPLEMENTED
+Lists an rancher resouce
 
 ```
-cattlectl delete TYPE NAME [flags]
+cattlectl list TYPE [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                  help for delete
+  -h, --help                  help for list
       --namespace string      The namespace of the project to list resouces from
+      --pattern string        Match pattern to filter resouce names
       --project-name string   The name of the project to list resouces from
 ```
 

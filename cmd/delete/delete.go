@@ -27,7 +27,7 @@ var (
 	deleteCmd = &cobra.Command{
 		Use:       "delete TYPE NAME",
 		Short:     "Deletes an rancher resouce",
-		Long:      "Deletes an rancher resouce",
+		Long:      deleteLongDescription,
 		Run:       delete,
 		ValidArgs: validArgs,
 	}

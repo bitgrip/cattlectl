@@ -33,6 +33,7 @@ deployement, if you run cattlectl twice.
 * [cattlectl completion](cattlectl_completion.md)	 - Generates bash completion scripts
 * [cattlectl delete](cattlectl_delete.md)	 - Deletes an rancher resouce
 * [cattlectl gen-doc](cattlectl_gen-doc.md)	 - genrates the markdown documentation
+* [cattlectl list](cattlectl_list.md)	 - Lists an rancher resouce
 * [cattlectl show](cattlectl_show.md)	 - Show the resulting project descriptor
 * [cattlectl version](cattlectl_version.md)	 - version of cattlectl
 

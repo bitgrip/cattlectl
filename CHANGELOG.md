@@ -11,6 +11,47 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## [1.3.0]
+
+### Added
+
+* Enable flag to merge answers with exising apps (#42) (#43)
+* [FEATURE] global, cluster and project catalogs as code (#39 #44)
+  * Add Descriptor for Rancher with Catalog client
+  * Add Descriptor for Cluster with Catalog client
+  * Add Descriptor for Project with Catalog client
+  * Add catalog samples
+* Add command `list TYPE` to list project resources.
+	* namespaces
+	* certificates
+	* config-maps
+	* docker-credentials
+	* secrets
+	* apps
+	* jobs
+	* cron-jobs
+	* deployments
+	* daemon-sets
+	* stateful-sets
+* Add command `delete TYPE NAME` to delete project resources.
+  * namespace
+  * certificate - NOT YET IMPLEMENTED
+  * config-map - NOT YET IMPLEMENTED
+  * docker-credential - NOT YET IMPLEMENTED
+  * secret - NOT YET IMPLEMENTED
+  * app
+  * job
+  * cron-job - NOT YET IMPLEMENTED
+  * deployment - NOT YET IMPLEMENTED
+  * daemon-set - NOT YET IMPLEMENTED
+  * stateful-set - NOT YET IMPLEMENTED
+
+### Changed
+
+### Removed
+
+### Fixed
+
 ## [1.2.0]
 
 ### Added
@@ -73,7 +114,8 @@ All notable changes to this project will be documented in this file.
 
 * Initial release
 
-[Unreleased]: https://github.com/bitgrip/cattlectl/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/bitgrip/cattlectl/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/bitgrip/cattlectl/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bitgrip/cattlectl/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/bitgrip/cattlectl/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/bitgrip/cattlectl/compare/v1.0.0...v1.1.0
