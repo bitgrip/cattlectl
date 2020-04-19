@@ -20,6 +20,11 @@ var (
 	}
 )
 
+// DeleteProjectResouce is deleting one project resource from project
+//
+// * projectName: the project to delete the resource from
+// * resourceType: the type of the resource to delete
+// * name: the name of the resource to delete
 func DeleteProjectResouce(projectName, resouceType, name string, config config.Config) (err error) {
 	deleteFunc, supportedType := deletableProjectResouceTypes[resouceType]
 	if !supportedType {

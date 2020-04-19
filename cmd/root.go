@@ -20,6 +20,7 @@ import (
 
 	"github.com/bitgrip/cattlectl/cmd/apply"
 	"github.com/bitgrip/cattlectl/cmd/delete"
+	"github.com/bitgrip/cattlectl/cmd/list"
 	"github.com/bitgrip/cattlectl/cmd/show"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
@@ -89,6 +90,7 @@ func init() {
 
 	rootCmd.AddCommand(apply.BaseCommand(rancherConfig, initSubCommand))
 	rootCmd.AddCommand(delete.BaseCommand(rancherConfig, initSubCommand))
+	rootCmd.AddCommand(list.BaseCommand(rancherConfig, initSubCommand))
 	rootCmd.AddCommand(show.BaseCommand(rancherConfig, initSubCommand))
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(genDocCmd)
