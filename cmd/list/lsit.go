@@ -48,9 +48,9 @@ func list(cmd *cobra.Command, args []string) {
 		return
 	}
 	resouceType := args[0]
-	projectName := viper.GetString("rancher.project_name")
-	namespace := viper.GetString("rancher.namespace")
-	pattern := viper.GetString("rancher.pattern")
+	projectName := viper.GetString("list_cmd.project_name")
+	namespace := viper.GetString("list_cmd.namespace")
+	pattern := viper.GetString("list_cmd.pattern")
 	logrus.
 		WithField("project-name", projectName).
 		WithField("resouce-type", resouceType).
@@ -69,14 +69,11 @@ func list(cmd *cobra.Command, args []string) {
 func init() {
 
 	listCmd.Flags().String("project-name", "", "The name of the project to list resouces from")
-	viper.BindPFlag("rancher.project_name", listCmd.Flags().Lookup("project-name"))
-	viper.BindEnv("rancher.project_name", "RANCHER_PROJECT_NAME")
+	viper.BindPFlag("list_cmd.project_name", listCmd.Flags().Lookup("project-name"))
 
 	listCmd.Flags().String("namespace", "", "The namespace of the project to list resouces from")
-	viper.BindPFlag("rancher.namespace", listCmd.Flags().Lookup("namespace"))
-	viper.BindEnv("rancher.namespace", "RANCHER_NAMESPACE")
+	viper.BindPFlag("list_cmd.namespace", listCmd.Flags().Lookup("namespace"))
 
 	listCmd.Flags().String("pattern", "", "Match pattern to filter resouce names")
-	viper.BindPFlag("rancher.pattern", listCmd.Flags().Lookup("pattern"))
-	viper.BindEnv("rancher.pattern", "RANCHER_PATTERN")
+	viper.BindPFlag("list_cmd.pattern", listCmd.Flags().Lookup("pattern"))
 }

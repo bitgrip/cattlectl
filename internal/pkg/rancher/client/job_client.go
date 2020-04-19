@@ -19,6 +19,7 @@ import (
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
 	"github.com/rancher/norman/types"
+	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -115,6 +116,15 @@ func (client *jobClient) Upgrade() error {
 	return nil
 }
 
+func (client *jobClient) Delete() (err error) {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return
+	}
+	installedJob, err := client.loadExistingJob()
+	return backendClient.Job.Delete(installedJob)
+}
+
 func (client *jobClient) Data() (projectModel.Job, error) {
 	return client.job, nil
 }
@@ -123,4 +133,34 @@ func (client *jobClient) SetData(job projectModel.Job) error {
 	client.name = job.Name
 	client.job = job
 	return nil
+}
+
+func (client *jobClient) loadExistingJob() (existingJob *backendProjectClient.Job, err error) {
+	backendClient, err := client.project.backendProjectClient()
+	if err != nil {
+		return
+	}
+	namespaceID, err := client.NamespaceID()
+	if err != nil {
+		return
+	}
+	client.logger.Trace("Load from rancher")
+	collection, err := backendClient.Job.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name":        client.name,
+			"namespaceId": namespaceID,
+		},
+	})
+	if nil != err {
+		client.logger.WithError(err).Error("Failed to read job list")
+		err = fmt.Errorf("Failed to read job list, %v", err)
+		return
+	}
+
+	if len(collection.Data) == 0 {
+		return
+	}
+
+	existingJob = &collection.Data[0]
+	return
 }

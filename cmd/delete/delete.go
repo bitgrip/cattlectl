@@ -49,14 +49,15 @@ func delete(cmd *cobra.Command, args []string) {
 	}
 	resouceType := args[0]
 	resourceName := args[1]
-	projectName := viper.GetString("rancher.project_name")
+	projectName := viper.GetString("delete_cmd.project_name")
+	namespace := viper.GetString("delete_cmd.namespace")
 	logrus.
 		WithField("project-name", projectName).
 		WithField("resouce-type", resouceType).
 		WithField("resouce-name", resourceName).
 		WithField("cluster-name", rootConfig.ClusterName()).
 		Info("Delete project resouce")
-	err := ctl.DeleteProjectResouce(projectName, resouceType, resourceName, rootConfig)
+	err := ctl.DeleteProjectResouce(projectName, namespace, resouceType, resourceName, rootConfig)
 	if err != nil {
 		logrus.
 			WithField("project-name", projectName).
@@ -68,8 +69,9 @@ func delete(cmd *cobra.Command, args []string) {
 }
 
 func init() {
+	deleteCmd.Flags().String("project-name", "", "The name of the project to list resouces from")
+	viper.BindPFlag("delete_cmd.project_name", deleteCmd.Flags().Lookup("project-name"))
 
-	deleteCmd.PersistentFlags().String("project-name", "", "The name of the project to delete resouces from")
-	viper.BindPFlag("rancher.project_name", deleteCmd.PersistentFlags().Lookup("project-name"))
-	viper.BindEnv("rancher.project_name", "RANCHER_PROJECT_NAME")
+	deleteCmd.Flags().String("namespace", "", "The namespace of the project to list resouces from")
+	viper.BindPFlag("delete_cmd.namespace", deleteCmd.Flags().Lookup("namespace"))
 }

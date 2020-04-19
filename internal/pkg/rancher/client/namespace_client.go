@@ -140,6 +140,18 @@ func (client *namespaceClient) Upgrade() error {
 	return nil
 }
 
+func (client *namespaceClient) Delete() (err error) {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
+		return err
+	}
+	existingNamespace, err := client.loadExistingNamespace()
+	if err != nil {
+		return err
+	}
+	return backendClient.Namespace.Delete(existingNamespace)
+}
+
 func (client *namespaceClient) HasProject() (bool, error) {
 	return client.projectClient != nil, nil
 }
@@ -152,4 +164,27 @@ func (client *namespaceClient) SetData(namespace projectModel.Namespace) error {
 	client.name = namespace.Name
 	client.namespace = namespace
 	return nil
+}
+
+func (client *namespaceClient) loadExistingNamespace() (existingNamespace *backendClusterClient.Namespace, err error) {
+	backendClient, err := client.clusterClient.backendClusterClient()
+	if err != nil {
+		return
+	}
+	collection, err := backendClient.Namespace.List(&types.ListOpts{
+		Filters: map[string]interface{}{
+			"name": client.name,
+		},
+	})
+	if err != nil {
+		client.logger.WithError(err).Error("Failed to read namespace list")
+		return nil, fmt.Errorf("Failed to read namespace list, %v", err)
+	}
+
+	if len(collection.Data) == 0 {
+		return
+	}
+
+	existingNamespace = &collection.Data[0]
+	return
 }
