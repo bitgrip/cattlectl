@@ -50,13 +50,13 @@ func CreateProjectCatalogOperationsStub(tb testing.TB) *ProjectCatalogOperations
 			assert.FailInStub(tb, 2, "Unexpected call of Delete")
 			return nil
 		},
-		DoActionRefresh: func(container *rancherClient.ProjectCatalog) error {
+		DoActionRefresh: func(container *rancherClient.ProjectCatalog) (*rancherClient.CatalogRefresh, error) {
 			assert.FailInStub(tb, 2, "Unexpected call of ActionRefresh")
-			return nil
+			return nil, nil
 		},
-		DoCollectionActionRefresh: func(container *rancherClient.ProjectCatalogCollection) error {
+		DoCollectionActionRefresh: func(container *rancherClient.ProjectCatalogCollection) (*rancherClient.CatalogRefresh, error) {
 			assert.FailInStub(tb, 2, "Unexpected call of CollectionActionRefresh")
-			return nil
+			return nil, nil
 		},
 	}
 }
@@ -70,8 +70,8 @@ type ProjectCatalogOperationsStub struct {
 	DoReplace                 func(existing *rancherClient.ProjectCatalog) (*rancherClient.ProjectCatalog, error)
 	DoByID                    func(id string) (*rancherClient.ProjectCatalog, error)
 	DoDelete                  func(container *rancherClient.ProjectCatalog) error
-	DoActionRefresh           func(container *rancherClient.ProjectCatalog) error
-	DoCollectionActionRefresh func(container *rancherClient.ProjectCatalogCollection) error
+	DoActionRefresh           func(container *rancherClient.ProjectCatalog) (*rancherClient.CatalogRefresh, error)
+	DoCollectionActionRefresh func(container *rancherClient.ProjectCatalogCollection) (*rancherClient.CatalogRefresh, error)
 }
 
 // List implements github.com/rancher/types/client/project/v3/ProjectCatalogOperations.List(...)
@@ -105,11 +105,11 @@ func (stub ProjectCatalogOperationsStub) Delete(container *rancherClient.Project
 }
 
 // ActionRefresh implements github.com/rancher/types/client/project/v3/ProjectCatalogOperations.ActionRefresh(...)
-func (stub ProjectCatalogOperationsStub) ActionRefresh(resource *rancherClient.ProjectCatalog) error {
+func (stub ProjectCatalogOperationsStub) ActionRefresh(resource *rancherClient.ProjectCatalog) (*rancherClient.CatalogRefresh, error) {
 	return stub.DoActionRefresh(resource)
 }
 
 // CollectionActionRefresh implements github.com/rancher/types/client/project/v3/ProjectCatalogOperations.CollectionActionRefresh(...)
-func (stub ProjectCatalogOperationsStub) CollectionActionRefresh(resource *rancherClient.ProjectCatalogCollection) error {
+func (stub ProjectCatalogOperationsStub) CollectionActionRefresh(resource *rancherClient.ProjectCatalogCollection) (*rancherClient.CatalogRefresh, error) {
 	return stub.DoCollectionActionRefresh(resource)
 }

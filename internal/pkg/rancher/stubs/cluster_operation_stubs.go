@@ -84,16 +84,16 @@ func (stub ClusterOperationsStub) Delete(container *managementClient.Cluster) er
 
 }
 
-// ActionDisableMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionBackupEtcd(...)
+// ActionBackupEtcd implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionBackupEtcd(...)
 func (stub ClusterOperationsStub) ActionBackupEtcd(resource *managementClient.Cluster) error {
-	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionDisableMonitoring")
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionBackupEtcd")
 	return nil
 
 }
 
-// ActionEnableMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionDisableMonitoring(...)
+// ActionDisableMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionDisableMonitoring(...)
 func (stub ClusterOperationsStub) ActionDisableMonitoring(resource *managementClient.Cluster) error {
-	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionDisableMonitoring")
 	return nil
 
 }
@@ -110,9 +110,9 @@ func (stub ClusterOperationsStub) ActionEnableMonitoring(resource *managementCli
 	return nil
 }
 
-// ActionEnableMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionEnableMonitoring(...)
+// ActionViewMonitoring implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionViewMonitoring(...)
 func (stub ClusterOperationsStub) ActionViewMonitoring(resource *managementClient.Cluster) (*managementClient.MonitoringOutput, error) {
-	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionEnableMonitoring")
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionViewMonitoring")
 	return nil, nil
 }
 
@@ -123,30 +123,44 @@ func (stub ClusterOperationsStub) ActionExportYaml(resource *managementClient.Cl
 
 }
 
-// ActionExportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionGenerateKubeconfig(...)
+// ActionGenerateKubeconfig implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionGenerateKubeconfig(...)
 func (stub ClusterOperationsStub) ActionGenerateKubeconfig(resource *managementClient.Cluster) (*managementClient.GenerateKubeConfigOutput, error) {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionGenerateKubeconfig")
 	return nil, nil
 
 }
 
-// ActionExportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionImportYaml(...)
+// ActionImportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionImportYaml(...)
 func (stub ClusterOperationsStub) ActionImportYaml(resource *managementClient.Cluster, input *managementClient.ImportClusterYamlInput) (*managementClient.ImportYamlOutput, error) {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionImportYaml")
 	return nil, nil
 
 }
 
-// ActionExportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionRestoreFromEtcdBackup(...)
+// ActionRestoreFromEtcdBackup implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionRestoreFromEtcdBackup(...)
 func (stub ClusterOperationsStub) ActionRestoreFromEtcdBackup(resource *managementClient.Cluster, input *managementClient.RestoreFromEtcdBackupInput) error {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionRestoreFromEtcdBackup")
 	return nil
 
 }
 
-// ActionExportYaml implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionRotateCertificates(...)
+// ActionRotateCertificates implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionRotateCertificates(...)
 func (stub ClusterOperationsStub) ActionRotateCertificates(resource *managementClient.Cluster, input *managementClient.RotateCertificateInput) (*managementClient.RotateCertificateOutput, error) {
 	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionRotateCertificates")
+	return nil, nil
+
+}
+
+// ActionRunSecurityScan implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionRunSecurityScan(...)
+func (stub ClusterOperationsStub) ActionRunSecurityScan(resource *managementClient.Cluster) error {
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionRunSecurityScan")
+	return nil
+
+}
+
+// ActionSaveAsTemplate implements github.com/rancher/types/client/management/v3/ClusterOperations.ActionSaveAsTemplate(...)
+func (stub ClusterOperationsStub) ActionSaveAsTemplate(resource *managementClient.Cluster, input *managementClient.SaveAsTemplateInput) (*managementClient.SaveAsTemplateOutput, error) {
+	assert.FailInStub(stub.tb, 2, "Unexpected call of ActionSaveAsTemplate")
 	return nil, nil
 
 }

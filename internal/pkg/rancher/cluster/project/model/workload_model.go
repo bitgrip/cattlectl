@@ -34,6 +34,7 @@ type baseWorkload struct {
 	Containers                    []Container            `json:"containers,omitempty" yaml:"containers,omitempty"`
 	DNSConfig                     *PodDNSConfig          `json:"dnsConfig,omitempty" yaml:"dnsConfig,omitempty"`
 	DNSPolicy                     string                 `json:"dnsPolicy,omitempty" yaml:"dnsPolicy,omitempty"`
+	EnableServiceLinks            *bool                  `json:"enableServiceLinks,omitempty" yaml:"enableServiceLinks,omitempty"`
 	HostAliases                   []HostAlias            `json:"hostAliases,omitempty" yaml:"hostAliases,omitempty"`
 	HostIPC                       bool                   `json:"hostIPC,omitempty" yaml:"hostIPC,omitempty"`
 	HostNetwork                   bool                   `json:"hostNetwork,omitempty" yaml:"hostNetwork,omitempty"`
@@ -42,12 +43,11 @@ type baseWorkload struct {
 	ImagePullSecrets              []LocalObjectReference `json:"imagePullSecrets,omitempty" yaml:"imagePullSecrets,omitempty"`
 	Labels                        map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Name                          string                 `json:"name,omitempty" yaml:"name,omitempty"`
-	Priority                      *int64                 `json:"priority,omitempty" yaml:"priority,omitempty"`
-	PriorityClassName             string                 `json:"priorityClassName,omitempty" yaml:"priorityClassName,omitempty"`
+	Overhead                      map[string]string      `json:"overhead,omitempty" yaml:"overhead,omitempty"`
+	PreemptionPolicy              string                 `json:"preemptionPolicy,omitempty" yaml:"preemptionPolicy,omitempty"`
 	RestartPolicy                 string                 `json:"restartPolicy,omitempty" yaml:"restartPolicy,omitempty"`
 	RunAsGroup                    *int64                 `json:"runAsGroup,omitempty" yaml:"runAsGroup,omitempty"`
 	RunAsNonRoot                  *bool                  `json:"runAsNonRoot,omitempty" yaml:"runAsNonRoot,omitempty"`
-	SchedulerName                 string                 `json:"schedulerName,omitempty" yaml:"schedulerName,omitempty"`
 	Scheduling                    *Scheduling            `json:"scheduling,omitempty" yaml:"scheduling,omitempty"`
 	Selector                      *LabelSelector         `json:"selector,omitempty" yaml:"selector,omitempty"`
 	ServiceAccountName            string                 `json:"serviceAccountName,omitempty" yaml:"serviceAccountName,omitempty"`
