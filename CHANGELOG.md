@@ -7,6 +7,18 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+* Updates github.com/rancher/norman and github.com/rancher/types to match with github.com/rancher/rancher v2.3.6
+  * Model Changes to the descriptor files:
+    * Workload dose no longer support
+      * priority
+      * priorityClassName
+      * schedulerName
+      * use scheduler object instead
+    * Workload dose now support
+      * enableServiceLinks
+      * overhead
+      * preemptionPolicy
+
 ### Removed
 
 ### Fixed
