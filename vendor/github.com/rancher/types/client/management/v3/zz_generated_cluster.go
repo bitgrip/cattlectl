@@ -8,6 +8,7 @@ const (
 	ClusterType                                      = "cluster"
 	ClusterFieldAPIEndpoint                          = "apiEndpoint"
 	ClusterFieldAgentImage                           = "agentImage"
+	ClusterFieldAgentImageOverride                   = "agentImageOverride"
 	ClusterFieldAllocatable                          = "allocatable"
 	ClusterFieldAnnotations                          = "annotations"
 	ClusterFieldAppliedEnableNetworkPolicy           = "appliedEnableNetworkPolicy"
@@ -17,6 +18,11 @@ const (
 	ClusterFieldCACert                               = "caCert"
 	ClusterFieldCapabilities                         = "capabilities"
 	ClusterFieldCapacity                             = "capacity"
+	ClusterFieldCertificatesExpiration               = "certificatesExpiration"
+	ClusterFieldClusterTemplateAnswers               = "answers"
+	ClusterFieldClusterTemplateID                    = "clusterTemplateId"
+	ClusterFieldClusterTemplateQuestions             = "questions"
+	ClusterFieldClusterTemplateRevisionID            = "clusterTemplateRevisionId"
 	ClusterFieldComponentStatuses                    = "componentStatuses"
 	ClusterFieldConditions                           = "conditions"
 	ClusterFieldCreated                              = "created"
@@ -34,6 +40,7 @@ const (
 	ClusterFieldFailedSpec                           = "failedSpec"
 	ClusterFieldImportedConfig                       = "importedConfig"
 	ClusterFieldInternal                             = "internal"
+	ClusterFieldIstioEnabled                         = "istioEnabled"
 	ClusterFieldLabels                               = "labels"
 	ClusterFieldLimits                               = "limits"
 	ClusterFieldLocalClusterAuthEndpoint             = "localClusterAuthEndpoint"
@@ -48,12 +55,14 @@ const (
 	ClusterFieldTransitioningMessage                 = "transitioningMessage"
 	ClusterFieldUUID                                 = "uuid"
 	ClusterFieldVersion                              = "version"
+	ClusterFieldWindowsPreferedCluster               = "windowsPreferedCluster"
 )
 
 type Cluster struct {
 	types.Resource
 	APIEndpoint                          string                         `json:"apiEndpoint,omitempty" yaml:"apiEndpoint,omitempty"`
 	AgentImage                           string                         `json:"agentImage,omitempty" yaml:"agentImage,omitempty"`
+	AgentImageOverride                   string                         `json:"agentImageOverride,omitempty" yaml:"agentImageOverride,omitempty"`
 	Allocatable                          map[string]string              `json:"allocatable,omitempty" yaml:"allocatable,omitempty"`
 	Annotations                          map[string]string              `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	AppliedEnableNetworkPolicy           bool                           `json:"appliedEnableNetworkPolicy,omitempty" yaml:"appliedEnableNetworkPolicy,omitempty"`
@@ -63,6 +72,11 @@ type Cluster struct {
 	CACert                               string                         `json:"caCert,omitempty" yaml:"caCert,omitempty"`
 	Capabilities                         *Capabilities                  `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
 	Capacity                             map[string]string              `json:"capacity,omitempty" yaml:"capacity,omitempty"`
+	CertificatesExpiration               map[string]CertExpiration      `json:"certificatesExpiration,omitempty" yaml:"certificatesExpiration,omitempty"`
+	ClusterTemplateAnswers               *Answer                        `json:"answers,omitempty" yaml:"answers,omitempty"`
+	ClusterTemplateID                    string                         `json:"clusterTemplateId,omitempty" yaml:"clusterTemplateId,omitempty"`
+	ClusterTemplateQuestions             []Question                     `json:"questions,omitempty" yaml:"questions,omitempty"`
+	ClusterTemplateRevisionID            string                         `json:"clusterTemplateRevisionId,omitempty" yaml:"clusterTemplateRevisionId,omitempty"`
 	ComponentStatuses                    []ClusterComponentStatus       `json:"componentStatuses,omitempty" yaml:"componentStatuses,omitempty"`
 	Conditions                           []ClusterCondition             `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	Created                              string                         `json:"created,omitempty" yaml:"created,omitempty"`
@@ -80,6 +94,7 @@ type Cluster struct {
 	FailedSpec                           *ClusterSpec                   `json:"failedSpec,omitempty" yaml:"failedSpec,omitempty"`
 	ImportedConfig                       *ImportedConfig                `json:"importedConfig,omitempty" yaml:"importedConfig,omitempty"`
 	Internal                             bool                           `json:"internal,omitempty" yaml:"internal,omitempty"`
+	IstioEnabled                         bool                           `json:"istioEnabled,omitempty" yaml:"istioEnabled,omitempty"`
 	Labels                               map[string]string              `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Limits                               map[string]string              `json:"limits,omitempty" yaml:"limits,omitempty"`
 	LocalClusterAuthEndpoint             *LocalClusterAuthEndpoint      `json:"localClusterAuthEndpoint,omitempty" yaml:"localClusterAuthEndpoint,omitempty"`
@@ -94,6 +109,7 @@ type Cluster struct {
 	TransitioningMessage                 string                         `json:"transitioningMessage,omitempty" yaml:"transitioningMessage,omitempty"`
 	UUID                                 string                         `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 	Version                              *Info                          `json:"version,omitempty" yaml:"version,omitempty"`
+	WindowsPreferedCluster               bool                           `json:"windowsPreferedCluster,omitempty" yaml:"windowsPreferedCluster,omitempty"`
 }
 
 type ClusterCollection struct {
@@ -131,6 +147,10 @@ type ClusterOperations interface {
 	ActionRestoreFromEtcdBackup(resource *Cluster, input *RestoreFromEtcdBackupInput) error
 
 	ActionRotateCertificates(resource *Cluster, input *RotateCertificateInput) (*RotateCertificateOutput, error)
+
+	ActionRunSecurityScan(resource *Cluster) error
+
+	ActionSaveAsTemplate(resource *Cluster, input *SaveAsTemplateInput) (*SaveAsTemplateOutput, error)
 
 	ActionViewMonitoring(resource *Cluster) (*MonitoringOutput, error)
 }
@@ -232,6 +252,17 @@ func (c *ClusterClient) ActionRestoreFromEtcdBackup(resource *Cluster, input *Re
 func (c *ClusterClient) ActionRotateCertificates(resource *Cluster, input *RotateCertificateInput) (*RotateCertificateOutput, error) {
 	resp := &RotateCertificateOutput{}
 	err := c.apiClient.Ops.DoAction(ClusterType, "rotateCertificates", &resource.Resource, input, resp)
+	return resp, err
+}
+
+func (c *ClusterClient) ActionRunSecurityScan(resource *Cluster) error {
+	err := c.apiClient.Ops.DoAction(ClusterType, "runSecurityScan", &resource.Resource, nil, nil)
+	return err
+}
+
+func (c *ClusterClient) ActionSaveAsTemplate(resource *Cluster, input *SaveAsTemplateInput) (*SaveAsTemplateOutput, error) {
+	resp := &SaveAsTemplateOutput{}
+	err := c.apiClient.Ops.DoAction(ClusterType, "saveAsTemplate", &resource.Resource, input, resp)
 	return resp, err
 }
 

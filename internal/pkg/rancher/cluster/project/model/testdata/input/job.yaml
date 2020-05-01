@@ -20,7 +20,6 @@ spec:
     livenessProbe: null
     name: pi
     ports: null
-    postStart: null
     postStart:
       command:
       - "echo"
@@ -72,12 +71,9 @@ spec:
   labels:
     bitgrip.de/test-label: "label-value"
   name: workload-name
-  priority: 123
-  priorityClassName: high-priority
   restartPolicy: Never
   runAsGroup: 1001
   runAsNonRoot: true
-  schedulerName: default-scheduler
   scheduling:
     node:
       nodeId: test-node
