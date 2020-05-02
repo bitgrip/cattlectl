@@ -1,1 +1,1 @@
-{{toYaml .my_array_value | indent 4 }}
+{{toYaml .my_array_value | indent 8 }}

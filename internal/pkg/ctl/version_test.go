@@ -26,23 +26,29 @@ func Test_isSupportedAPIVersion(t *testing.T) {
 		want bool
 	}{
 		{
+			name: "to_small_minor",
+			args: args{apiVersion: "1.3"},
+			want: false,
+		},
+		{
 			name: "smaller_minor",
-			args: args{apiVersion: "1.0"},
+			args: args{apiVersion: "1.4"},
 			want: true,
 		},
 		{
 			name: "equal_minor",
-			args: args{apiVersion: "1.2"},
+			args: args{apiVersion: "1.5"},
 			want: true,
 		},
 		{
 			name: "bigger_minor",
-			args: args{apiVersion: "1.3"},
+			args: args{apiVersion: "1.6"},
 			want: false,
 		},
 	}
 	oldVersion := Version
-	Version = "v1.2.0-local"
+	minAPIVersion = "1.4"
+	Version = "v1.5.0-local"
 	defer func() {
 		Version = oldVersion
 	}()

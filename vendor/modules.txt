@@ -1,6 +1,13 @@
+# github.com/Masterminds/goutils v1.1.0
+github.com/Masterminds/goutils
 # github.com/Masterminds/semver v1.4.2
 ## explicit
 github.com/Masterminds/semver
+# github.com/Masterminds/semver/v3 v3.1.0
+github.com/Masterminds/semver/v3
+# github.com/Masterminds/sprig/v3 v3.1.0
+## explicit
+github.com/Masterminds/sprig/v3
 # github.com/cpuguy83/go-md2man v1.0.10
 github.com/cpuguy83/go-md2man/md2man
 # github.com/fsnotify/fsnotify v1.4.7
@@ -11,6 +18,8 @@ github.com/ghodss/yaml
 github.com/gogo/protobuf/proto
 # github.com/google/gofuzz v1.0.0
 github.com/google/gofuzz
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
 # github.com/hashicorp/hcl v1.0.0
@@ -24,6 +33,10 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
+# github.com/huandu/xstrings v1.3.1
+github.com/huandu/xstrings
+# github.com/imdario/mergo v0.3.8
+github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
@@ -31,11 +44,15 @@ github.com/inconshreveable/mousetrap
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
+# github.com/mitchellh/copystructure v1.0.0
+github.com/mitchellh/copystructure
 # github.com/mitchellh/go-homedir v1.1.0
 ## explicit
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
+# github.com/mitchellh/reflectwalk v1.0.0
+github.com/mitchellh/reflectwalk
 # github.com/pelletier/go-toml v1.4.0
 ## explicit
 github.com/pelletier/go-toml
@@ -69,7 +86,7 @@ github.com/sirupsen/logrus
 ## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
-# github.com/spf13/cast v1.3.0
+# github.com/spf13/cast v1.3.1
 github.com/spf13/cast
 # github.com/spf13/cobra v0.0.5
 ## explicit
@@ -82,6 +99,11 @@ github.com/spf13/pflag
 # github.com/spf13/viper v1.4.0
 ## explicit
 github.com/spf13/viper
+# golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/scrypt
 # golang.org/x/sys v0.0.0-20190616124812-15dcb6c0061f
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
