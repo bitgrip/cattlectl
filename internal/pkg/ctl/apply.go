@@ -15,7 +15,9 @@
 package ctl
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	rancher "github.com/bitgrip/cattlectl/internal/pkg/rancher"
@@ -29,6 +31,8 @@ import (
 )
 
 var (
+	println = fmt.Println
+
 	newRancherClient = rancher_client.NewRancherClient
 
 	newRancherConverger     = rancher.NewRancherConverger
@@ -51,81 +55,93 @@ var (
 )
 
 // ApplyDescriptor the the CTL perform a apply action
-func ApplyDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
-	apiVersion, kind, err := GetAPIVersionAndKind(data)
-	if err != nil {
-		return err
-	}
-	if !isSupportedAPIVersion(apiVersion) {
-		return fmt.Errorf("Unsupported api version %s", apiVersion)
-	}
-	switch kind {
-	case rancherModel.RancherKind:
-		descriptor := rancherModel.Rancher{}
-		if err := newRancherParser(file, values).Parse(data, &descriptor); err != nil {
+func ApplyDescriptor(file string, fullData []byte, values map[string]interface{}, config config.Config) error {
+	decoder := yaml.NewDecoder(bytes.NewReader(fullData))
+	for {
+		apiVersion, kind, object, err := DecodeToApply(decoder)
+		if err != nil {
+			if err.Error() == "EMPTY" {
+				continue
+			} else if err.Error() == "EOF" {
+				break
+			}
 			return err
 		}
-		if err := ApplyRancher(descriptor, config); err != nil {
+		singleObjectData, err := yaml.Marshal(object)
+		if err != nil {
 			return err
 		}
-	case rancherModel.ClusterKind:
-		descriptor := clusterModel.Cluster{}
-		if err := newClusterParser(file, values).Parse(data, &descriptor); err != nil {
-			return err
+		if !isSupportedAPIVersion(apiVersion) {
+			return fmt.Errorf("Unsupported api version %s", apiVersion)
 		}
-		if err := ApplyCluster(descriptor, config); err != nil {
-			return err
+		switch kind {
+		case rancherModel.RancherKind:
+			descriptor := rancherModel.Rancher{}
+			if err := newRancherParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+			if err := ApplyRancher(descriptor, config); err != nil {
+				return err
+			}
+		case rancherModel.ClusterKind:
+			descriptor := clusterModel.Cluster{}
+			if err := newClusterParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+			if err := ApplyCluster(descriptor, config); err != nil {
+				return err
+			}
+		case rancherModel.ProjectKind:
+			project := projectModel.Project{}
+			if err := newProjectParser(file, values).Parse(singleObjectData, &project); err != nil {
+				return err
+			}
+			if err := ApplyProject(project, config); err != nil {
+				return err
+			}
+		case rancherModel.JobKind:
+			jobDescriptor := projectModel.JobDescriptor{}
+			if err := newJobParser(file, values).Parse(singleObjectData, &jobDescriptor); err != nil {
+				return err
+			}
+			if err := ApplyJob(jobDescriptor, config); err != nil {
+				return err
+			}
+		case rancherModel.CronJobKind:
+			cronJobDescriptor := projectModel.CronJobDescriptor{}
+			if err := newCronJobParser(file, values).Parse(singleObjectData, &cronJobDescriptor); err != nil {
+				return err
+			}
+			if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
+				return err
+			}
+		case rancherModel.DeploymentKind:
+			deploymentDescriptor := projectModel.DeploymentDescriptor{}
+			if err := newDeploymentParser(file, values).Parse(singleObjectData, &deploymentDescriptor); err != nil {
+				return err
+			}
+			if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
+				return err
+			}
+		case rancherModel.DaemonSetKind:
+			daemonSetDescriptor := projectModel.DaemonSetDescriptor{}
+			if err := newDaemonSetParser(file, values).Parse(singleObjectData, &daemonSetDescriptor); err != nil {
+				return err
+			}
+			if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
+				return err
+			}
+		case rancherModel.StatefulSetKind:
+			statefulSetDescriptor := projectModel.StatefulSetDescriptor{}
+			if err := newStatefulSetParser(file, values).Parse(singleObjectData, &statefulSetDescriptor); err != nil {
+				return err
+			}
+			if err := ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("Unknown descriptor %s", kind)
 		}
-	case rancherModel.ProjectKind:
-		project := projectModel.Project{}
-		if err := newProjectParser(file, values).Parse(data, &project); err != nil {
-			return err
-		}
-		if err := ApplyProject(project, config); err != nil {
-			return err
-		}
-	case rancherModel.JobKind:
-		jobDescriptor := projectModel.JobDescriptor{}
-		if err := newJobParser(file, values).Parse(data, &jobDescriptor); err != nil {
-			return err
-		}
-		if err := ApplyJob(jobDescriptor, config); err != nil {
-			return err
-		}
-	case rancherModel.CronJobKind:
-		cronJobDescriptor := projectModel.CronJobDescriptor{}
-		if err := newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
-			return err
-		}
-		if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
-			return err
-		}
-	case rancherModel.DeploymentKind:
-		deploymentDescriptor := projectModel.DeploymentDescriptor{}
-		if err := newDeploymentParser(file, values).Parse(data, &deploymentDescriptor); err != nil {
-			return err
-		}
-		if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
-			return err
-		}
-	case rancherModel.DaemonSetKind:
-		daemonSetDescriptor := projectModel.DaemonSetDescriptor{}
-		if err := newDaemonSetParser(file, values).Parse(data, &daemonSetDescriptor); err != nil {
-			return err
-		}
-		if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
-			return err
-		}
-	case rancherModel.StatefulSetKind:
-		statefulSetDescriptor := projectModel.StatefulSetDescriptor{}
-		if err := newStatefulSetParser(file, values).Parse(data, &statefulSetDescriptor); err != nil {
-			return err
-		}
-		if err := ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("Unknown descriptor %s", kind)
 	}
 	return nil
 }
@@ -234,91 +250,108 @@ func ApplyRancher(rancher rancherModel.Rancher, config config.Config) error {
 	return converger.Converge()
 }
 
-// GetAPIVersionAndKind reads API version and kind from the data
-func GetAPIVersionAndKind(data []byte) (string, string, error) {
-	structure := make(map[string]interface{})
-	apiVersion := "UNKNOWN"
-	kind := "UNKNOWN"
-	if err := yaml.Unmarshal(data, &structure); err != nil {
-		return apiVersion, kind, err
+// DecodeToApply will decode the next object from the decoder
+func DecodeToApply(decoder *yaml.Decoder) (apiVersion, kind string, object map[string]interface{}, err error) {
+	err = decoder.Decode(&object)
+	if err != nil {
+		return
 	}
-	if foundKind, exists := structure["kind"]; exists {
+	if len(object) == 0 {
+		err = fmt.Errorf("EMPTY")
+		return
+	}
+	if foundKind, exists := object["kind"]; exists {
 		kind = fmt.Sprint(foundKind)
 	} else {
-		return apiVersion, kind, fmt.Errorf("Kind is undefined")
+		err = fmt.Errorf("Kind is undefined")
+		return
 	}
-	if foundAPIVersion, exists := structure["api_version"]; exists {
+	if foundAPIVersion, exists := object["api_version"]; exists {
 		apiVersion = fmt.Sprint(foundAPIVersion)
 	} else {
-		return apiVersion, kind, fmt.Errorf("Kind is undefined")
+		err = fmt.Errorf("API version is undefined")
+		return
 	}
-
-	return apiVersion, kind, nil
+	return
 }
 
 // ParseAndPrintDescriptor parse and print the 'data'
-func ParseAndPrintDescriptor(file string, data []byte, values map[string]interface{}, config config.Config) error {
-	apiVersion, kind, err := GetAPIVersionAndKind(data)
-	if err != nil {
-		return err
+func ParseAndPrintDescriptor(file string, fullData []byte, values map[string]interface{}, config config.Config) error {
+	decoder := yaml.NewDecoder(bytes.NewReader(fullData))
+	for {
+		apiVersion, kind, object, err := DecodeToApply(decoder)
+		if err != nil {
+			if err.Error() == "EMPTY" {
+				continue
+			} else if err.Error() == "EOF" {
+				break
+			}
+			return err
+		}
+		singleObjectData, err := yaml.Marshal(object)
+		if err != nil {
+			return err
+		}
+		if !isSupportedAPIVersion(apiVersion) {
+			return fmt.Errorf("Unsupported api version %s", apiVersion)
+		}
+		var descriptor interface{}
+		switch kind {
+		case rancherModel.RancherKind:
+			descriptor = rancherModel.Rancher{}
+			if err = newRancherParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+		case rancherModel.ClusterKind:
+			descriptor = clusterModel.Cluster{}
+			if err = newClusterParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+		case rancherModel.ProjectKind:
+			project := projectModel.Project{}
+			if err = newProjectParser(file, values).Parse(singleObjectData, &project); err != nil {
+				return err
+			}
+			descriptor = project
+		case rancherModel.JobKind:
+			jobDescriptor := projectModel.JobDescriptor{}
+			if err = newJobParser(file, values).Parse(singleObjectData, &jobDescriptor); err != nil {
+				return err
+			}
+			descriptor = jobDescriptor
+		case rancherModel.CronJobKind:
+			cronJobDescriptor := projectModel.CronJobDescriptor{}
+			if err = newCronJobParser(file, values).Parse(singleObjectData, &cronJobDescriptor); err != nil {
+				return err
+			}
+			descriptor = cronJobDescriptor
+		case rancherModel.DeploymentKind:
+			descriptor = projectModel.Deployment{}
+			if err = newDeploymentParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+		case rancherModel.StatefulSetKind:
+			descriptor = projectModel.StatefulSet{}
+			if err = newStatefulSetParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+		case rancherModel.DaemonSetKind:
+			descriptor = projectModel.DaemonSet{}
+			if err = newDaemonSetParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("Unknown descriptor %s", kind)
+		}
+		out, err := yaml.Marshal(descriptor)
+		if err != nil {
+			return err
+		}
+		println("---")
+		println(strings.TrimSpace(string(out)))
+
 	}
-	if !isSupportedAPIVersion(apiVersion) {
-		return fmt.Errorf("Unsupported api version %s", apiVersion)
-	}
-	var descriptor interface{}
-	switch kind {
-	case rancherModel.RancherKind:
-		descriptor = rancherModel.Rancher{}
-		if err = newRancherParser(file, values).Parse(data, &descriptor); err != nil {
-			return err
-		}
-	case rancherModel.ClusterKind:
-		descriptor = clusterModel.Cluster{}
-		if err = newRancherParser(file, values).Parse(data, &descriptor); err != nil {
-			return err
-		}
-	case rancherModel.ProjectKind:
-		project := projectModel.Project{}
-		if err = newProjectParser(file, values).Parse(data, &project); err != nil {
-			return err
-		}
-		descriptor = project
-	case rancherModel.JobKind:
-		jobDescriptor := projectModel.JobDescriptor{}
-		if err = newJobParser(file, values).Parse(data, &jobDescriptor); err != nil {
-			return err
-		}
-		descriptor = jobDescriptor
-	case rancherModel.CronJobKind:
-		cronJobDescriptor := projectModel.CronJobDescriptor{}
-		if err = newCronJobParser(file, values).Parse(data, &cronJobDescriptor); err != nil {
-			return err
-		}
-		descriptor = cronJobDescriptor
-	case rancherModel.DeploymentKind:
-		descriptor = projectModel.Deployment{}
-		if err = newDeploymentParser(file, values).Parse(data, &descriptor); err != nil {
-			return err
-		}
-	case rancherModel.StatefulSetKind:
-		descriptor = projectModel.StatefulSet{}
-		if err = newStatefulSetParser(file, values).Parse(data, &descriptor); err != nil {
-			return err
-		}
-	case rancherModel.DaemonSetKind:
-		descriptor = projectModel.DaemonSet{}
-		if err = newDaemonSetParser(file, values).Parse(data, &descriptor); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("Unknown descriptor %s", kind)
-	}
-	out, err := yaml.Marshal(descriptor)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Println(string(out))
-	return err
+	return nil
 }
 
 func fillWorkloadMetadata(metadata *projectModel.WorkloadMetadata, config config.Config) (rancher_client.RancherClient, rancher_client.ClusterClient, rancher_client.ProjectClient, error) {
