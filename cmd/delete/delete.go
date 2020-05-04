@@ -57,7 +57,7 @@ func delete(cmd *cobra.Command, args []string) {
 		WithField("resouce-name", resourceName).
 		WithField("cluster-name", rootConfig.ClusterName()).
 		Info("Delete project resouce")
-	err := ctl.DeleteProjectResouce(projectName, namespace, resouceType, resourceName, rootConfig)
+	_, err := ctl.DeleteProjectResouce(projectName, namespace, resouceType, resourceName, rootConfig)
 	if err != nil {
 		logrus.
 			WithField("project-name", projectName).

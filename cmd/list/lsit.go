@@ -15,6 +15,8 @@
 package list
 
 import (
+	"fmt"
+
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
 	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 	"github.com/sirupsen/logrus"
@@ -56,13 +58,16 @@ func list(cmd *cobra.Command, args []string) {
 		WithField("resouce-type", resouceType).
 		WithField("cluster-name", rootConfig.ClusterName()).
 		Debug("List project resouces")
-	err := ctl.ListProjectResouces(projectName, namespace, resouceType, pattern, rootConfig)
+	matches, err := ctl.ListProjectResouces(projectName, namespace, resouceType, pattern, rootConfig)
 	if err != nil {
 		logrus.
 			WithField("project-name", projectName).
 			WithField("resouce-type", resouceType).
 			WithField("cluster-name", rootConfig.ClusterName()).
 			Fatal(err)
+	}
+	for _, match := range matches {
+		fmt.Println(match)
 	}
 }
 

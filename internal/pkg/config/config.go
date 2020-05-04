@@ -1,4 +1,4 @@
-// Copyright © 2018 Bitgrip <berlin@bitgrip.de>
+// Copyright © 2020 Bitgrip <berlin@bitgrip.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 package config
 
+import "fmt"
+
 // Config provides rancher access informations
 type Config interface {
 	RancherURL() string
@@ -25,4 +27,73 @@ type Config interface {
 	ClusterName() string
 	ClusterID() string
 	MergeAnswers() bool
+}
+
+func SimpleConfig(
+	rancherURL string,
+	insecureAPI bool,
+	caCerts string,
+	accessKey string,
+	secretKey string,
+	clusterName string,
+	clusterID string,
+	mergeAnswers bool,
+) Config {
+	return simpleConfig{
+		rancherURL:   rancherURL,
+		insecureAPI:  insecureAPI,
+		caCerts:      caCerts,
+		accessKey:    accessKey,
+		secretKey:    secretKey,
+		clusterName:  clusterName,
+		clusterID:    clusterID,
+		mergeAnswers: mergeAnswers,
+	}
+}
+
+type simpleConfig struct {
+	rancherURL   string
+	insecureAPI  bool
+	caCerts      string
+	accessKey    string
+	secretKey    string
+	clusterName  string
+	clusterID    string
+	mergeAnswers bool
+}
+
+func (config simpleConfig) RancherURL() string {
+	return config.rancherURL
+}
+
+func (config simpleConfig) InsecureAPI() bool {
+	return config.insecureAPI
+}
+
+func (config simpleConfig) CACerts() string {
+	return config.caCerts
+}
+
+func (config simpleConfig) AccessKey() string {
+	return config.accessKey
+}
+
+func (config simpleConfig) SecretKey() string {
+	return config.secretKey
+}
+
+func (config simpleConfig) TokenKey() string {
+	return fmt.Sprintf("%s:%s", config.AccessKey(), config.SecretKey())
+}
+
+func (config simpleConfig) ClusterName() string {
+	return config.clusterName
+}
+
+func (config simpleConfig) ClusterID() string {
+	return config.clusterID
+}
+
+func (config simpleConfig) MergeAnswers() bool {
+	return config.mergeAnswers
 }
