@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
       * enableServiceLinks
       * overhead
       * preemptionPolicy
+* Fix help text of delete flags (#54)
 
 ### Removed
 

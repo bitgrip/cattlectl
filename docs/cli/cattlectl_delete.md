@@ -28,8 +28,8 @@ cattlectl delete KIND NAME [flags]
 
 ```
   -h, --help                  help for delete
-      --namespace string      The namespace of the project to list resouces from
-      --project-name string   The name of the project to list resouces from
+      --namespace string      The namespace of the project to delete resouces from
+      --project-name string   The name of the project to delete resouces from
 ```
 
 ### Options inherited from parent commands
