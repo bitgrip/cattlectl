@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	"github.com/sirupsen/logrus"
 )
@@ -63,6 +64,10 @@ type cronJobClient struct {
 	cronJob projectModel.CronJob
 }
 
+func (client *cronJobClient) Type() string {
+	return rancherModel.CronJobKind
+}
+
 func (client *cronJobClient) Exists() (bool, error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
@@ -91,19 +96,19 @@ func (client *cronJobClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *cronJobClient) Create(dryRun bool) error {
+func (client *cronJobClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new cronJob")
 	pattern, err := projectModel.ConvertCronJobToProjectAPI(client.cronJob)
 	if err != nil {
-		return err
+		return
 	}
 	pattern.NamespaceId = namespaceID
 
@@ -112,12 +117,12 @@ func (client *cronJobClient) Create(dryRun bool) error {
 	} else {
 		_, err = backendClient.CronJob.Create(&pattern)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *cronJobClient) Upgrade(dryRun bool) error {
+func (client *cronJobClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Warn("Skip change existing cronjob")
-	return nil
+	return
 }
 
 func (client *cronJobClient) Data() (projectModel.CronJob, error) {

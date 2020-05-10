@@ -1,22 +1,19 @@
-## cattlectl list
+## cattlectl gen-doc
 
-Lists an rancher resouce
+genrates the markdown documentation
 
 ### Synopsis
 
-Lists an rancher resouce
+Generates the full command tree documantation as markdown files inside the target folder.
 
 ```
-cattlectl list TYPE [flags]
+cattlectl gen-doc [target folder] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                  help for list
-      --namespace string      The namespace of the project to list resouces from
-      --pattern string        Match pattern to filter resouce names
-      --project-name string   The name of the project to list resouces from
+  -h, --help   help for gen-doc
 ```
 
 ### Options inherited from parent commands
@@ -26,6 +23,7 @@ cattlectl list TYPE [flags]
       --cluster-id string     The ID of the cluster the project is part of
       --cluster-name string   The name of the cluster the project is part of
       --config string         config file (default is $HOME/.cattlectl.yaml)
+      --dry-run               if do dry-run
       --insecure-api          If Rancher uses a self signed certificate
       --log-json              if to log using json format
       --rancher-url string    The URL to reach the rancher

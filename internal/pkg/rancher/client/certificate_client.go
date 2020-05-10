@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -67,6 +68,10 @@ func newCertificateClient(
 type certificateClient struct {
 	namespacedResourceClient
 	certificate projectModel.Certificate
+}
+
+func (client *certificateClient) Type() string {
+	return rancherModel.Certificate
 }
 
 func (client *certificateClient) Exists() (bool, error) {
@@ -127,10 +132,10 @@ func (client *certificateClient) existsInNamespace() (bool, error) {
 	return false, nil
 }
 
-func (client *certificateClient) Create(dryRun bool) error {
+func (client *certificateClient) Create(dryRun bool) (changed bool, err error) {
 	projectID, err := client.project.ID()
 	if err != nil {
-		return fmt.Errorf("Failed to read namespace ID, %v", err)
+		return changed, fmt.Errorf("Failed to read namespace ID, %v", err)
 	}
 	client.logger.Info("Create new Certificate")
 	labels := make(map[string]string)
@@ -142,10 +147,10 @@ func (client *certificateClient) Create(dryRun bool) error {
 	return client.createInProject(projectID, labels, dryRun)
 }
 
-func (client *certificateClient) createInProject(projectID string, labels map[string]string, dryRun bool) error {
+func (client *certificateClient) createInProject(projectID string, labels map[string]string, dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	newCertificate := &backendProjectClient.Certificate{
 		Name:      client.certificate.Name,
@@ -160,17 +165,17 @@ func (client *certificateClient) createInProject(projectID string, labels map[st
 	} else {
 		_, err = backendClient.Certificate.Create(newCertificate)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *certificateClient) createInNamespace(projectID string, labels map[string]string, dryRun bool) error {
+func (client *certificateClient) createInNamespace(projectID string, labels map[string]string, dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	newCertificate := &backendProjectClient.NamespacedCertificate{
 		Name:        client.certificate.Name,
@@ -186,20 +191,20 @@ func (client *certificateClient) createInNamespace(projectID string, labels map[
 	} else {
 		_, err = backendClient.NamespacedCertificate.Create(newCertificate)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *certificateClient) Upgrade(dryRun bool) error {
+func (client *certificateClient) Upgrade(dryRun bool) (changed bool, err error) {
 	if client.namespace != "" {
 		return client.upgradeInNamespace(dryRun)
 	}
 	return client.upgradeInProject(dryRun)
 }
 
-func (client *certificateClient) upgradeInProject(dryRun bool) error {
+func (client *certificateClient) upgradeInProject(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.Certificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -208,16 +213,16 @@ func (client *certificateClient) upgradeInProject(dryRun bool) error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read certificate list")
-		return fmt.Errorf("Failed to read certificate list, %v", err)
+		return changed, fmt.Errorf("Failed to read certificate list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("Certificate %v not found", client.name)
+		return changed, fmt.Errorf("Certificate %v not found", client.name)
 	}
 	existingCertificate := collection.Data[0]
 	if strings.TrimSpace(existingCertificate.Certs) == strings.TrimSpace(client.certificate.Certs) {
 		client.logger.Debug("Skip upgrade certificate - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade Certificate")
 	existingCertificate.Key = client.certificate.Key
@@ -228,17 +233,17 @@ func (client *certificateClient) upgradeInProject(dryRun bool) error {
 	} else {
 		_, err = backendClient.Certificate.Replace(&existingCertificate)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *certificateClient) upgradeInNamespace(dryRun bool) error {
+func (client *certificateClient) upgradeInNamespace(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.NamespacedCertificate.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -248,16 +253,16 @@ func (client *certificateClient) upgradeInNamespace(dryRun bool) error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read certificate list")
-		return fmt.Errorf("Failed to read certificate list, %v", err)
+		return changed, fmt.Errorf("Failed to read certificate list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("Certificate %v not found", client.name)
+		return changed, fmt.Errorf("Certificate %v not found", client.name)
 	}
 	existingCertificate := collection.Data[0]
 	if strings.TrimSpace(existingCertificate.Certs) == strings.TrimSpace(client.certificate.Certs) {
 		client.logger.Debug("Skip upgrade certificate - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade Certificate")
 	existingCertificate.Key = client.certificate.Key
@@ -268,7 +273,7 @@ func (client *certificateClient) upgradeInNamespace(dryRun bool) error {
 	} else {
 		_, err = backendClient.NamespacedCertificate.Replace(&existingCertificate)
 	}
-	return err
+	return err == nil, err
 }
 
 func (client *certificateClient) Data() (projectModel.Certificate, error) {

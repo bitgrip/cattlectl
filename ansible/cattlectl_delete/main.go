@@ -17,46 +17,47 @@ package main
 import (
 	"fmt"
 
-	"github.com/bitgrip/cattlectl/ansible/util"
+	"github.com/bitgrip/cattlectl/ansible/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 )
 
 type moduleArgs struct {
-	ProjectName     string   `json:"project_name"`
-	Namespace       string   `json:"namespace"`
-	ResouceType     string   `json:"resource_type"`
-	Names           []string `json:"names"`
-	util.AccessArgs `json:"access_args,inline"`
+	ProjectName      string   `json:"project_name"`
+	Namespace        string   `json:"namespace"`
+	Kind             string   `json:"kind"`
+	Names            []string `json:"names"`
+	utils.AccessArgs `json:",inline"`
 }
 
 type listResponse struct {
-	Deleted           []string `json:"deleted"`
-	util.BaseResponse `json:"base_response,inline"`
+	Deleted            []string `json:"deleted"`
+	utils.BaseResponse `json:",inline"`
 }
 
 func main() {
 	var moduleArgs moduleArgs
-	util.ReadArguments(&moduleArgs)
+	utils.ReadArguments(&moduleArgs)
 
 	var response listResponse
+	response.Version = ctl.Version
 	for _, name := range moduleArgs.Names {
 		deleted, err := ctl.DeleteProjectResouce(
 			moduleArgs.ProjectName,
 			moduleArgs.Namespace,
-			moduleArgs.ResouceType,
+			moduleArgs.Kind,
 			name,
-			util.BuildRancherConfig(moduleArgs.AccessArgs),
+			utils.BuildRancherConfig(moduleArgs.AccessArgs),
 		)
 		if err != nil {
-			response.Msg = fmt.Sprintf("Failed to delete %s %s:  - %v", moduleArgs.ResouceType, name, err)
+			response.Msg = fmt.Sprintf("Failed to delete %s %s:  - %v", moduleArgs.Kind, name, err)
 			response.Failed = true
-			util.FailJson(response)
+			utils.FailJson(response)
 		}
 		if deleted {
 			response.Deleted = append(response.Deleted, name)
 			response.Changed = true
 		}
 	}
-	response.Msg = fmt.Sprintf("Deleted %v %ss", len(response.Deleted), moduleArgs.ResouceType)
-	util.ExitJson(response)
+	response.Msg = fmt.Sprintf("Deleted %v %ss", len(response.Deleted), moduleArgs.Kind)
+	utils.ExitJson(response)
 }

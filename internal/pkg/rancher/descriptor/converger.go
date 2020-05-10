@@ -19,37 +19,60 @@ import (
 )
 
 type Converger interface {
-	Converge() error
+	Converge(bool) (ConvergeResult, error)
+}
+
+type ConvergeResult struct {
+	CreatedResources  []ResourceDescriptor `json:"created_resources"`
+	UpgradedResources []ResourceDescriptor `json:"upgraded_resources"`
+}
+
+type ResourceDescriptor struct {
+	Type string
+	Name string
 }
 
 type ResourceClientConverger struct {
 	Client   client.ResourceClient
 	Children []Converger
-	DryRun   bool
 }
 
-func (converger *ResourceClientConverger) Converge() error {
+func (converger *ResourceClientConverger) Converge(dryRun bool) (result ConvergeResult, err error) {
 	var (
-		exists bool
-		err    error
+		name    string
+		exists  bool
+		changed bool
 	)
-	exists, err = converger.Client.Exists()
-	if err != nil {
-		return err
+	if name, err = converger.Client.Name(); err != nil {
+		return
+	}
+	if exists, err = converger.Client.Exists(); err != nil {
+		return
 	}
 	if exists {
-		err = converger.Client.Upgrade(converger.DryRun)
-	} else {
-		err = converger.Client.Create(converger.DryRun)
-	}
-	if err != nil {
-		return err
-	}
-	for _, child := range converger.Children {
-		err = child.Converge()
+		changed, err = converger.Client.Upgrade(dryRun)
 		if err != nil {
-			return err
+			return result, err
+		}
+		if changed {
+			result.UpgradedResources = append(result.UpgradedResources, ResourceDescriptor{Type: converger.Client.Type(), Name: name})
+		}
+	} else {
+		changed, err = converger.Client.Create(dryRun)
+		if err != nil {
+			return
+		}
+		if changed {
+			result.CreatedResources = append(result.CreatedResources, ResourceDescriptor{Type: converger.Client.Type(), Name: name})
 		}
 	}
-	return nil
+	for _, child := range converger.Children {
+		childResult, err := child.Converge(dryRun)
+		result.CreatedResources = append(result.CreatedResources, childResult.CreatedResources...)
+		result.UpgradedResources = append(result.UpgradedResources, childResult.UpgradedResources...)
+		if err != nil {
+			return result, err
+		}
+	}
+	return
 }

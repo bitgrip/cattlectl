@@ -17,42 +17,43 @@ package main
 import (
 	"fmt"
 
-	"github.com/bitgrip/cattlectl/ansible/util"
+	"github.com/bitgrip/cattlectl/ansible/utils"
 	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 )
 
 type moduleArgs struct {
-	ProjectName     string `json:"project_name"`
-	Namespace       string `json:"namespace"`
-	ResouceType     string `json:"resource_type"`
-	Pattern         string `json:"pattern"`
-	util.AccessArgs `json:"access_args,inline"`
+	ProjectName      string `json:"project_name"`
+	Namespace        string `json:"namespace"`
+	Kind             string `json:"kind"`
+	Pattern          string `json:"pattern"`
+	utils.AccessArgs `json:",inline"`
 }
 
 type listResponse struct {
-	Matches           []string `json:"matches"`
-	util.BaseResponse `json:"base_response,inline"`
+	Matches            []string `json:"matches"`
+	utils.BaseResponse `json:",inline"`
 }
 
 func main() {
 	var moduleArgs moduleArgs
-	util.ReadArguments(&moduleArgs)
+	utils.ReadArguments(&moduleArgs)
 
 	matches, err := ctl.ListProjectResouces(
 		moduleArgs.ProjectName,
 		moduleArgs.Namespace,
-		moduleArgs.ResouceType,
+		moduleArgs.Kind,
 		moduleArgs.Pattern,
-		util.BuildRancherConfig(moduleArgs.AccessArgs),
+		utils.BuildRancherConfig(moduleArgs.AccessArgs),
 	)
 
 	var response listResponse
+	response.Version = ctl.Version
 	if err != nil {
 		response.Msg = "Failed to list resources: " + err.Error()
 		response.Failed = true
-		util.FailJson(response)
+		utils.FailJson(response)
 	}
 	response.Msg = fmt.Sprintf("List %v matches", len(matches))
 	response.Matches = matches
-	util.ExitJson(response)
+	utils.ExitJson(response)
 }

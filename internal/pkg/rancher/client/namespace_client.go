@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
@@ -63,6 +64,10 @@ type namespaceClient struct {
 	namespace     projectModel.Namespace
 	projectClient ProjectClient
 	clusterClient ClusterClient
+}
+
+func (client *namespaceClient) Type() string {
+	return rancherModel.Namespace
 }
 
 func (client *namespaceClient) ID() (string, error) {
@@ -113,10 +118,10 @@ func (client *namespaceClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *namespaceClient) Create(dryRun bool) error {
+func (client *namespaceClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
-		return err
+		return
 	}
 
 	client.logger.Info("Create new namespace")
@@ -126,7 +131,7 @@ func (client *namespaceClient) Create(dryRun bool) error {
 	if hasProjct, _ := client.HasProject(); hasProjct {
 		projectID, err := client.projectClient.ID()
 		if err != nil {
-			return err
+			return changed, err
 		}
 		newNamespace.ProjectID = projectID
 	}
@@ -136,29 +141,31 @@ func (client *namespaceClient) Create(dryRun bool) error {
 	} else {
 		_, err = backendClient.Namespace.Create(newNamespace)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *namespaceClient) Upgrade(dryRun bool) error {
+func (client *namespaceClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Debug("Skip change existing namespace")
-	return nil
+	return
 }
 
-func (client *namespaceClient) Delete(dryRun bool) (err error) {
+func (client *namespaceClient) Delete(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
-		return err
+		return
 	}
 	existingNamespace, err := client.loadExistingNamespace()
 	if err != nil {
-		return err
+		return
 	}
 
 	if dryRun {
 		client.logger.WithField("object", existingNamespace).Info("Do Dry-Run Delete")
-		return nil
+	} else {
+		err = backendClient.Namespace.Delete(existingNamespace)
 	}
-	return backendClient.Namespace.Delete(existingNamespace)
+
+	return err == nil, err
 }
 
 func (client *namespaceClient) HasProject() (bool, error) {

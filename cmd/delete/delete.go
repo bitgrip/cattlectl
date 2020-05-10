@@ -25,7 +25,7 @@ import (
 var (
 	validArgs = []string{"app"}
 	deleteCmd = &cobra.Command{
-		Use:       "delete TYPE NAME",
+		Use:       "delete KIND NAME",
 		Short:     "Deletes an rancher resouce",
 		Long:      deleteLongDescription,
 		Run:       delete,
@@ -43,28 +43,29 @@ func BaseCommand(config config.Config, init func()) *cobra.Command {
 }
 
 func delete(cmd *cobra.Command, args []string) {
-	if len(args) != 2 {
+	if len(args) < 2 {
 		logrus.Warn(cmd.UsageString())
 		return
 	}
-	resouceType := args[0]
-	resourceName := args[1]
+	kind := args[0]
 	projectName := viper.GetString("delete_cmd.project_name")
 	namespace := viper.GetString("delete_cmd.namespace")
-	logrus.
-		WithField("project-name", projectName).
-		WithField("resouce-type", resouceType).
-		WithField("resouce-name", resourceName).
-		WithField("cluster-name", rootConfig.ClusterName()).
-		Info("Delete project resouce")
-	_, err := ctl.DeleteProjectResouce(projectName, namespace, resouceType, resourceName, rootConfig)
-	if err != nil {
+	for _, resourceName := range args[1:] {
 		logrus.
 			WithField("project-name", projectName).
-			WithField("resouce-type", resouceType).
+			WithField("kind", kind).
 			WithField("resouce-name", resourceName).
 			WithField("cluster-name", rootConfig.ClusterName()).
-			Fatal(err)
+			Info("Delete project resouce")
+		_, err := ctl.DeleteProjectResouce(projectName, namespace, kind, resourceName, rootConfig)
+		if err != nil {
+			logrus.
+				WithField("project-name", projectName).
+				WithField("kind", kind).
+				WithField("resouce-name", resourceName).
+				WithField("cluster-name", rootConfig.ClusterName()).
+				Fatal(err)
+		}
 	}
 }
 

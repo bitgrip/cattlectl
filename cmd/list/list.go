@@ -27,7 +27,7 @@ import (
 var (
 	validArgs = []string{"app"}
 	listCmd   = &cobra.Command{
-		Use:       "list TYPE",
+		Use:       "list KIND",
 		Short:     "Lists an rancher resouce",
 		Long:      "Lists an rancher resouce",
 		Run:       list,
@@ -49,20 +49,20 @@ func list(cmd *cobra.Command, args []string) {
 		logrus.Warn(cmd.UsageString())
 		return
 	}
-	resouceType := args[0]
+	kind := args[0]
 	projectName := viper.GetString("list_cmd.project_name")
 	namespace := viper.GetString("list_cmd.namespace")
 	pattern := viper.GetString("list_cmd.pattern")
 	logrus.
 		WithField("project-name", projectName).
-		WithField("resouce-type", resouceType).
+		WithField("kind", kind).
 		WithField("cluster-name", rootConfig.ClusterName()).
 		Debug("List project resouces")
-	matches, err := ctl.ListProjectResouces(projectName, namespace, resouceType, pattern, rootConfig)
+	matches, err := ctl.ListProjectResouces(projectName, namespace, kind, pattern, rootConfig)
 	if err != nil {
 		logrus.
 			WithField("project-name", projectName).
-			WithField("resouce-type", resouceType).
+			WithField("kind", kind).
 			WithField("cluster-name", rootConfig.ClusterName()).
 			Fatal(err)
 	}

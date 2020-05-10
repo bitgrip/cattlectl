@@ -47,10 +47,10 @@ var (
 // * namespace: the namespace to list the resources from
 // * resourceType: the type of the resources to list
 // * pattern: a match pattern to filter the results
-func ListProjectResouces(projectName, namespace, resouceType, pattern string, config config.Config) (matches []string, err error) {
-	listFunc, supportedType := listableProjectResouceTypes[resouceType]
+func ListProjectResouces(projectName, namespace, kind, pattern string, config config.Config) (matches []string, err error) {
+	listFunc, supportedType := listableProjectResouceTypes[kind]
 	if !supportedType {
-		return matches, fmt.Errorf("Not supported resouce type [%s]", resouceType)
+		return matches, fmt.Errorf("Not supported resouce type [%s]", kind)
 	}
 	names, err := listFunc(projectName, namespace, config)
 	if err != nil {

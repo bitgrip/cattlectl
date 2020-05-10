@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package utils
 
 import (
 	"encoding/json"
@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/bitgrip/cattlectl/internal/pkg/config"
+	"github.com/bitgrip/cattlectl/internal/pkg/ctl"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
@@ -40,6 +41,7 @@ type BaseResponse struct {
 	Msg     string `json:"msg"`
 	Changed bool   `json:"changed"`
 	Failed  bool   `json:"failed"`
+	Version string `json:"cattlectl_version"`
 }
 
 func ExitJson(responseBody interface{}) {
@@ -53,6 +55,7 @@ func FailJson(responseBody interface{}) {
 func ReadArguments(moduleArgs interface{}) {
 
 	var response BaseResponse
+	response.Version = ctl.Version
 
 	if len(os.Args) != 2 {
 		response.Msg = "No argument file provided"
@@ -75,6 +78,8 @@ func ReadArguments(moduleArgs interface{}) {
 		response.Failed = true
 		FailJson(response)
 	}
+
+	os.Chdir("")
 }
 
 func ReturnResponse(responseBody interface{}, failed bool) {

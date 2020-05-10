@@ -1,36 +1,22 @@
-## cattlectl completion
+## cattlectl list
 
-Generates bash completion scripts
+Lists an rancher resouce
 
 ### Synopsis
 
-
-
-To configure your bash shell to load completions for each session add to your bashrc
-
-* ~/.bashrc or ~/.profile
-
-        . <(cattlectl completion)
-
-* On Mac (with bash completion installed from brew)
-
-        cattlectl completion > $(brew --prefix)/etc/bash_completion.d/cattlectl
-
-* To load completion run
-
-        . <(cattlectl completion)
-
-This will only temporaly activate completion in the current session.
-
+Lists an rancher resouce
 
 ```
-cattlectl completion [flags]
+cattlectl list KIND [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for completion
+  -h, --help                  help for list
+      --namespace string      The namespace of the project to list resouces from
+      --pattern string        Match pattern to filter resouce names
+      --project-name string   The name of the project to list resouces from
 ```
 
 ### Options inherited from parent commands
@@ -40,6 +26,7 @@ cattlectl completion [flags]
       --cluster-id string     The ID of the cluster the project is part of
       --cluster-name string   The name of the cluster the project is part of
       --config string         config file (default is $HOME/.cattlectl.yaml)
+      --dry-run               if do dry-run
       --insecure-api          If Rancher uses a self signed certificate
       --log-json              if to log using json format
       --rancher-url string    The URL to reach the rancher

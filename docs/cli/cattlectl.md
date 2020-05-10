@@ -19,6 +19,7 @@ deployement, if you run cattlectl twice.
       --cluster-id string     The ID of the cluster the project is part of
       --cluster-name string   The name of the cluster the project is part of
       --config string         config file (default is $HOME/.cattlectl.yaml)
+      --dry-run               if do dry-run
   -h, --help                  help for cattlectl
       --insecure-api          If Rancher uses a self signed certificate
       --log-json              if to log using json format

@@ -36,10 +36,10 @@ var (
 // * projectName: the project to delete the resource from
 // * resourceType: the type of the resource to delete
 // * name: the name of the resource to delete
-func DeleteProjectResouce(projectName, namespace, resouceType, name string, config config.Config) (bool, error) {
-	deleteFunc, supportedType := deletableProjectResouceTypes[resouceType]
+func DeleteProjectResouce(projectName, namespace, kind, name string, config config.Config) (bool, error) {
+	deleteFunc, supportedType := deletableProjectResouceTypes[kind]
 	if !supportedType {
-		return false, fmt.Errorf("Not supported resouce type [%s]", resouceType)
+		return false, fmt.Errorf("Not supported resouce type [%s]", kind)
 	}
 	return deleteFunc(projectName, namespace, name, config)
 }
@@ -207,7 +207,7 @@ func deleteStatefulSet(projectName, namespace, name string, config config.Config
 	return deleteNamespaceResouce(statefulSet, config.ClusterName(), projectName, namespace, "stateful-set", name, config.DryRun())
 }
 
-func deleteProjectResouce(resource client.ResourceClient, clusterName, projectName, resouceType, name string, dryRun bool) (deleted bool, err error) {
+func deleteProjectResouce(resource client.ResourceClient, clusterName, projectName, kind, name string, dryRun bool) (deleted bool, err error) {
 	if exists, err := resource.Exists(); err != nil || !exists {
 		if err != nil {
 			return false, err
@@ -216,16 +216,15 @@ func deleteProjectResouce(resource client.ResourceClient, clusterName, projectNa
 			WithField("project-name", projectName).
 			WithField("resouce-name", name).
 			WithField("cluster-name", clusterName).
-			Infof("No %s skip delete", resouceType)
+			Infof("No %s skip delete", kind)
 		return false, nil
 	}
 
-	err = resource.Delete(dryRun)
-	deleted = err == nil
+	deleted, err = resource.Delete(dryRun)
 	return
 }
 
-func deleteNamespaceResouce(resource client.ResourceClient, clusterName, projectName, namespace, resouceType, name string, dryRun bool) (deleted bool, err error) {
+func deleteNamespaceResouce(resource client.ResourceClient, clusterName, projectName, namespace, kind, name string, dryRun bool) (deleted bool, err error) {
 	if exists, err := resource.Exists(); err != nil || !exists {
 		if err != nil {
 			return false, err
@@ -235,11 +234,10 @@ func deleteNamespaceResouce(resource client.ResourceClient, clusterName, project
 			WithField("namespace", namespace).
 			WithField("resouce-name", name).
 			WithField("cluster-name", clusterName).
-			Infof("No %s skip delete", resouceType)
+			Infof("No %s skip delete", kind)
 		return false, nil
 	}
 
-	err = resource.Delete(dryRun)
-	deleted = err == nil
+	deleted, err = resource.Delete(dryRun)
 	return
 }

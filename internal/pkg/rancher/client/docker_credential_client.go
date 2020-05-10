@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -62,6 +63,10 @@ func newDockerCredentialClient(
 type dockerCredentialClient struct {
 	namespacedResourceClient
 	dockerCredential projectModel.DockerCredential
+}
+
+func (client *dockerCredentialClient) Type() string {
+	return rancherModel.DockerCredential
 }
 
 func (client *dockerCredentialClient) Exists() (bool, error) {
@@ -122,7 +127,7 @@ func (client *dockerCredentialClient) existsInNamespace() (bool, error) {
 	return false, nil
 }
 
-func (client *dockerCredentialClient) Create(dryRun bool) error {
+func (client *dockerCredentialClient) Create(dryRun bool) (changed bool, err error) {
 	client.logger.Info("Create new DockerCredential")
 
 	registries := make(map[string]backendProjectClient.RegistryCredential)
@@ -136,7 +141,7 @@ func (client *dockerCredentialClient) Create(dryRun bool) error {
 	labels["cattlectl.io/hash"] = hashOf(client.dockerCredential)
 	projectID, err := client.project.ID()
 	if err != nil {
-		return err
+		return
 	}
 	if client.namespace != "" {
 		return client.createInNamespace(registries, labels, projectID, dryRun)
@@ -144,10 +149,10 @@ func (client *dockerCredentialClient) Create(dryRun bool) error {
 	return client.createInProject(registries, labels, projectID, dryRun)
 }
 
-func (client *dockerCredentialClient) createInProject(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string, dryRun bool) error {
+func (client *dockerCredentialClient) createInProject(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string, dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	newDockerCredential := &backendProjectClient.DockerCredential{
 		Name:        client.dockerCredential.Name,
@@ -162,17 +167,17 @@ func (client *dockerCredentialClient) createInProject(registries map[string]back
 	} else {
 		_, err = backendClient.DockerCredential.Create(newDockerCredential)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *dockerCredentialClient) createInNamespace(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string, dryRun bool) error {
+func (client *dockerCredentialClient) createInNamespace(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string, dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	newDockerCredential := &backendProjectClient.NamespacedDockerCredential{
 		Name:        client.dockerCredential.Name,
@@ -187,20 +192,20 @@ func (client *dockerCredentialClient) createInNamespace(registries map[string]ba
 	} else {
 		_, err = backendClient.NamespacedDockerCredential.Create(newDockerCredential)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *dockerCredentialClient) Upgrade(dryRun bool) error {
+func (client *dockerCredentialClient) Upgrade(dryRun bool) (changed bool, err error) {
 	if client.namespace != "" {
 		return client.upgradeInNamespace(dryRun)
 	}
 	return client.upgradeInProject(dryRun)
 }
 
-func (client *dockerCredentialClient) upgradeInProject(dryRun bool) error {
+func (client *dockerCredentialClient) upgradeInProject(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.DockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -209,16 +214,16 @@ func (client *dockerCredentialClient) upgradeInProject(dryRun bool) error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read dockerCredential list")
-		return fmt.Errorf("Failed to read dockerCredential list, %v", err)
+		return changed, fmt.Errorf("Failed to read dockerCredential list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("DockerCredential %v not found", client.name)
+		return changed, fmt.Errorf("DockerCredential %v not found", client.name)
 	}
 	existingDockerCredential := collection.Data[0]
 	if isProjectDockerCredentialUnchanged(existingDockerCredential, client.dockerCredential) {
 		client.logger.Debug("Skip upgrade DockerCredential - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade DockerCredential")
 	registries := make(map[string]backendProjectClient.RegistryCredential)
@@ -236,17 +241,17 @@ func (client *dockerCredentialClient) upgradeInProject(dryRun bool) error {
 	} else {
 		_, err = backendClient.DockerCredential.Replace(&existingDockerCredential)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *dockerCredentialClient) upgradeInNamespace(dryRun bool) error {
+func (client *dockerCredentialClient) upgradeInNamespace(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.NamespacedDockerCredential.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -256,16 +261,16 @@ func (client *dockerCredentialClient) upgradeInNamespace(dryRun bool) error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read dockerCredential list")
-		return fmt.Errorf("Failed to read dockerCredential list, %v", err)
+		return changed, fmt.Errorf("Failed to read dockerCredential list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("DockerCredential %v not found", client.name)
+		return changed, fmt.Errorf("DockerCredential %v not found", client.name)
 	}
 	existingDockerCredential := collection.Data[0]
 	if isNamespacedDockerCredentialUnchanged(existingDockerCredential, client.dockerCredential) {
 		client.logger.Debug("Skip upgrade DockerCredential - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade DockerCredential")
 	registries := make(map[string]backendProjectClient.RegistryCredential)
@@ -283,7 +288,7 @@ func (client *dockerCredentialClient) upgradeInNamespace(dryRun bool) error {
 	} else {
 		_, err = backendClient.NamespacedDockerCredential.Replace(&existingDockerCredential)
 	}
-	return err
+	return err == nil, err
 }
 
 func (client *dockerCredentialClient) Data() (projectModel.DockerCredential, error) {

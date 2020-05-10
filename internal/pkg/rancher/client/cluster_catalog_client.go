@@ -60,6 +60,10 @@ type clusterCatalogClient struct {
 	clusterClient ClusterClient
 }
 
+func (client *clusterCatalogClient) Type() string {
+	return rancherModel.ClusterCatalog
+}
+
 func (client *clusterCatalogClient) Exists() (bool, error) {
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
@@ -88,14 +92,14 @@ func (client *clusterCatalogClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *clusterCatalogClient) Create(dryRun bool) error {
+func (client *clusterCatalogClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
-		return err
+		return
 	}
 	clusterID, err := client.clusterClient.ID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new catalog")
 	newClusterCatalog := &backendRancherClient.ClusterCatalog{
@@ -115,17 +119,17 @@ func (client *clusterCatalogClient) Create(dryRun bool) error {
 	} else {
 		_, err = backendClient.ClusterCatalog.Create(newClusterCatalog)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *clusterCatalogClient) Upgrade(dryRun bool) error {
+func (client *clusterCatalogClient) Upgrade(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
-		return err
+		return
 	}
 	clusterID, err := client.clusterClient.ID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Trace("Load from rancher")
 	collection, err := backendClient.ClusterCatalog.List(&types.ListOpts{
@@ -136,17 +140,17 @@ func (client *clusterCatalogClient) Upgrade(dryRun bool) error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read catalog list")
-		return fmt.Errorf("Failed to read catalog list, %v", err)
+		return changed, fmt.Errorf("Failed to read catalog list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("Catalog %v not found", client.name)
+		return changed, fmt.Errorf("Catalog %v not found", client.name)
 	}
 
 	existingCatalog := collection.Data[0]
 	if isClusterCatalogUnchanged(existingCatalog, client.catalog) {
 		client.logger.Debug("Skip upgrade catalog - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade ClusterCatalog")
 	existingCatalog.Labels["cattlectl.io/hash"] = hashOf(client.catalog)
@@ -160,7 +164,7 @@ func (client *clusterCatalogClient) Upgrade(dryRun bool) error {
 	} else {
 		_, err = backendClient.ClusterCatalog.Replace(&existingCatalog)
 	}
-	return err
+	return err == nil, err
 }
 
 func (client *clusterCatalogClient) Data() (rancherModel.Catalog, error) {

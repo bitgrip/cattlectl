@@ -429,7 +429,7 @@ func TestApplyDescriptor(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			unexpectAllBackendCalls()
 			tt.setExpectedBackends(t)
-			err := ApplyDescriptor(tt.args.file, tt.args.fullData, tt.args.values, tt.args.config)
+			_, err := ApplyDescriptor(tt.args.file, tt.args.fullData, tt.args.values, tt.args.config)
 			if tt.wantErr != nil {
 				assert.NotOk(t, err, tt.wantErr.Error())
 			} else {
@@ -725,9 +725,9 @@ type testConverger struct {
 	expected bool
 }
 
-func (converger testConverger) Converge() (err error) {
+func (converger testConverger) Converge(bool) (result descriptor.ConvergeResult, err error) {
 	if !converger.expected {
-		return fmt.Errorf("Unexpected Call")
+		return result, fmt.Errorf("Unexpected Call")
 	}
 	return
 }
@@ -759,6 +759,7 @@ type testConfig struct {
 	clusterName  string
 	clusterID    string
 	mergeAnswers bool
+	dryRun       bool
 }
 
 func (config testConfig) RancherURL() string {
@@ -787,4 +788,7 @@ func (config testConfig) ClusterID() string {
 }
 func (config testConfig) MergeAnswers() bool {
 	return config.mergeAnswers
+}
+func (config testConfig) DryRun() bool {
+	return config.dryRun
 }

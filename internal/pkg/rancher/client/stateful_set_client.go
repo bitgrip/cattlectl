@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	"github.com/sirupsen/logrus"
 )
@@ -63,6 +64,10 @@ type statefulSetClient struct {
 	statefulSet projectModel.StatefulSet
 }
 
+func (client *statefulSetClient) Type() string {
+	return rancherModel.StatefulSetKind
+}
+
 func (client *statefulSetClient) Exists() (bool, error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
@@ -91,19 +96,19 @@ func (client *statefulSetClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *statefulSetClient) Create(dryRun bool) error {
+func (client *statefulSetClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new statefulSet")
 	pattern, err := projectModel.ConvertStatefulSetToProjectAPI(client.statefulSet)
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	pattern.NamespaceId = namespaceID
 
@@ -112,12 +117,12 @@ func (client *statefulSetClient) Create(dryRun bool) error {
 	} else {
 		_, err = backendClient.StatefulSet.Create(&pattern)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *statefulSetClient) Upgrade(dryRun bool) error {
+func (client *statefulSetClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Warn("Skip change existing statefulset")
-	return nil
+	return
 }
 
 func (client *statefulSetClient) Data() (projectModel.StatefulSet, error) {

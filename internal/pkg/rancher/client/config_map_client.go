@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -64,6 +65,10 @@ type configMapClient struct {
 	configMap projectModel.ConfigMap
 }
 
+func (client *configMapClient) Type() string {
+	return rancherModel.ConfigMap
+}
+
 func (client *configMapClient) Exists() (bool, error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
@@ -92,18 +97,18 @@ func (client *configMapClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *configMapClient) Create(dryRun bool) error {
+func (client *configMapClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	projectID, err := client.project.ID()
 	if err != nil {
-		return fmt.Errorf("Failed to read namespace ID, %v", err)
+		return changed, fmt.Errorf("Failed to read namespace ID, %v", err)
 	}
 	client.logger.Info("Create new ConfigMap")
 	labels := make(map[string]string)
@@ -121,17 +126,17 @@ func (client *configMapClient) Create(dryRun bool) error {
 	} else {
 		_, err = backendClient.ConfigMap.Create(newConfigMap)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *configMapClient) Upgrade(dryRun bool) error {
+func (client *configMapClient) Upgrade(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.ConfigMap.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -141,16 +146,16 @@ func (client *configMapClient) Upgrade(dryRun bool) error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read configMap list")
-		return fmt.Errorf("Failed to read configMap list, %v", err)
+		return changed, fmt.Errorf("Failed to read configMap list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("ConfigMap %v not found", client.name)
+		return changed, fmt.Errorf("ConfigMap %v not found", client.name)
 	}
 	existingConfigMap := collection.Data[0]
 	if isConfigMapUnchanged(existingConfigMap, client.configMap) {
 		client.logger.Debug("Skip upgrade configMap - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade ConfigMap")
 	existingConfigMap.Labels["cattlectl.io/hash"] = hashOf(client.configMap)
@@ -161,7 +166,7 @@ func (client *configMapClient) Upgrade(dryRun bool) error {
 	} else {
 		_, err = backendClient.ConfigMap.Replace(&existingConfigMap)
 	}
-	return err
+	return err == nil, err
 }
 
 func (client *configMapClient) Data() (projectModel.ConfigMap, error) {

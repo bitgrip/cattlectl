@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -72,6 +73,10 @@ type appClient struct {
 	projectClient ProjectClient
 }
 
+func (client *appClient) Type() string {
+	return rancherModel.App
+}
+
 func (client *appClient) Exists() (bool, error) {
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
@@ -95,15 +100,15 @@ func (client *appClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *appClient) Create(dryRun bool) error {
+func (client *appClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 
 	externalID, err := client.externalID(client.app.Catalog, client.app.CatalogType, client.app.Chart, client.app.Version)
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new app")
 	pattern := &backendProjectClient.App{
@@ -122,10 +127,10 @@ func (client *appClient) Create(dryRun bool) error {
 	} else {
 		_, err = backendClient.App.Create(pattern)
 	}
-	return err
+	return err == nil, err
 }
 
-func (client *appClient) Upgrade(dryRun bool) (err error) {
+func (client *appClient) Upgrade(dryRun bool) (changed bool, err error) {
 
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
@@ -134,12 +139,12 @@ func (client *appClient) Upgrade(dryRun bool) (err error) {
 	installedApp, err := client.loadInstalledApp()
 
 	if installedApp == nil {
-		return fmt.Errorf("App %v not found", client.name)
+		return changed, fmt.Errorf("App %v not found", client.name)
 	}
 
 	externalID, err := client.externalID(client.app.Catalog, client.app.CatalogType, client.app.Chart, client.app.Version)
 	if err != nil {
-		return err
+		return
 	}
 	au := &backendProjectClient.AppUpgradeConfig{
 		ExternalID: externalID,
@@ -147,7 +152,7 @@ func (client *appClient) Upgrade(dryRun bool) (err error) {
 	if client.app.ValuesYaml != "" {
 		if strings.TrimSpace(installedApp.ValuesYaml) == strings.TrimSpace(client.app.ValuesYaml) {
 			client.logger.Debug("Skip upgrade app - no changes")
-			return nil
+			return
 		}
 		au.ValuesYaml = client.app.ValuesYaml
 	} else {
@@ -162,25 +167,27 @@ func (client *appClient) Upgrade(dryRun bool) (err error) {
 		}
 		if reflect.DeepEqual(installedApp.Answers, resultAnswers) {
 			client.logger.Debug("Skip upgrade app - no changes")
-			return nil
+			return
 		}
 		au.Answers = resultAnswers
 	}
 	if client.app.SkipUpgrade {
 		client.logger.Info("Suppress upgrade app - by config")
-		return nil
+		return
 	}
 
 	client.logger.Info("Upgrade app")
 
 	if dryRun {
 		client.logger.WithField("object", installedApp).Info("Do Dry-Run Upgrade")
-		return nil
+	} else {
+		err = backendClient.App.ActionUpgrade(installedApp, au)
 	}
-	return backendClient.App.ActionUpgrade(installedApp, au)
+
+	return err == nil, err
 }
 
-func (client *appClient) Delete(dryRun bool) (err error) {
+func (client *appClient) Delete(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
 		return
@@ -189,9 +196,11 @@ func (client *appClient) Delete(dryRun bool) (err error) {
 
 	if dryRun {
 		client.logger.WithField("object", installedApp).Info("Do Dry-Run Delete")
-		return nil
+	} else {
+		err = backendClient.App.Delete(installedApp)
 	}
-	return backendClient.App.Delete(installedApp)
+
+	return err == nil, err
 }
 
 func (client *appClient) Data() (projectModel.App, error) {
