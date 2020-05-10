@@ -95,7 +95,7 @@ func (client *appClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *appClient) Create() error {
+func (client *appClient) Create(dryRun bool) error {
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
 		return err
@@ -116,11 +116,16 @@ func (client *appClient) Create() error {
 	} else {
 		pattern.Answers = client.app.Answers
 	}
-	_, err = backendClient.App.Create(pattern)
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.App.Create(pattern)
+	}
 	return err
 }
 
-func (client *appClient) Upgrade() (err error) {
+func (client *appClient) Upgrade(dryRun bool) (err error) {
 
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
@@ -167,15 +172,25 @@ func (client *appClient) Upgrade() (err error) {
 	}
 
 	client.logger.Info("Upgrade app")
+
+	if dryRun {
+		client.logger.WithField("object", installedApp).Info("Do Dry-Run Upgrade")
+		return nil
+	}
 	return backendClient.App.ActionUpgrade(installedApp, au)
 }
 
-func (client *appClient) Delete() (err error) {
+func (client *appClient) Delete(dryRun bool) (err error) {
 	backendClient, err := client.projectClient.backendProjectClient()
 	if err != nil {
 		return
 	}
 	installedApp, err := client.loadInstalledApp()
+
+	if dryRun {
+		client.logger.WithField("object", installedApp).Info("Do Dry-Run Delete")
+		return nil
+	}
 	return backendClient.App.Delete(installedApp)
 }
 

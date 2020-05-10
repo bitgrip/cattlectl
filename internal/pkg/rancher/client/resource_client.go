@@ -39,13 +39,13 @@ func (client *resourceClient) Name() (string, error) {
 func (client *resourceClient) Exists() (bool, error) {
 	return false, fmt.Errorf("Exists not supported")
 }
-func (client *resourceClient) Create() error {
+func (client *resourceClient) Create(dryRun bool) error {
 	return fmt.Errorf("Create not supported")
 }
-func (client *resourceClient) Upgrade() error {
+func (client *resourceClient) Upgrade(dryRun bool) error {
 	return fmt.Errorf("Upgrade not supported")
 }
-func (client *resourceClient) Delete() error {
+func (client *resourceClient) Delete(dryRun bool) error {
 	return fmt.Errorf("Delete not supported")
 }
 
@@ -92,12 +92,12 @@ func (client emptyResourceClient) Name() (string, error) {
 func (client emptyResourceClient) Exists() (bool, error) {
 	return true, nil
 }
-func (client emptyResourceClient) Create() error {
+func (client emptyResourceClient) Create(dryRun bool) error {
 	return nil
 }
-func (client emptyResourceClient) Upgrade() error {
+func (client emptyResourceClient) Upgrade(dryRun bool) error {
 	return nil
 }
-func (client emptyResourceClient) Delete() error {
+func (client emptyResourceClient) Delete(dryRun bool) error {
 	return nil
 }

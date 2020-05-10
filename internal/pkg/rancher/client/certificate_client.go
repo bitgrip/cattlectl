@@ -127,7 +127,7 @@ func (client *certificateClient) existsInNamespace() (bool, error) {
 	return false, nil
 }
 
-func (client *certificateClient) Create() error {
+func (client *certificateClient) Create(dryRun bool) error {
 	projectID, err := client.project.ID()
 	if err != nil {
 		return fmt.Errorf("Failed to read namespace ID, %v", err)
@@ -137,12 +137,12 @@ func (client *certificateClient) Create() error {
 	labels["cattlectl.io/hash"] = hashOf(client.certificate)
 
 	if client.namespace != "" {
-		return client.createInNamespace(projectID, labels)
+		return client.createInNamespace(projectID, labels, dryRun)
 	}
-	return client.createInProject(projectID, labels)
+	return client.createInProject(projectID, labels, dryRun)
 }
 
-func (client *certificateClient) createInProject(projectID string, labels map[string]string) error {
+func (client *certificateClient) createInProject(projectID string, labels map[string]string, dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -155,11 +155,15 @@ func (client *certificateClient) createInProject(projectID string, labels map[st
 		ProjectID: projectID,
 	}
 
-	_, err = backendClient.Certificate.Create(newCertificate)
+	if dryRun {
+		client.logger.WithField("object", newCertificate).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Certificate.Create(newCertificate)
+	}
 	return err
 }
 
-func (client *certificateClient) createInNamespace(projectID string, labels map[string]string) error {
+func (client *certificateClient) createInNamespace(projectID string, labels map[string]string, dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -176,18 +180,23 @@ func (client *certificateClient) createInNamespace(projectID string, labels map[
 		NamespaceId: namespaceID,
 		ProjectID:   projectID,
 	}
-	_, err = backendClient.NamespacedCertificate.Create(newCertificate)
+
+	if dryRun {
+		client.logger.WithField("object", newCertificate).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.NamespacedCertificate.Create(newCertificate)
+	}
 	return err
 }
 
-func (client *certificateClient) Upgrade() error {
+func (client *certificateClient) Upgrade(dryRun bool) error {
 	if client.namespace != "" {
-		return client.upgradeInNamespace()
+		return client.upgradeInNamespace(dryRun)
 	}
-	return client.upgradeInProject()
+	return client.upgradeInProject(dryRun)
 }
 
-func (client *certificateClient) upgradeInProject() error {
+func (client *certificateClient) upgradeInProject(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -214,11 +223,15 @@ func (client *certificateClient) upgradeInProject() error {
 	existingCertificate.Key = client.certificate.Key
 	existingCertificate.Certs = client.certificate.Certs
 
-	_, err = backendClient.Certificate.Replace(&existingCertificate)
+	if dryRun {
+		client.logger.WithField("object", existingCertificate).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.Certificate.Replace(&existingCertificate)
+	}
 	return err
 }
 
-func (client *certificateClient) upgradeInNamespace() error {
+func (client *certificateClient) upgradeInNamespace(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -250,7 +263,11 @@ func (client *certificateClient) upgradeInNamespace() error {
 	existingCertificate.Key = client.certificate.Key
 	existingCertificate.Certs = client.certificate.Certs
 
-	_, err = backendClient.NamespacedCertificate.Replace(&existingCertificate)
+	if dryRun {
+		client.logger.WithField("object", existingCertificate).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.NamespacedCertificate.Replace(&existingCertificate)
+	}
 	return err
 }
 

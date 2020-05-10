@@ -83,7 +83,7 @@ func (client *persistentVolumeClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *persistentVolumeClient) Create() error {
+func (client *persistentVolumeClient) Create(dryRun bool) error {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
 		return err
@@ -115,11 +115,15 @@ func (client *persistentVolumeClient) Create() error {
 		},
 	}
 
-	_, err = backendClient.PersistentVolume.Create(newPersistentVolume)
+	if dryRun {
+		client.logger.WithField("object", newPersistentVolume).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.PersistentVolume.Create(newPersistentVolume)
+	}
 	return err
 }
 
-func (client *persistentVolumeClient) Upgrade() error {
+func (client *persistentVolumeClient) Upgrade(dryRun bool) error {
 	client.logger.Debug("Skip change existing persistent volume")
 	return nil
 }

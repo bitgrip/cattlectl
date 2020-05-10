@@ -25,6 +25,7 @@ type Converger interface {
 type ResourceClientConverger struct {
 	Client   client.ResourceClient
 	Children []Converger
+	DryRun   bool
 }
 
 func (converger *ResourceClientConverger) Converge() error {
@@ -37,9 +38,9 @@ func (converger *ResourceClientConverger) Converge() error {
 		return err
 	}
 	if exists {
-		err = converger.Client.Upgrade()
+		err = converger.Client.Upgrade(converger.DryRun)
 	} else {
-		err = converger.Client.Create()
+		err = converger.Client.Create(converger.DryRun)
 	}
 	if err != nil {
 		return err

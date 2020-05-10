@@ -92,7 +92,7 @@ func (client *jobClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *jobClient) Create() error {
+func (client *jobClient) Create(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -107,21 +107,31 @@ func (client *jobClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.Job.Create(&pattern)
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Job.Create(&pattern)
+	}
 	return err
 }
 
-func (client *jobClient) Upgrade() error {
+func (client *jobClient) Upgrade(dryRun bool) error {
 	client.logger.Warn("Skip change existing job")
 	return nil
 }
 
-func (client *jobClient) Delete() (err error) {
+func (client *jobClient) Delete(dryRun bool) (err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return
 	}
 	installedJob, err := client.loadExistingJob()
+
+	if dryRun {
+		client.logger.WithField("object", installedJob).Info("Do Dry-Run Delete")
+		return nil
+	}
 	return backendClient.Job.Delete(installedJob)
 }
 

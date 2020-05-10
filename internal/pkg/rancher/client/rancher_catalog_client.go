@@ -83,14 +83,14 @@ func (client *rancherCatalogClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *rancherCatalogClient) Create() error {
+func (client *rancherCatalogClient) Create(dryRun bool) error {
 	backendClient, err := client.rancherClient.backendRancherClient()
 	if err != nil {
 		return err
 	}
 
 	client.logger.Info("Create new catalog")
-	_, err = backendClient.Catalog.Create(&backendRancherClient.Catalog{
+	newRancherCatalog := backendRancherClient.Catalog{
 		Name:     client.catalog.Name,
 		URL:      client.catalog.URL,
 		Branch:   client.catalog.Branch,
@@ -99,11 +99,17 @@ func (client *rancherCatalogClient) Create() error {
 		Labels: map[string]string{
 			"cattlectl.io/hash": hashOf(client.catalog),
 		},
-	})
+	}
+
+	if dryRun {
+		client.logger.WithField("object", newRancherCatalog).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Catalog.Create(&newRancherCatalog)
+	}
 	return err
 }
 
-func (client *rancherCatalogClient) Upgrade() error {
+func (client *rancherCatalogClient) Upgrade(dryRun bool) error {
 	backendClient, err := client.rancherClient.backendRancherClient()
 	if err != nil {
 		return err
@@ -135,7 +141,11 @@ func (client *rancherCatalogClient) Upgrade() error {
 	existingCatalog.Username = client.catalog.Username
 	existingCatalog.Password = client.catalog.Password
 
-	_, err = backendClient.Catalog.Replace(&existingCatalog)
+	if dryRun {
+		client.logger.WithField("object", existingCatalog).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.Catalog.Replace(&existingCatalog)
+	}
 	return err
 }
 

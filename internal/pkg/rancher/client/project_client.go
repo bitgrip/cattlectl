@@ -129,7 +129,7 @@ func (client *projectClient) Exists() (bool, error) {
 	projectID, err := client.ID()
 	return projectID != "", err
 }
-func (client *projectClient) Create() error {
+func (client *projectClient) Create(dryRun bool) error {
 	client.logger.Info("Create new project")
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
@@ -143,16 +143,22 @@ func (client *projectClient) Create() error {
 		ClusterID: clusterID,
 		Name:      client.name,
 	}
-	createdProject, err := backendClient.Project.Create(pattern)
-	if err != nil {
-		client.logger.Warn("Failed to create project")
-		return err
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+		client.id = client.name
+	} else {
+		createdProject, err := backendClient.Project.Create(pattern)
+		if err != nil {
+			client.logger.Warn("Failed to create project")
+			return err
+		}
+		client.id = createdProject.ID
 	}
-	client.id = createdProject.ID
 
 	return nil
 }
-func (client *projectClient) Upgrade() error {
+func (client *projectClient) Upgrade(dryRun bool) error {
 	client.logger.Debug("Project exists")
 	return nil
 }

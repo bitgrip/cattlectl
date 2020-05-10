@@ -27,6 +27,7 @@ type Config interface {
 	ClusterName() string
 	ClusterID() string
 	MergeAnswers() bool
+	DryRun() bool
 }
 
 func SimpleConfig(
@@ -38,6 +39,7 @@ func SimpleConfig(
 	clusterName string,
 	clusterID string,
 	mergeAnswers bool,
+	dryRun bool,
 ) Config {
 	return simpleConfig{
 		rancherURL:   rancherURL,
@@ -48,6 +50,7 @@ func SimpleConfig(
 		clusterName:  clusterName,
 		clusterID:    clusterID,
 		mergeAnswers: mergeAnswers,
+		dryRun:       dryRun,
 	}
 }
 
@@ -60,6 +63,7 @@ type simpleConfig struct {
 	clusterName  string
 	clusterID    string
 	mergeAnswers bool
+	dryRun       bool
 }
 
 func (config simpleConfig) RancherURL() string {
@@ -96,4 +100,8 @@ func (config simpleConfig) ClusterID() string {
 
 func (config simpleConfig) MergeAnswers() bool {
 	return config.mergeAnswers
+}
+
+func (config simpleConfig) DryRun() bool {
+	return config.dryRun
 }

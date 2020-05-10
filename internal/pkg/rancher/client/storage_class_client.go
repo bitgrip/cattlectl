@@ -83,7 +83,7 @@ func (client *storageClassClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *storageClassClient) Create() error {
+func (client *storageClassClient) Create(dryRun bool) error {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
 		return err
@@ -98,11 +98,15 @@ func (client *storageClassClient) Create() error {
 		MountOptions:      client.storageClass.MountOptions,
 	}
 
-	_, err = backendClient.StorageClass.Create(newStorageClass)
+	if dryRun {
+		client.logger.WithField("object", newStorageClass).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.StorageClass.Create(newStorageClass)
+	}
 	return err
 }
 
-func (client *storageClassClient) Upgrade() error {
+func (client *storageClassClient) Upgrade(dryRun bool) error {
 	client.logger.Debug("Skip change existing storage class")
 	return nil
 }

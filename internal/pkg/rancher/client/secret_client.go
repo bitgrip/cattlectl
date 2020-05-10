@@ -123,14 +123,14 @@ func (client *secretClient) existsInNamespace() (bool, error) {
 	return false, nil
 }
 
-func (client *secretClient) Create() error {
+func (client *secretClient) Create(dryRun bool) error {
 	if client.namespace != "" {
-		return client.createInNamespace()
+		return client.createInNamespace(dryRun)
 	}
-	return client.createInProject()
+	return client.createInProject(dryRun)
 }
 
-func (client *secretClient) createInProject() error {
+func (client *secretClient) createInProject(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -149,11 +149,15 @@ func (client *secretClient) createInProject() error {
 		ProjectID: projectID,
 	}
 
-	_, err = backendClient.Secret.Create(newSecret)
+	if dryRun {
+		client.logger.WithField("object", newSecret).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Secret.Create(newSecret)
+	}
 	return err
 }
 
-func (client *secretClient) createInNamespace() error {
+func (client *secretClient) createInNamespace(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -177,18 +181,22 @@ func (client *secretClient) createInNamespace() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = backendClient.NamespacedSecret.Create(newSecret)
+	if dryRun {
+		client.logger.WithField("object", newSecret).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.NamespacedSecret.Create(newSecret)
+	}
 	return err
 }
 
-func (client *secretClient) Upgrade() error {
+func (client *secretClient) Upgrade(dryRun bool) error {
 	if client.namespace != "" {
-		return client.upgradeInNamespace()
+		return client.upgradeInNamespace(dryRun)
 	}
-	return client.upgradeInProject()
+	return client.upgradeInProject(dryRun)
 }
 
-func (client *secretClient) upgradeInProject() error {
+func (client *secretClient) upgradeInProject(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -214,11 +222,15 @@ func (client *secretClient) upgradeInProject() error {
 	client.logger.Info("Upgrade Secret")
 	existingSecret.Data = client.secret.Data
 
-	_, err = backendClient.Secret.Replace(&existingSecret)
+	if dryRun {
+		client.logger.WithField("object", existingSecret).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.Secret.Replace(&existingSecret)
+	}
 	return err
 }
 
-func (client *secretClient) upgradeInNamespace() error {
+func (client *secretClient) upgradeInNamespace(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -249,7 +261,11 @@ func (client *secretClient) upgradeInNamespace() error {
 	client.logger.Info("Upgrade Secret")
 	existingSecret.Data = client.secret.Data
 
-	_, err = backendClient.NamespacedSecret.Replace(&existingSecret)
+	if dryRun {
+		client.logger.WithField("object", existingSecret).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.NamespacedSecret.Replace(&existingSecret)
+	}
 	return err
 }
 

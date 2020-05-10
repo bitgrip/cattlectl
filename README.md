@@ -39,10 +39,18 @@ bitgrip/cattlectl apply
 Build from source
 -----------------
 
+### cattlectl
+
 ```bash
 go install \
 -ldflags "-X github.com/bitgrip/cattlectl/internal/pkg/ctl.Version=$(git describe --tags) -s -w" \
 -a -tags netgo -installsuffix netgo -mod=vendor
+```
+
+### Ansible modules
+
+```
+go build -mod=vendor -o ~/.ansible/plugins/modules/ ./ansible/...
 ```
 
 Docs

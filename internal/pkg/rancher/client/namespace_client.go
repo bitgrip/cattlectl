@@ -113,7 +113,7 @@ func (client *namespaceClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *namespaceClient) Create() error {
+func (client *namespaceClient) Create(dryRun bool) error {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
 		return err
@@ -131,16 +131,20 @@ func (client *namespaceClient) Create() error {
 		newNamespace.ProjectID = projectID
 	}
 
-	_, err = backendClient.Namespace.Create(newNamespace)
+	if dryRun {
+		client.logger.WithField("object", newNamespace).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Namespace.Create(newNamespace)
+	}
 	return err
 }
 
-func (client *namespaceClient) Upgrade() error {
+func (client *namespaceClient) Upgrade(dryRun bool) error {
 	client.logger.Debug("Skip change existing namespace")
 	return nil
 }
 
-func (client *namespaceClient) Delete() (err error) {
+func (client *namespaceClient) Delete(dryRun bool) (err error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
 		return err
@@ -148,6 +152,11 @@ func (client *namespaceClient) Delete() (err error) {
 	existingNamespace, err := client.loadExistingNamespace()
 	if err != nil {
 		return err
+	}
+
+	if dryRun {
+		client.logger.WithField("object", existingNamespace).Info("Do Dry-Run Delete")
+		return nil
 	}
 	return backendClient.Namespace.Delete(existingNamespace)
 }

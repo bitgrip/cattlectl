@@ -88,7 +88,7 @@ func (client *projectCatalogClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *projectCatalogClient) Create() error {
+func (client *projectCatalogClient) Create(dryRun bool) error {
 	backendClient, err := client.projectClient.backendRancherClient()
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (client *projectCatalogClient) Create() error {
 		return err
 	}
 	client.logger.Info("Create new catalog")
-	_, err = backendClient.ProjectCatalog.Create(&backendRancherClient.ProjectCatalog{
+	newProjectCatalog := backendRancherClient.ProjectCatalog{
 		Name:      client.catalog.Name,
 		ProjectID: projectID,
 		URL:       client.catalog.URL,
@@ -108,11 +108,17 @@ func (client *projectCatalogClient) Create() error {
 		Labels: map[string]string{
 			"cattlectl.io/hash": hashOf(client.catalog),
 		},
-	})
+	}
+
+	if dryRun {
+		client.logger.WithField("object", newProjectCatalog).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.ProjectCatalog.Create(&newProjectCatalog)
+	}
 	return err
 }
 
-func (client *projectCatalogClient) Upgrade() error {
+func (client *projectCatalogClient) Upgrade(dryRun bool) error {
 	backendClient, err := client.projectClient.backendRancherClient()
 	if err != nil {
 		return err
@@ -149,7 +155,11 @@ func (client *projectCatalogClient) Upgrade() error {
 	existingCatalog.Username = client.catalog.Username
 	existingCatalog.Password = client.catalog.Password
 
-	_, err = backendClient.ProjectCatalog.Replace(&existingCatalog)
+	if dryRun {
+		client.logger.WithField("object", existingCatalog).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.ProjectCatalog.Replace(&existingCatalog)
+	}
 	return err
 }
 

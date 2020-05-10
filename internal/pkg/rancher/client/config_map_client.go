@@ -92,7 +92,7 @@ func (client *configMapClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *configMapClient) Create() error {
+func (client *configMapClient) Create(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -116,11 +116,15 @@ func (client *configMapClient) Create() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = backendClient.ConfigMap.Create(newConfigMap)
+	if dryRun {
+		client.logger.WithField("object", newConfigMap).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.ConfigMap.Create(newConfigMap)
+	}
 	return err
 }
 
-func (client *configMapClient) Upgrade() error {
+func (client *configMapClient) Upgrade(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -152,7 +156,11 @@ func (client *configMapClient) Upgrade() error {
 	existingConfigMap.Labels["cattlectl.io/hash"] = hashOf(client.configMap)
 	existingConfigMap.Data = client.configMap.Data
 
-	_, err = backendClient.ConfigMap.Replace(&existingConfigMap)
+	if dryRun {
+		client.logger.WithField("object", existingConfigMap).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.ConfigMap.Replace(&existingConfigMap)
+	}
 	return err
 }
 

@@ -143,7 +143,7 @@ func Test_certificateClient_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.client.Create()
+			err := tt.client.Create(false)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {
@@ -188,7 +188,7 @@ func Test_certificateClient_Upgrade(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.client.Upgrade()
+			err := tt.client.Upgrade(false)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {

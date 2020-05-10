@@ -88,7 +88,7 @@ func (client *clusterCatalogClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *clusterCatalogClient) Create() error {
+func (client *clusterCatalogClient) Create(dryRun bool) error {
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (client *clusterCatalogClient) Create() error {
 		return err
 	}
 	client.logger.Info("Create new catalog")
-	_, err = backendClient.ClusterCatalog.Create(&backendRancherClient.ClusterCatalog{
+	newClusterCatalog := &backendRancherClient.ClusterCatalog{
 		Name:      client.catalog.Name,
 		ClusterID: clusterID,
 		URL:       client.catalog.URL,
@@ -108,11 +108,17 @@ func (client *clusterCatalogClient) Create() error {
 		Labels: map[string]string{
 			"cattlectl.io/hash": hashOf(client.catalog),
 		},
-	})
+	}
+
+	if dryRun {
+		client.logger.WithField("object", newClusterCatalog).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.ClusterCatalog.Create(newClusterCatalog)
+	}
 	return err
 }
 
-func (client *clusterCatalogClient) Upgrade() error {
+func (client *clusterCatalogClient) Upgrade(dryRun bool) error {
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
 		return err
@@ -149,7 +155,11 @@ func (client *clusterCatalogClient) Upgrade() error {
 	existingCatalog.Username = client.catalog.Username
 	existingCatalog.Password = client.catalog.Password
 
-	_, err = backendClient.ClusterCatalog.Replace(&existingCatalog)
+	if dryRun {
+		client.logger.WithField("object", existingCatalog).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.ClusterCatalog.Replace(&existingCatalog)
+	}
 	return err
 }
 

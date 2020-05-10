@@ -122,7 +122,7 @@ func (client *dockerCredentialClient) existsInNamespace() (bool, error) {
 	return false, nil
 }
 
-func (client *dockerCredentialClient) Create() error {
+func (client *dockerCredentialClient) Create(dryRun bool) error {
 	client.logger.Info("Create new DockerCredential")
 
 	registries := make(map[string]backendProjectClient.RegistryCredential)
@@ -139,12 +139,12 @@ func (client *dockerCredentialClient) Create() error {
 		return err
 	}
 	if client.namespace != "" {
-		return client.createInNamespace(registries, labels, projectID)
+		return client.createInNamespace(registries, labels, projectID, dryRun)
 	}
-	return client.createInProject(registries, labels, projectID)
+	return client.createInProject(registries, labels, projectID, dryRun)
 }
 
-func (client *dockerCredentialClient) createInProject(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string) error {
+func (client *dockerCredentialClient) createInProject(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string, dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -157,11 +157,15 @@ func (client *dockerCredentialClient) createInProject(registries map[string]back
 		ProjectID:   projectID,
 	}
 
-	_, err = backendClient.DockerCredential.Create(newDockerCredential)
+	if dryRun {
+		client.logger.WithField("object", newDockerCredential).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.DockerCredential.Create(newDockerCredential)
+	}
 	return err
 }
 
-func (client *dockerCredentialClient) createInNamespace(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string) error {
+func (client *dockerCredentialClient) createInNamespace(registries map[string]backendProjectClient.RegistryCredential, labels map[string]string, projectID string, dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -178,18 +182,22 @@ func (client *dockerCredentialClient) createInNamespace(registries map[string]ba
 		ProjectID:   projectID,
 	}
 
-	_, err = backendClient.NamespacedDockerCredential.Create(newDockerCredential)
+	if dryRun {
+		client.logger.WithField("object", newDockerCredential).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.NamespacedDockerCredential.Create(newDockerCredential)
+	}
 	return err
 }
 
-func (client *dockerCredentialClient) Upgrade() error {
+func (client *dockerCredentialClient) Upgrade(dryRun bool) error {
 	if client.namespace != "" {
-		return client.upgradeInNamespace()
+		return client.upgradeInNamespace(dryRun)
 	}
-	return client.upgradeInProject()
+	return client.upgradeInProject(dryRun)
 }
 
-func (client *dockerCredentialClient) upgradeInProject() error {
+func (client *dockerCredentialClient) upgradeInProject(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -223,11 +231,15 @@ func (client *dockerCredentialClient) upgradeInProject() error {
 	existingDockerCredential.Registries = registries
 	existingDockerCredential.Labels["cattlectl.io/hash"] = hashOf(client.dockerCredential)
 
-	_, err = backendClient.DockerCredential.Replace(&existingDockerCredential)
+	if dryRun {
+		client.logger.WithField("object", existingDockerCredential).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.DockerCredential.Replace(&existingDockerCredential)
+	}
 	return err
 }
 
-func (client *dockerCredentialClient) upgradeInNamespace() error {
+func (client *dockerCredentialClient) upgradeInNamespace(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -266,7 +278,11 @@ func (client *dockerCredentialClient) upgradeInNamespace() error {
 	existingDockerCredential.Registries = registries
 	existingDockerCredential.Labels["cattlectl.io/hash"] = hashOf(client.dockerCredential)
 
-	_, err = backendClient.NamespacedDockerCredential.Replace(&existingDockerCredential)
+	if dryRun {
+		client.logger.WithField("object", existingDockerCredential).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.NamespacedDockerCredential.Replace(&existingDockerCredential)
+	}
 	return err
 }
 

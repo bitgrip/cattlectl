@@ -91,7 +91,7 @@ func (client *daemonSetClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *daemonSetClient) Create() error {
+func (client *daemonSetClient) Create(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -106,11 +106,16 @@ func (client *daemonSetClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.DaemonSet.Create(&pattern)
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.DaemonSet.Create(&pattern)
+	}
 	return err
 }
 
-func (client *daemonSetClient) Upgrade() error {
+func (client *daemonSetClient) Upgrade(dryRun bool) error {
 	client.logger.Warn("Skip change existing daemonset")
 	return nil
 }

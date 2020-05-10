@@ -91,7 +91,7 @@ func (client *deploymentClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *deploymentClient) Create() error {
+func (client *deploymentClient) Create(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -106,11 +106,16 @@ func (client *deploymentClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.Deployment.Create(&pattern)
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Deployment.Create(&pattern)
+	}
 	return err
 }
 
-func (client *deploymentClient) Upgrade() error {
+func (client *deploymentClient) Upgrade(dryRun bool) error {
 	client.logger.Warn("Skip change existing deployment")
 	return nil
 }

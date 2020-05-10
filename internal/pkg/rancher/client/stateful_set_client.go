@@ -91,7 +91,7 @@ func (client *statefulSetClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *statefulSetClient) Create() error {
+func (client *statefulSetClient) Create(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -106,11 +106,16 @@ func (client *statefulSetClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.StatefulSet.Create(&pattern)
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.StatefulSet.Create(&pattern)
+	}
 	return err
 }
 
-func (client *statefulSetClient) Upgrade() error {
+func (client *statefulSetClient) Upgrade(dryRun bool) error {
 	client.logger.Warn("Skip change existing statefulset")
 	return nil
 }

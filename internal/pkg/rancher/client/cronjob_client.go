@@ -91,7 +91,7 @@ func (client *cronJobClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *cronJobClient) Create() error {
+func (client *cronJobClient) Create(dryRun bool) error {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return err
@@ -106,11 +106,16 @@ func (client *cronJobClient) Create() error {
 		return err
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.CronJob.Create(&pattern)
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.CronJob.Create(&pattern)
+	}
 	return err
 }
 
-func (client *cronJobClient) Upgrade() error {
+func (client *cronJobClient) Upgrade(dryRun bool) error {
 	client.logger.Warn("Skip change existing cronjob")
 	return nil
 }

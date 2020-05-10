@@ -37,9 +37,9 @@ type ResourceClient interface {
 	ID() (string, error)
 	Name() (string, error)
 	Exists() (bool, error)
-	Create() error
-	Upgrade() error
-	Delete() error
+	Create(bool) error
+	Upgrade(bool) error
+	Delete(bool) error
 }
 
 // NamespacedResourceClient is a client to any Rancher resource belonging to a namespace

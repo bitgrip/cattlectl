@@ -33,6 +33,7 @@ type AccessArgs struct {
 	SecretKey   string `json:"secret_key"`
 	ClusterName string `json:"cluster_name"`
 	ConfigFile  string `json:"config_file"`
+	DryRun      bool   `json:"dry_run"`
 }
 
 type BaseResponse struct {
@@ -131,5 +132,6 @@ func BuildRancherConfig(args AccessArgs) config.Config {
 		args.ClusterName,
 		"",
 		false,
+		args.DryRun,
 	)
 }
