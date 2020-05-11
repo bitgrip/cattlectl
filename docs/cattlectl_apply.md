@@ -4,7 +4,21 @@ Apply a project descriptor to your rancher
 
 ### Synopsis
 
-Apply a project descriptor to your rancher.
+Apply a deployment descriptor to your rancher.
+
+### Descriptor Format
+
+* The descriptor file (project.yaml by default) contains one or more YAML objects
+
+### Supported deployment descriptors
+
+* Project - A Rancher project and its members [more...](project_descriptor.md)
+* Workload - A Rancher workload and its configuration [more...](project_workload_descriptor.md)
+  * Job
+  * CronJob
+  * Deployment
+  * DaemonSet
+  * StatefulSet
 
 ### Directory layout
 

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+* (#48) Add support for multiple YAML objects in a single file
+  * Each not empty object must have fields
+    * `api_version`
+    * `kind`
+  * Objects are handled one by one
+  * First error stops execution
+  * Empty objects are ignored
+
 ### Changed
 
 * Updates github.com/rancher/norman and github.com/rancher/types to match with github.com/rancher/rancher v2.3.6
