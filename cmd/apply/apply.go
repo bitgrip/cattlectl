@@ -43,7 +43,6 @@ var (
 
 // used services
 var (
-	doApply           = ctl.ApplyProject
 	doApplyDescriptor = ctl.ApplyDescriptor
 	newProjectParser  = project.NewProjectParser
 )
@@ -74,12 +73,16 @@ func apply(cmd *cobra.Command, args []string) {
 			Fatal(err)
 	}
 
-	err = doApplyDescriptor(applyFile, projectData, values, rootConfig)
+	result, err := doApplyDescriptor(applyFile, projectData, values, rootConfig)
 	if err != nil {
 		logrus.WithFields(values).
 			WithField("apply_file", applyFile).
 			Fatal(err)
 	}
+	logrus.
+		WithField("upgraded-resouces", len(result.UpgradedResources)).
+		WithField("created-resouces", len(result.CreatedResources)).
+		Info("Finished Apply")
 }
 
 func init() {

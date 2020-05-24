@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	"github.com/sirupsen/logrus"
 )
@@ -63,6 +64,10 @@ type daemonSetClient struct {
 	daemonSet projectModel.DaemonSet
 }
 
+func (client *daemonSetClient) Type() string {
+	return rancherModel.DaemonSetKind
+}
+
 func (client *daemonSetClient) Exists() (bool, error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
@@ -91,28 +96,33 @@ func (client *daemonSetClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *daemonSetClient) Create() error {
+func (client *daemonSetClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new daemonSet")
 	pattern, err := projectModel.ConvertDaemonSetToProjectAPI(client.daemonSet)
 	if err != nil {
-		return err
+		return
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.DaemonSet.Create(&pattern)
-	return err
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.DaemonSet.Create(&pattern)
+	}
+	return err == nil, err
 }
 
-func (client *daemonSetClient) Upgrade() error {
+func (client *daemonSetClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Warn("Skip change existing daemonset")
-	return nil
+	return
 }
 
 func (client *daemonSetClient) Data() (projectModel.DaemonSet, error) {

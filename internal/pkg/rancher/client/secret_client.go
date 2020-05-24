@@ -19,6 +19,7 @@ import (
 	"reflect"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -63,6 +64,10 @@ func newSecretClient(
 type secretClient struct {
 	namespacedResourceClient
 	secret projectModel.ConfigMap
+}
+
+func (client *secretClient) Type() string {
+	return rancherModel.Secret
 }
 
 func (client *secretClient) Exists() (bool, error) {
@@ -123,21 +128,21 @@ func (client *secretClient) existsInNamespace() (bool, error) {
 	return false, nil
 }
 
-func (client *secretClient) Create() error {
+func (client *secretClient) Create(dryRun bool) (changed bool, err error) {
 	if client.namespace != "" {
-		return client.createInNamespace()
+		return client.createInNamespace(dryRun)
 	}
-	return client.createInProject()
+	return client.createInProject(dryRun)
 }
 
-func (client *secretClient) createInProject() error {
+func (client *secretClient) createInProject(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	projectID, err := client.project.ID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new Secret")
 	labels := make(map[string]string)
@@ -149,22 +154,26 @@ func (client *secretClient) createInProject() error {
 		ProjectID: projectID,
 	}
 
-	_, err = backendClient.Secret.Create(newSecret)
-	return err
+	if dryRun {
+		client.logger.WithField("object", newSecret).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Secret.Create(newSecret)
+	}
+	return err == nil, err
 }
 
-func (client *secretClient) createInNamespace() error {
+func (client *secretClient) createInNamespace(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	projectID, err := client.project.ID()
 	if err != nil {
-		return fmt.Errorf("Failed to read namespace ID, %v", err)
+		return changed, fmt.Errorf("Failed to read namespace ID, %v", err)
 	}
 	client.logger.Info("Create new Secret")
 	labels := make(map[string]string)
@@ -177,21 +186,25 @@ func (client *secretClient) createInNamespace() error {
 		ProjectID:   projectID,
 	}
 
-	_, err = backendClient.NamespacedSecret.Create(newSecret)
-	return err
-}
-
-func (client *secretClient) Upgrade() error {
-	if client.namespace != "" {
-		return client.upgradeInNamespace()
+	if dryRun {
+		client.logger.WithField("object", newSecret).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.NamespacedSecret.Create(newSecret)
 	}
-	return client.upgradeInProject()
+	return err == nil, err
 }
 
-func (client *secretClient) upgradeInProject() error {
+func (client *secretClient) Upgrade(dryRun bool) (changed bool, err error) {
+	if client.namespace != "" {
+		return client.upgradeInNamespace(dryRun)
+	}
+	return client.upgradeInProject(dryRun)
+}
+
+func (client *secretClient) upgradeInProject(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.Secret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -200,32 +213,36 @@ func (client *secretClient) upgradeInProject() error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read secret list")
-		return fmt.Errorf("Failed to read secret list, %v", err)
+		return changed, fmt.Errorf("Failed to read secret list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("Secret %v not found", client.name)
+		return changed, fmt.Errorf("Secret %v not found", client.name)
 	}
 	existingSecret := collection.Data[0]
 	if isProjectSecretUnchanged(existingSecret, client.secret) {
 		client.logger.Debug("Skip upgrade secret - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade Secret")
 	existingSecret.Data = client.secret.Data
 
-	_, err = backendClient.Secret.Replace(&existingSecret)
-	return err
+	if dryRun {
+		client.logger.WithField("object", existingSecret).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.Secret.Replace(&existingSecret)
+	}
+	return err == nil, err
 }
 
-func (client *secretClient) upgradeInNamespace() error {
+func (client *secretClient) upgradeInNamespace(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	collection, err := backendClient.NamespacedSecret.List(&types.ListOpts{
 		Filters: map[string]interface{}{
@@ -235,22 +252,26 @@ func (client *secretClient) upgradeInNamespace() error {
 	})
 	if nil != err {
 		client.logger.WithError(err).Error("Failed to read secret list")
-		return fmt.Errorf("Failed to read secret list, %v", err)
+		return changed, fmt.Errorf("Failed to read secret list, %v", err)
 	}
 
 	if len(collection.Data) == 0 {
-		return fmt.Errorf("Secret %v not found", client.name)
+		return changed, fmt.Errorf("Secret %v not found", client.name)
 	}
 	existingSecret := collection.Data[0]
 	if isNamespacedSecretUnchanged(existingSecret, client.secret) {
 		client.logger.Debug("Skip upgrade secret - no changes")
-		return nil
+		return
 	}
 	client.logger.Info("Upgrade Secret")
 	existingSecret.Data = client.secret.Data
 
-	_, err = backendClient.NamespacedSecret.Replace(&existingSecret)
-	return err
+	if dryRun {
+		client.logger.WithField("object", existingSecret).Info("Do Dry-Run Upgrade")
+	} else {
+		_, err = backendClient.NamespacedSecret.Replace(&existingSecret)
+	}
+	return err == nil, err
 }
 
 func (client *secretClient) Data() (projectModel.ConfigMap, error) {

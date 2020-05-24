@@ -60,3 +60,7 @@ func (config) ClusterID() string {
 func (config) MergeAnswers() bool {
 	return viper.GetBool("rancher.merge_answers")
 }
+
+func (config) DryRun() bool {
+	return viper.GetBool("dry_run")
+}

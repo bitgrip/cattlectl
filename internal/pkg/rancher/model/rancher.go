@@ -16,14 +16,26 @@ package model
 
 // Types of Descriptors which are expected values of the field 'kind'
 const (
-	RancherKind     = "Rancher"
-	ClusterKind     = "Cluster"
-	ProjectKind     = "Project"
-	JobKind         = "Job"
-	CronJobKind     = "CronJob"
-	DeploymentKind  = "Deployment"
-	DaemonSetKind   = "DaemonSet"
-	StatefulSetKind = "StatefulSet"
+	RancherKind      = "Rancher"
+	ClusterKind      = "Cluster"
+	ProjectKind      = "Project"
+	JobKind          = "Job"
+	CronJobKind      = "CronJob"
+	DeploymentKind   = "Deployment"
+	DaemonSetKind    = "DaemonSet"
+	StatefulSetKind  = "StatefulSet"
+	App              = "App"
+	Certificate      = "Certificate"
+	ClusterCatalog   = "ClusterCatalog"
+	Cluster          = "Cluster"
+	ConfigMap        = "ConfigMap"
+	DockerCredential = "DockerCredential"
+	Namespace        = "Namespace"
+	PersistentVolume = "PersistentVolume"
+	ProjectCatalog   = "ProjectCatalog"
+	RancherCatalog   = "RancherCatalog"
+	Secret           = "Secret"
+	StorageClass     = "StorageClass"
 )
 
 // Rancher represents global members

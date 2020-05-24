@@ -39,14 +39,14 @@ func (client *resourceClient) Name() (string, error) {
 func (client *resourceClient) Exists() (bool, error) {
 	return false, fmt.Errorf("Exists not supported")
 }
-func (client *resourceClient) Create() error {
-	return fmt.Errorf("Create not supported")
+func (client *resourceClient) Create(dryRun bool) (changed bool, err error) {
+	return changed, fmt.Errorf("Create not supported")
 }
-func (client *resourceClient) Upgrade() error {
-	return fmt.Errorf("Upgrade not supported")
+func (client *resourceClient) Upgrade(dryRun bool) (changed bool, err error) {
+	return changed, fmt.Errorf("Upgrade not supported")
 }
-func (client *resourceClient) Delete() error {
-	return fmt.Errorf("Delete not supported")
+func (client *resourceClient) Delete(dryRun bool) (changed bool, err error) {
+	return changed, fmt.Errorf("Delete not supported")
 }
 
 type namespacedResourceClient struct {
@@ -85,6 +85,9 @@ type emptyResourceClient struct{}
 func (client emptyResourceClient) ID() (string, error) {
 	return "", nil
 }
+func (client emptyResourceClient) Type() string {
+	return "EmptyResource"
+}
 func (client emptyResourceClient) Name() (string, error) {
 	return "", nil
 }
@@ -92,12 +95,12 @@ func (client emptyResourceClient) Name() (string, error) {
 func (client emptyResourceClient) Exists() (bool, error) {
 	return true, nil
 }
-func (client emptyResourceClient) Create() error {
-	return nil
+func (client emptyResourceClient) Create(dryRun bool) (changed bool, err error) {
+	return
 }
-func (client emptyResourceClient) Upgrade() error {
-	return nil
+func (client emptyResourceClient) Upgrade(dryRun bool) (changed bool, err error) {
+	return
 }
-func (client emptyResourceClient) Delete() error {
-	return nil
+func (client emptyResourceClient) Delete(dryRun bool) (changed bool, err error) {
+	return
 }

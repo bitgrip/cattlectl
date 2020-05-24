@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	deletableProjectResouceTypes = map[string]func(string, string, string, config.Config) error{
+	deletableProjectResouceTypes = map[string]func(string, string, string, config.Config) (bool, error){
 		"namespace":         deleteNamespace,
 		"certificate":       deleteCertificate,
 		"config-map":        deleteConfigMap,
@@ -36,15 +36,15 @@ var (
 // * projectName: the project to delete the resource from
 // * resourceType: the type of the resource to delete
 // * name: the name of the resource to delete
-func DeleteProjectResouce(projectName, namespace, resouceType, name string, config config.Config) (err error) {
-	deleteFunc, supportedType := deletableProjectResouceTypes[resouceType]
+func DeleteProjectResouce(projectName, namespace, kind, name string, config config.Config) (bool, error) {
+	deleteFunc, supportedType := deletableProjectResouceTypes[kind]
 	if !supportedType {
-		return fmt.Errorf("Not supported resouce type [%s]", resouceType)
+		return false, fmt.Errorf("Not supported resouce type [%s]", kind)
 	}
 	return deleteFunc(projectName, namespace, name, config)
 }
 
-func deleteNamespace(projectName, _namespace, name string, config config.Config) (err error) {
+func deleteNamespace(projectName, _namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -55,10 +55,10 @@ func deleteNamespace(projectName, _namespace, name string, config config.Config)
 		return
 	}
 
-	return deleteProjectResouce(namespace, config.ClusterName(), projectName, "namespace", name)
+	return deleteProjectResouce(namespace, config.ClusterName(), projectName, "namespace", name, config.DryRun())
 }
 
-func deleteCertificate(projectName, namespace, name string, config config.Config) (err error) {
+func deleteCertificate(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -70,12 +70,12 @@ func deleteCertificate(projectName, namespace, name string, config config.Config
 	}
 
 	if namespace == "" {
-		return deleteProjectResouce(certificate, config.ClusterName(), projectName, "certificate", name)
+		return deleteProjectResouce(certificate, config.ClusterName(), projectName, "certificate", name, config.DryRun())
 	}
-	return deleteNamespaceResouce(certificate, config.ClusterName(), projectName, namespace, "certificate", name)
+	return deleteNamespaceResouce(certificate, config.ClusterName(), projectName, namespace, "certificate", name, config.DryRun())
 }
 
-func deleteConfigMap(projectName, namespace, name string, config config.Config) (err error) {
+func deleteConfigMap(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -86,10 +86,10 @@ func deleteConfigMap(projectName, namespace, name string, config config.Config) 
 		return
 	}
 
-	return deleteNamespaceResouce(configMap, config.ClusterName(), projectName, namespace, "config-map", name)
+	return deleteNamespaceResouce(configMap, config.ClusterName(), projectName, namespace, "config-map", name, config.DryRun())
 }
 
-func deleteDockerCredential(projectName, namespace, name string, config config.Config) (err error) {
+func deleteDockerCredential(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -101,12 +101,12 @@ func deleteDockerCredential(projectName, namespace, name string, config config.C
 	}
 
 	if namespace == "" {
-		return deleteProjectResouce(dockerCredential, config.ClusterName(), projectName, "docker-credential", name)
+		return deleteProjectResouce(dockerCredential, config.ClusterName(), projectName, "docker-credential", name, config.DryRun())
 	}
-	return deleteNamespaceResouce(dockerCredential, config.ClusterName(), projectName, namespace, "docker-credential", name)
+	return deleteNamespaceResouce(dockerCredential, config.ClusterName(), projectName, namespace, "docker-credential", name, config.DryRun())
 }
 
-func deleteSecret(projectName, namespace, name string, config config.Config) (err error) {
+func deleteSecret(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -118,12 +118,12 @@ func deleteSecret(projectName, namespace, name string, config config.Config) (er
 	}
 
 	if namespace == "" {
-		return deleteProjectResouce(secret, config.ClusterName(), projectName, "secret", name)
+		return deleteProjectResouce(secret, config.ClusterName(), projectName, "secret", name, config.DryRun())
 	}
-	return deleteNamespaceResouce(secret, config.ClusterName(), projectName, namespace, "secret", name)
+	return deleteNamespaceResouce(secret, config.ClusterName(), projectName, namespace, "secret", name, config.DryRun())
 }
 
-func deleteApp(projectName, namespace, name string, config config.Config) (err error) {
+func deleteApp(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -134,10 +134,10 @@ func deleteApp(projectName, namespace, name string, config config.Config) (err e
 		return
 	}
 
-	return deleteProjectResouce(app, config.ClusterName(), projectName, "app", name)
+	return deleteProjectResouce(app, config.ClusterName(), projectName, "app", name, config.DryRun())
 }
 
-func deleteJob(projectName, namespace, name string, config config.Config) (err error) {
+func deleteJob(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -148,10 +148,10 @@ func deleteJob(projectName, namespace, name string, config config.Config) (err e
 		return
 	}
 
-	return deleteNamespaceResouce(job, config.ClusterName(), projectName, namespace, "job", name)
+	return deleteNamespaceResouce(job, config.ClusterName(), projectName, namespace, "job", name, config.DryRun())
 }
 
-func deleteCronJob(projectName, namespace, name string, config config.Config) (err error) {
+func deleteCronJob(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -162,10 +162,10 @@ func deleteCronJob(projectName, namespace, name string, config config.Config) (e
 		return
 	}
 
-	return deleteNamespaceResouce(cronJob, config.ClusterName(), projectName, namespace, "cron-job", name)
+	return deleteNamespaceResouce(cronJob, config.ClusterName(), projectName, namespace, "cron-job", name, config.DryRun())
 }
 
-func deleteDeployment(projectName, namespace, name string, config config.Config) (err error) {
+func deleteDeployment(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -176,10 +176,10 @@ func deleteDeployment(projectName, namespace, name string, config config.Config)
 		return
 	}
 
-	return deleteNamespaceResouce(deployment, config.ClusterName(), projectName, namespace, "deployment", name)
+	return deleteNamespaceResouce(deployment, config.ClusterName(), projectName, namespace, "deployment", name, config.DryRun())
 }
 
-func deleteDaemonSet(projectName, namespace, name string, config config.Config) (err error) {
+func deleteDaemonSet(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -190,10 +190,10 @@ func deleteDaemonSet(projectName, namespace, name string, config config.Config) 
 		return
 	}
 
-	return deleteNamespaceResouce(daemonSet, config.ClusterName(), projectName, namespace, "daemon-set", name)
+	return deleteNamespaceResouce(daemonSet, config.ClusterName(), projectName, namespace, "daemon-set", name, config.DryRun())
 }
 
-func deleteStatefulSet(projectName, namespace, name string, config config.Config) (err error) {
+func deleteStatefulSet(projectName, namespace, name string, config config.Config) (deleted bool, err error) {
 	_, _, projectClient, err := getProjectClient(projectName, config)
 	if err != nil {
 		return
@@ -204,40 +204,40 @@ func deleteStatefulSet(projectName, namespace, name string, config config.Config
 		return
 	}
 
-	return deleteNamespaceResouce(statefulSet, config.ClusterName(), projectName, namespace, "stateful-set", name)
+	return deleteNamespaceResouce(statefulSet, config.ClusterName(), projectName, namespace, "stateful-set", name, config.DryRun())
 }
 
-func deleteProjectResouce(resource client.ResourceClient, clusterName, projectName, resouceType, name string) (err error) {
+func deleteProjectResouce(resource client.ResourceClient, clusterName, projectName, kind, name string, dryRun bool) (deleted bool, err error) {
 	if exists, err := resource.Exists(); err != nil || !exists {
 		if err != nil {
-			return err
+			return false, err
 		}
 		logrus.
 			WithField("project-name", projectName).
 			WithField("resouce-name", name).
 			WithField("cluster-name", clusterName).
-			Infof("No %s skip delete", resouceType)
-		return nil
+			Infof("No %s skip delete", kind)
+		return false, nil
 	}
 
-	err = resource.Delete()
+	deleted, err = resource.Delete(dryRun)
 	return
 }
 
-func deleteNamespaceResouce(resource client.ResourceClient, clusterName, projectName, namespace, resouceType, name string) (err error) {
+func deleteNamespaceResouce(resource client.ResourceClient, clusterName, projectName, namespace, kind, name string, dryRun bool) (deleted bool, err error) {
 	if exists, err := resource.Exists(); err != nil || !exists {
 		if err != nil {
-			return err
+			return false, err
 		}
 		logrus.
 			WithField("project-name", projectName).
 			WithField("namespace", namespace).
 			WithField("resouce-name", name).
 			WithField("cluster-name", clusterName).
-			Infof("No %s skip delete", resouceType)
-		return nil
+			Infof("No %s skip delete", kind)
+		return false, nil
 	}
 
-	err = resource.Delete()
+	deleted, err = resource.Delete(dryRun)
 	return
 }

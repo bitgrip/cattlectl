@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	"github.com/sirupsen/logrus"
 )
@@ -63,6 +64,10 @@ type deploymentClient struct {
 	deployment projectModel.Deployment
 }
 
+func (client *deploymentClient) Type() string {
+	return rancherModel.DeploymentKind
+}
+
 func (client *deploymentClient) Exists() (bool, error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
@@ -91,28 +96,33 @@ func (client *deploymentClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *deploymentClient) Create() error {
+func (client *deploymentClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new deployment")
 	pattern, err := projectModel.ConvertDeploymentToProjectAPI(client.deployment)
 	if err != nil {
-		return err
+		return
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.Deployment.Create(&pattern)
-	return err
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Deployment.Create(&pattern)
+	}
+	return err == nil, err
 }
 
-func (client *deploymentClient) Upgrade() error {
+func (client *deploymentClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Warn("Skip change existing deployment")
-	return nil
+	return
 }
 
 func (client *deploymentClient) Data() (projectModel.Deployment, error) {

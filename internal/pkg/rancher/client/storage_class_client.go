@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
@@ -60,6 +61,10 @@ type storageClassClient struct {
 	clusterClient ClusterClient
 }
 
+func (client *storageClassClient) Type() string {
+	return rancherModel.StorageClass
+}
+
 func (client *storageClassClient) Exists() (bool, error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
@@ -83,10 +88,10 @@ func (client *storageClassClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *storageClassClient) Create() error {
+func (client *storageClassClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new storage class")
 	newStorageClass := &backendClusterClient.StorageClass{
@@ -98,13 +103,17 @@ func (client *storageClassClient) Create() error {
 		MountOptions:      client.storageClass.MountOptions,
 	}
 
-	_, err = backendClient.StorageClass.Create(newStorageClass)
-	return err
+	if dryRun {
+		client.logger.WithField("object", newStorageClass).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.StorageClass.Create(newStorageClass)
+	}
+	return err == nil, err
 }
 
-func (client *storageClassClient) Upgrade() error {
+func (client *storageClassClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Debug("Skip change existing storage class")
-	return nil
+	return
 }
 
 func (client *storageClassClient) Data() (projectModel.StorageClass, error) {

@@ -105,7 +105,7 @@ func Test_rancherCatalogClient_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.client.Create()
+			_, err := tt.client.Create(false)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {
@@ -137,7 +137,7 @@ func Test_rancherCatalogClient_Upgrade(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.client.Upgrade()
+			_, err := tt.client.Upgrade(false)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {
@@ -224,7 +224,7 @@ func notExistingRancherCatalogClient(t *testing.T, name, url, branch, username, 
 		Branch:   branch,
 		Username: username,
 		Password: password,
-		Labels:    map[string]string{"cattlectl.io/hash": hashOf(rancherCatalogData)},
+		Labels:   map[string]string{"cattlectl.io/hash": hashOf(rancherCatalogData)},
 	}
 
 	rancherCatalogOperationsStub := stubs.CreateRancherCatalogOperationsStub(t)

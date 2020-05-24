@@ -62,6 +62,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cattlectl.yaml)")
 	rootCmd.PersistentFlags().IntVarP(&LogLevel, "verbosity", "v", 0, "verbosity level to use")
 	rootCmd.PersistentFlags().BoolVar(&logJson, "log-json", false, "if to log using json format")
+	rootCmd.PersistentFlags().Bool("dry-run", false, "if do dry-run")
 	rootCmd.PersistentFlags().String("rancher-url", "", "The URL to reach the rancher")
 	rootCmd.PersistentFlags().Bool("insecure-api", false, "If Rancher uses a self signed certificate")
 	rootCmd.PersistentFlags().String("access-key", "", "The access key to access rancher with")
@@ -87,6 +88,9 @@ func init() {
 
 	viper.BindPFlag("rancher.cluster_name", rootCmd.PersistentFlags().Lookup("cluster-name"))
 	viper.BindEnv("rancher.cluster_name", "RANCHER_CLUSTER_NAME")
+
+	viper.BindPFlag("dry_run", rootCmd.PersistentFlags().Lookup("dry-run"))
+	viper.BindEnv("dry_run", "DRY_RUN")
 
 	rootCmd.AddCommand(apply.BaseCommand(rancherConfig, initSubCommand))
 	rootCmd.AddCommand(delete.BaseCommand(rancherConfig, initSubCommand))

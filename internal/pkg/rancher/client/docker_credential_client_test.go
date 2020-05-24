@@ -99,7 +99,7 @@ func Test_dockerCredentialClient_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.client.Create()
+			_, err := tt.client.Create(false)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {
@@ -132,7 +132,7 @@ func Test_dockerCredentialClient_Upgrade(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.client.Upgrade()
+			_, err := tt.client.Upgrade(false)
 			if tt.wantErr {
 				assert.NotOk(t, err, tt.wantedErr)
 			} else {

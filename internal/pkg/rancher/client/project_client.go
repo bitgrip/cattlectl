@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
@@ -71,6 +72,10 @@ type projectClient struct {
 	daemonSetClients        map[string]DaemonSetClient
 	statefulSetClients      map[string]StatefulSetClient
 	catalogClients          map[string]CatalogClient
+}
+
+func (client *projectClient) Type() string {
+	return rancherModel.ProjectKind
 }
 
 func (client *projectClient) init() error {
@@ -129,32 +134,38 @@ func (client *projectClient) Exists() (bool, error) {
 	projectID, err := client.ID()
 	return projectID != "", err
 }
-func (client *projectClient) Create() error {
+func (client *projectClient) Create(dryRun bool) (changed bool, err error) {
 	client.logger.Info("Create new project")
 	backendClient, err := client.clusterClient.backendRancherClient()
 	if err != nil {
-		return err
+		return
 	}
 	clusterID, err := client.clusterClient.ID()
 	if err != nil {
-		return err
+		return
 	}
 	pattern := &backendRancherClient.Project{
 		ClusterID: clusterID,
 		Name:      client.name,
 	}
-	createdProject, err := backendClient.Project.Create(pattern)
-	if err != nil {
-		client.logger.Warn("Failed to create project")
-		return err
-	}
-	client.id = createdProject.ID
 
-	return nil
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+		client.id = client.name
+	} else {
+		createdProject, err := backendClient.Project.Create(pattern)
+		if err != nil {
+			client.logger.Warn("Failed to create project")
+		} else {
+			client.id = createdProject.ID
+		}
+	}
+
+	return err == nil, err
 }
-func (client *projectClient) Upgrade() error {
+func (client *projectClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Debug("Project exists")
-	return nil
+	return
 }
 func (client *projectClient) Namespace(name string) (NamespaceClient, error) {
 	return client.clusterClient.Namespace(name, client.name)

@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	"github.com/sirupsen/logrus"
@@ -60,6 +61,10 @@ type persistentVolumeClient struct {
 	clusterClient    ClusterClient
 }
 
+func (client *persistentVolumeClient) Type() string {
+	return rancherModel.PersistentVolume
+}
+
 func (client *persistentVolumeClient) Exists() (bool, error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
@@ -83,10 +88,10 @@ func (client *persistentVolumeClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *persistentVolumeClient) Create() error {
+func (client *persistentVolumeClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.clusterClient.backendClusterClient()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new persistent volume")
 	newPersistentVolume := &backendClusterClient.PersistentVolume{
@@ -115,13 +120,17 @@ func (client *persistentVolumeClient) Create() error {
 		},
 	}
 
-	_, err = backendClient.PersistentVolume.Create(newPersistentVolume)
-	return err
+	if dryRun {
+		client.logger.WithField("object", newPersistentVolume).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.PersistentVolume.Create(newPersistentVolume)
+	}
+	return err == nil, err
 }
 
-func (client *persistentVolumeClient) Upgrade() error {
+func (client *persistentVolumeClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Debug("Skip change existing persistent volume")
-	return nil
+	return
 }
 
 func (client *persistentVolumeClient) Data() (projectModel.PersistentVolume, error) {

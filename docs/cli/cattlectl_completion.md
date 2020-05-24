@@ -1,19 +1,36 @@
-## cattlectl gen-doc
+## cattlectl completion
 
-genrates the markdown documentation
+Generates bash completion scripts
 
 ### Synopsis
 
-Generates the full command tree documantation as markdown files inside the target folder.
+
+
+To configure your bash shell to load completions for each session add to your bashrc
+
+* ~/.bashrc or ~/.profile
+
+        . <(cattlectl completion)
+
+* On Mac (with bash completion installed from brew)
+
+        cattlectl completion > $(brew --prefix)/etc/bash_completion.d/cattlectl
+
+* To load completion run
+
+        . <(cattlectl completion)
+
+This will only temporaly activate completion in the current session.
+
 
 ```
-cattlectl gen-doc [target folder] [flags]
+cattlectl completion [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for gen-doc
+  -h, --help   help for completion
 ```
 
 ### Options inherited from parent commands
@@ -23,6 +40,7 @@ cattlectl gen-doc [target folder] [flags]
       --cluster-id string     The ID of the cluster the project is part of
       --cluster-name string   The name of the cluster the project is part of
       --config string         config file (default is $HOME/.cattlectl.yaml)
+      --dry-run               if do dry-run
       --insecure-api          If Rancher uses a self signed certificate
       --log-json              if to log using json format
       --rancher-url string    The URL to reach the rancher

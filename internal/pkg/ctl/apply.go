@@ -26,6 +26,7 @@ import (
 	clusterModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model"
 	"github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project"
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	"github.com/bitgrip/cattlectl/internal/pkg/rancher/descriptor"
 	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -55,199 +56,205 @@ var (
 )
 
 // ApplyDescriptor the the CTL perform a apply action
-func ApplyDescriptor(file string, fullData []byte, values map[string]interface{}, config config.Config) error {
+func ApplyDescriptor(file string, fullData []byte, values map[string]interface{}, config config.Config) (result descriptor.ConvergeResult, err error) {
 	decoder := yaml.NewDecoder(bytes.NewReader(fullData))
 	for {
-		apiVersion, kind, object, err := DecodeToApply(decoder)
-		if err != nil {
-			if err.Error() == "EMPTY" {
+		apiVersion, kind, object, decodeErr := DecodeToApply(decoder)
+		if decodeErr != nil {
+			if decodeErr.Error() == "EMPTY" {
 				continue
-			} else if err.Error() == "EOF" {
+			} else if decodeErr.Error() == "EOF" {
 				break
 			}
-			return err
+			err = decodeErr
+			return
 		}
-		singleObjectData, err := yaml.Marshal(object)
-		if err != nil {
-			return err
+		var (
+			singleObjectData []byte
+			singleResult     descriptor.ConvergeResult
+		)
+		if singleObjectData, err = yaml.Marshal(object); err != nil {
+			return
 		}
 		if !isSupportedAPIVersion(apiVersion) {
-			return fmt.Errorf("Unsupported api version %s", apiVersion)
+			return result, fmt.Errorf("Unsupported api version %s", apiVersion)
 		}
 		switch kind {
 		case rancherModel.RancherKind:
 			descriptor := rancherModel.Rancher{}
-			if err := newRancherParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
-				return err
+			if err = newRancherParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return
 			}
-			if err := ApplyRancher(descriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyRancher(descriptor, config); err != nil {
+				return
 			}
 		case rancherModel.ClusterKind:
 			descriptor := clusterModel.Cluster{}
-			if err := newClusterParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
-				return err
+			if err = newClusterParser(file, values).Parse(singleObjectData, &descriptor); err != nil {
+				return
 			}
-			if err := ApplyCluster(descriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyCluster(descriptor, config); err != nil {
+				return
 			}
 		case rancherModel.ProjectKind:
 			project := projectModel.Project{}
-			if err := newProjectParser(file, values).Parse(singleObjectData, &project); err != nil {
-				return err
+			if err = newProjectParser(file, values).Parse(singleObjectData, &project); err != nil {
+				return
 			}
-			if err := ApplyProject(project, config); err != nil {
-				return err
+			if singleResult, err = ApplyProject(project, config); err != nil {
+				return
 			}
 		case rancherModel.JobKind:
 			jobDescriptor := projectModel.JobDescriptor{}
-			if err := newJobParser(file, values).Parse(singleObjectData, &jobDescriptor); err != nil {
-				return err
+			if err = newJobParser(file, values).Parse(singleObjectData, &jobDescriptor); err != nil {
+				return
 			}
-			if err := ApplyJob(jobDescriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyJob(jobDescriptor, config); err != nil {
+				return
 			}
 		case rancherModel.CronJobKind:
 			cronJobDescriptor := projectModel.CronJobDescriptor{}
-			if err := newCronJobParser(file, values).Parse(singleObjectData, &cronJobDescriptor); err != nil {
-				return err
+			if err = newCronJobParser(file, values).Parse(singleObjectData, &cronJobDescriptor); err != nil {
+				return
 			}
-			if err := ApplyCronJob(cronJobDescriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyCronJob(cronJobDescriptor, config); err != nil {
+				return
 			}
 		case rancherModel.DeploymentKind:
 			deploymentDescriptor := projectModel.DeploymentDescriptor{}
-			if err := newDeploymentParser(file, values).Parse(singleObjectData, &deploymentDescriptor); err != nil {
-				return err
+			if err = newDeploymentParser(file, values).Parse(singleObjectData, &deploymentDescriptor); err != nil {
+				return
 			}
-			if err := ApplyDeployment(deploymentDescriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyDeployment(deploymentDescriptor, config); err != nil {
+				return
 			}
 		case rancherModel.DaemonSetKind:
 			daemonSetDescriptor := projectModel.DaemonSetDescriptor{}
-			if err := newDaemonSetParser(file, values).Parse(singleObjectData, &daemonSetDescriptor); err != nil {
-				return err
+			if err = newDaemonSetParser(file, values).Parse(singleObjectData, &daemonSetDescriptor); err != nil {
+				return
 			}
-			if err := ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyDaemonSet(daemonSetDescriptor, config); err != nil {
+				return
 			}
 		case rancherModel.StatefulSetKind:
 			statefulSetDescriptor := projectModel.StatefulSetDescriptor{}
-			if err := newStatefulSetParser(file, values).Parse(singleObjectData, &statefulSetDescriptor); err != nil {
-				return err
+			if err = newStatefulSetParser(file, values).Parse(singleObjectData, &statefulSetDescriptor); err != nil {
+				return
 			}
-			if err := ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
-				return err
+			if singleResult, err = ApplyStatefulSet(statefulSetDescriptor, config); err != nil {
+				return
 			}
 		default:
-			return fmt.Errorf("Unknown descriptor %s", kind)
+			return result, fmt.Errorf("Unknown descriptor %s", kind)
 		}
+		result.CreatedResources = append(result.CreatedResources, singleResult.CreatedResources...)
+		result.UpgradedResources = append(result.UpgradedResources, singleResult.UpgradedResources...)
 	}
-	return nil
+	return
 }
 
 // ApplyCronJob the the CTL perform a apply action to a cronjob descriptor
-func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) error {
+func ApplyCronJob(cronJobDescriptor projectModel.CronJobDescriptor, config config.Config) (result descriptor.ConvergeResult, err error) {
 	_, _, projectClient, err := fillWorkloadMetadata(&cronJobDescriptor.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newCronJobConverger(cronJobDescriptor, projectClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyJob the the CTL perform a apply action to a job descriptor
-func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) error {
+func ApplyJob(jobDescriptor projectModel.JobDescriptor, config config.Config) (result descriptor.ConvergeResult, err error) {
 	_, _, projectClient, err := fillWorkloadMetadata(&jobDescriptor.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newJobConverger(jobDescriptor, projectClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyDeployment the the CTL perform a apply action to a deployment descriptor
-func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) error {
+func ApplyDeployment(deploymentDescriptor projectModel.DeploymentDescriptor, config config.Config) (result descriptor.ConvergeResult, err error) {
 	_, _, projectClient, err := fillWorkloadMetadata(&deploymentDescriptor.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newDeploymentConverger(deploymentDescriptor, projectClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyDaemonSet the the CTL perform a apply action to a daemon set descriptor
-func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) error {
+func ApplyDaemonSet(daemonSetDescriptor projectModel.DaemonSetDescriptor, config config.Config) (result descriptor.ConvergeResult, err error) {
 	_, _, projectClient, err := fillWorkloadMetadata(&daemonSetDescriptor.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newDaemonSetConverger(daemonSetDescriptor, projectClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyStatefulSet the the CTL perform a apply action to a stateful set descriptor
-func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, config config.Config) error {
+func ApplyStatefulSet(statefulSetDescriptor projectModel.StatefulSetDescriptor, config config.Config) (result descriptor.ConvergeResult, err error) {
 	_, _, projectClient, err := fillWorkloadMetadata(&statefulSetDescriptor.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newStatefulSetConverger(statefulSetDescriptor, projectClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyProject the the CTL perform a apply action to a project descriptor
-func ApplyProject(project projectModel.Project, config config.Config) error {
+func ApplyProject(project projectModel.Project, config config.Config) (result descriptor.ConvergeResult, err error) {
 	_, clusterClient, err := fillProjectMetadata(&project.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newProjectConverger(project, clusterClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyCluster the the CTL perform a apply action to a cluster descriptor
-func ApplyCluster(cluster clusterModel.Cluster, config config.Config) error {
+func ApplyCluster(cluster clusterModel.Cluster, config config.Config) (result descriptor.ConvergeResult, err error) {
 	rancherClient, err := fillClusterMetadata(&cluster.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newClusterConverger(cluster, rancherClient)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // ApplyRancher the the CTL perform a apply action to a cluster descriptor
-func ApplyRancher(rancher rancherModel.Rancher, config config.Config) error {
+func ApplyRancher(rancher rancherModel.Rancher, config config.Config) (result descriptor.ConvergeResult, err error) {
 	rancherConfig, err := fillRancherMetadata(&rancher.Metadata, config)
 	if err != nil {
-		return err
+		return
 	}
 	converger, err := newRancherConverger(rancher, rancherConfig)
 	if err != nil {
-		return err
+		return
 	}
-	return converger.Converge()
+	return converger.Converge(config.DryRun())
 }
 
 // DecodeToApply will decode the next object from the decoder

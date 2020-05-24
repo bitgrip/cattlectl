@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	projectModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/project/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendProjectClient "github.com/rancher/types/client/project/v3"
 	"github.com/sirupsen/logrus"
@@ -64,6 +65,10 @@ type jobClient struct {
 	job projectModel.Job
 }
 
+func (client *jobClient) Type() string {
+	return rancherModel.JobKind
+}
+
 func (client *jobClient) Exists() (bool, error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
@@ -92,37 +97,49 @@ func (client *jobClient) Exists() (bool, error) {
 	return false, nil
 }
 
-func (client *jobClient) Create() error {
+func (client *jobClient) Create(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
-		return err
+		return
 	}
 	namespaceID, err := client.NamespaceID()
 	if err != nil {
-		return err
+		return
 	}
 	client.logger.Info("Create new job")
 	pattern, err := projectModel.ConvertJobToProjectAPI(client.job)
 	if err != nil {
-		return err
+		return
 	}
 	pattern.NamespaceId = namespaceID
-	_, err = backendClient.Job.Create(&pattern)
-	return err
+
+	if dryRun {
+		client.logger.WithField("object", pattern).Info("Do Dry-Run Create")
+	} else {
+		_, err = backendClient.Job.Create(&pattern)
+	}
+	return err == nil, err
 }
 
-func (client *jobClient) Upgrade() error {
+func (client *jobClient) Upgrade(dryRun bool) (changed bool, err error) {
 	client.logger.Warn("Skip change existing job")
-	return nil
+	return
 }
 
-func (client *jobClient) Delete() (err error) {
+func (client *jobClient) Delete(dryRun bool) (changed bool, err error) {
 	backendClient, err := client.project.backendProjectClient()
 	if err != nil {
 		return
 	}
 	installedJob, err := client.loadExistingJob()
-	return backendClient.Job.Delete(installedJob)
+
+	if dryRun {
+		client.logger.WithField("object", installedJob).Info("Do Dry-Run Delete")
+		changed = true
+		return
+	}
+	err = backendClient.Job.Delete(installedJob)
+	return err == nil, err
 }
 
 func (client *jobClient) Data() (projectModel.Job, error) {

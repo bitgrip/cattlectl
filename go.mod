@@ -29,19 +29,15 @@ replace (
 
 require (
 	github.com/Masterminds/semver v1.4.2
-	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pelletier/go-toml v1.4.0 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/rancher/norman v0.0.0-20200227003532-35fa47cccad7
 	github.com/rancher/types v0.0.0-20191226170233-4d49bbf42146
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.4.0
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/apimachinery v0.0.0

@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	clusterModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/cluster/model"
+	rancherModel "github.com/bitgrip/cattlectl/internal/pkg/rancher/model"
 	"github.com/rancher/norman/types"
 	backendClusterClient "github.com/rancher/types/client/cluster/v3"
 	backendRancherClient "github.com/rancher/types/client/management/v3"
@@ -63,6 +64,10 @@ type namespaceCacheEntry struct {
 	namespace   NamespaceClient
 }
 
+func (client *clusterClient) Type() string {
+	return rancherModel.Cluster
+}
+
 func (client *clusterClient) init() error {
 	if client._backendClusterClient != nil {
 		return nil
@@ -103,7 +108,7 @@ func (client *clusterClient) ID() (string, error) {
 
 func (client *clusterClient) Exists() (bool, error) {
 	_, err := client.ID()
-	return err != nil, err
+	return err == nil, err
 }
 func (client *clusterClient) Project(name string) (ProjectClient, error) {
 	if cache, exists := client.projectClients[name]; exists {
