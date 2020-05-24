@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+* Add Ansible binary modules
+  * cattlectl_apply
+  * cattlectl_list
+  * cattlectl_delete
 * (#48) Add support for multiple YAML objects in a single file
   * Each not empty object must have fields
     * `api_version`
