@@ -63,6 +63,7 @@ type baseWorkload struct {
 type Container struct {
 	AllowPrivilegeEscalation *bool                 `json:"allowPrivilegeEscalation,omitempty" yaml:"allowPrivilegeEscalation,omitempty"`
 	Command                  []string              `json:"command,omitempty" yaml:"command,omitempty"`
+	Entrypoint               []string              `json:"entrypoint,omitempty" yaml:"entrypoint,omitempty"`
 	Environment              map[string]string     `json:"environment,omitempty" yaml:"environment,omitempty"`
 	EnvironmentFrom          []EnvironmentFrom     `json:"environmentFrom,omitempty" yaml:"environmentFrom,omitempty"`
 	Image                    string                `json:"image,omitempty" yaml:"image,omitempty"`

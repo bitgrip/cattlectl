@@ -11,6 +11,7 @@ spec:
   containers:
   - allowPrivilegeEscalation: true
     command: [ "perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)" ]
+    entrypoint: [ "/bin/sh" ]
     environment:
       TEST_VAR: test value
     environmentFrom: null
