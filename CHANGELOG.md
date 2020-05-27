@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
   * Objects are handled one by one
   * First error stops execution
   * Empty objects are ignored
+* (#56) Add support for defining entrypoints in workloads
 
 ### Changed
 
