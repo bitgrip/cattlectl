@@ -77,7 +77,7 @@ func main() {
 	result, err := ctl.ApplyDescriptor(
 		moduleArgs.ApplyFile,
 		projectData,
-		map[string]interface{}{},
+		values,
 		utils.BuildRancherConfig(moduleArgs.AccessArgs),
 	)
 
