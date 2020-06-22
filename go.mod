@@ -28,6 +28,7 @@ replace (
 )
 
 require (
+    github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/Masterminds/semver v1.4.2
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0

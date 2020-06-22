@@ -30,6 +30,7 @@ func TestGoldenFileTestCases(t *testing.T) {
 		if !testdir.IsDir() {
 			continue
 		}
+		t.Logf("Run variant [%v]", testdir.Name())
 		runTestCaseVariants(testdir.Name(), t)
 	}
 }

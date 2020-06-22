@@ -24,6 +24,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -40,22 +41,7 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, baseDir s
 		return []byte{}, err
 	}
 	descriptorTemplate := template.New("data-template")
-	descriptorTemplate.Funcs(template.FuncMap{
-		"read":             readFunc(absBaseDir),
-		"readWithTemplate": readTemplateFunc(baseDir, values),
-		"indent":           indent,
-		"trim":             trim,
-		"toYaml":           toYaml,
-	})
-	if truncated {
-		descriptorTemplate.Funcs(template.FuncMap{
-			"base64": toTruncatedBase64,
-		})
-	} else {
-		descriptorTemplate.Funcs(template.FuncMap{
-			"base64": toBase64,
-		})
-	}
+	descriptorTemplate.Funcs(funcMap(absBaseDir, values, truncated))
 	descriptorTemplate, err = descriptorTemplate.Parse(string(templateData))
 	if err != nil {
 		return []byte{}, err
@@ -68,6 +54,40 @@ func BuildTemplate(templateData []byte, values map[string]interface{}, baseDir s
 
 	return templateBuffer.Bytes(), nil
 
+}
+
+func funcMap(baseDir string, values map[string]interface{}, truncated bool) template.FuncMap {
+	out := template.FuncMap{
+		"read":             readFunc(baseDir),
+		"readAsString":     readAsStringFunc(baseDir),
+		"readWithTemplate": readTemplateFunc(baseDir, values, truncated),
+		"toYaml":           toYaml,
+	}
+	if truncated {
+		out["base64"] = toTruncatedBase64
+	} else {
+		out["base64"] = toBase64
+	}
+	for key, value := range sprig.TxtFuncMap() {
+		out[key] = value
+	}
+	return out
+}
+
+func readAsStringFunc(baseDir string) func(filename string) string {
+	return func(fileName string) string {
+		var absFileName string
+		if filepath.IsAbs(fileName) {
+			absFileName = fileName
+		} else {
+			absFileName = filepath.Clean(fmt.Sprintf("%s/%s", baseDir, fileName))
+		}
+		fileContent, err := ioutil.ReadFile(absFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return string(fileContent)
+	}
 }
 
 func readFunc(baseDir string) func(fileName string) []byte {
@@ -86,7 +106,7 @@ func readFunc(baseDir string) func(fileName string) []byte {
 	}
 }
 
-func readTemplateFunc(baseDir string, values map[string]interface{}) func(fileName string) string {
+func readTemplateFunc(baseDir string, values map[string]interface{}, truncated bool) func(fileName string) string {
 	return func(fileName string) string {
 
 		var absFileName string
@@ -102,12 +122,7 @@ func readTemplateFunc(baseDir string, values map[string]interface{}) func(fileNa
 		}
 
 		descriptorTemplate := template.New(absFileName)
-		descriptorTemplate.Funcs(template.FuncMap{
-			"read":   readFunc(filepath.Dir(absFileName)),
-			"indent": indent,
-			"toYaml": toYaml,
-			"base64": toBase64,
-		})
+		descriptorTemplate.Funcs(funcMap(filepath.Dir(absFileName), values, truncated))
 		descriptorTemplate, err = descriptorTemplate.Parse(string(fileContent))
 		if err != nil {
 			log.Fatal(err)
@@ -138,33 +153,11 @@ func toTruncatedBase64(data interface{}) string {
 	return fmt.Sprintf("< %v bytes base64 encoded >", len([]byte(fmt.Sprint(data))))
 }
 
-func indent(indents int, data interface{}) string {
-	prefix := strings.Repeat("  ", indents)
-	var toIndent string
-	if bytes, isBytes := data.([]byte); isBytes {
-		toIndent = string(bytes)
-	} else {
-		toIndent = fmt.Sprint(data)
-	}
-	result := strings.TrimSpace(strings.Join(strings.Split(toIndent, "\n"), "\n"+prefix))
-	return prefix + result
-}
-
-func trim(data interface{}) string {
-	var toTrim string
-	if bytes, isBytes := data.([]byte); isBytes {
-		toTrim = string(bytes)
-	} else {
-		toTrim = fmt.Sprint(data)
-	}
-	return strings.TrimSpace(toTrim)
-}
-
 func toYaml(data interface{}) (string, error) {
 	marshalledYaml, err := yaml.Marshal(data)
 	if err != nil {
 		// Swallow errors inside of a template.
 		return "", err
 	}
-	return string(marshalledYaml), nil
+	return strings.TrimSpace(string(marshalledYaml)), nil
 }

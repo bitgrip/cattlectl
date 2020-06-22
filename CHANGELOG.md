@@ -20,6 +20,19 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+* Add support for [sprig template functions](https://github.com/Masterminds/sprig)
+  * __THIS IS A BREAKING CHANGE FOR THE `indent` FUNCTION__
+  * __indent__ no longer accepts `[]byte` input. Only `string` input is accepted.
+  * __indent__ no longer trimes input.
+  * __indent__ no longer inserts two spaces per indent but one space.
+  * Required migration steps
+    * you need to double the indent size
+      * `indent 4 "hallo world"` needs to be `indent 8 "hallo world"`
+    * if you read file content and use indent you need to use `readAsString`
+      * `{{read "input-file.txt" | indent 4 }}` needs to be `{{readAsString "input-file.txt" | indent 8 }}`
+    * if you need to remove surrounding whitespaces you need to do it explicit using `trim`
+      * `indent 4 "  hallo world  "` needs to be `trim "  hallo world  " | indent 8`
+
 * Updates github.com/rancher/norman and github.com/rancher/types to match with github.com/rancher/rancher v2.3.6
   * Model Changes to the descriptor files:
     * Workload dose no longer support

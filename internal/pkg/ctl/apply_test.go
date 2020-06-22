@@ -54,11 +54,11 @@ var (
 func TestDecodeToApply(t *testing.T) {
 	data := `---
 description: With all required data
-api_version: "1.1"
+api_version: "2.0"
 kind: TestType
 ---
 description: Without kind
-api_version: "1.1"
+api_version: "2.0"
 ---
 description: Without API version
 kind: TestType
@@ -73,11 +73,11 @@ kind: TestType
 	}{
 		{
 			name:           "full",
-			wantAPIVersion: "1.1",
+			wantAPIVersion: "2.0",
 			wantKind:       "TestType",
 			wantObject: map[string]interface{}{
 				"description": "With all required data",
-				"api_version": "1.1",
+				"api_version": "2.0",
 				"kind":        "TestType",
 			},
 			wantErr: nil,
@@ -88,7 +88,7 @@ kind: TestType
 			wantKind:       "",
 			wantObject: map[string]interface{}{
 				"description": "Without kind",
-				"api_version": "1.1",
+				"api_version": "2.0",
 			},
 			wantErr: fmt.Errorf("Kind is undefined"),
 		},
@@ -155,14 +155,14 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_rancher_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Rancher"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Rancher"),
 				config:   testConfig{},
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newRancherParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Rancher\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Rancher\n"),
 						t:            t,
 					}
 				}
@@ -177,14 +177,14 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_cluster_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Cluster"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Cluster"),
 				config:   testConfig{},
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newClusterParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Cluster\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Cluster\n"),
 						t:            t,
 					}
 				}
@@ -206,7 +206,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_project_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Project"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -215,7 +215,7 @@ func TestApplyDescriptor(t *testing.T) {
 				newProjectParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Project\n"),
 						t:            t,
 					}
 				}
@@ -237,7 +237,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_job_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Job\nmetadata:\n  project_name: test-project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Job\nmetadata:\n  project_name: test-project"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -246,7 +246,7 @@ func TestApplyDescriptor(t *testing.T) {
 				newJobParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Job\nmetadata:\n  project_name: test-project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Job\nmetadata:\n  project_name: test-project\n"),
 						t:            t,
 					}
 				}
@@ -269,7 +269,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_cronjob_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: CronJob\nmetadata:\n  project_name: test-project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: CronJob\nmetadata:\n  project_name: test-project"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -278,7 +278,7 @@ func TestApplyDescriptor(t *testing.T) {
 				newCronJobParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: CronJob\nmetadata:\n  project_name: test-project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: CronJob\nmetadata:\n  project_name: test-project\n"),
 						t:            t,
 					}
 				}
@@ -301,7 +301,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_deployment_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Deployment\nmetadata:\n  project_name: test-project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Deployment\nmetadata:\n  project_name: test-project"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -310,7 +310,7 @@ func TestApplyDescriptor(t *testing.T) {
 				newDeploymentParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Deployment\nmetadata:\n  project_name: test-project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Deployment\nmetadata:\n  project_name: test-project\n"),
 						t:            t,
 					}
 				}
@@ -333,7 +333,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_daemonset_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: DaemonSet\nmetadata:\n  project_name: test-project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: DaemonSet\nmetadata:\n  project_name: test-project"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -342,7 +342,7 @@ func TestApplyDescriptor(t *testing.T) {
 				newDaemonSetParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: DaemonSet\nmetadata:\n  project_name: test-project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: DaemonSet\nmetadata:\n  project_name: test-project\n"),
 						t:            t,
 					}
 				}
@@ -365,7 +365,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "one_statefulset_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: StatefulSet\nmetadata:\n  project_name: test-project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: StatefulSet\nmetadata:\n  project_name: test-project"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -374,7 +374,7 @@ func TestApplyDescriptor(t *testing.T) {
 				newStatefulSetParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: StatefulSet\nmetadata:\n  project_name: test-project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: StatefulSet\nmetadata:\n  project_name: test-project\n"),
 						t:            t,
 					}
 				}
@@ -397,7 +397,7 @@ func TestApplyDescriptor(t *testing.T) {
 			name: "two_project_objects",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Project\nmetadata:\n  name: project1\n---\napi_version: \"1.1\"\nkind: Project\nmetadata:\n  name: project2\n---\n"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Project\nmetadata:\n  name: project1\n---\napi_version: \"2.0\"\nkind: Project\nmetadata:\n  name: project2\n---\n"),
 				config: testConfig{
 					clusterName: "test-cluster",
 				},
@@ -459,171 +459,171 @@ func TestParseAndPrintDescriptor(t *testing.T) {
 			name: "one_rancher_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Rancher"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Rancher"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newRancherParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Rancher\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Rancher\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Rancher\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Rancher\n",
 		},
 		{
 			name: "one_cluster_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Cluster"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Cluster"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newClusterParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Cluster\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Cluster\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Cluster\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Cluster\n",
 		},
 		{
 			name: "one_project_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Project"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newProjectParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Project\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Project\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Project\n",
 		},
 		{
 			name: "one_job_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Job"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Job"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newJobParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Job\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Job\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Job\nmetadata: {}\nspec: {}\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Job\nmetadata: {}\nspec: {}\n",
 		},
 		{
 			name: "one_cronjob_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: CronJob"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: CronJob"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newCronJobParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: CronJob\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: CronJob\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: CronJob\nmetadata: {}\nspec: {}\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: CronJob\nmetadata: {}\nspec: {}\n",
 		},
 		{
 			name: "one_Deployment_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Deployment"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Deployment"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newDeploymentParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Deployment\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Deployment\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Deployment\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Deployment\n",
 		},
 		{
 			name: "one_statefulset_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: StatefulSet"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: StatefulSet"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newStatefulSetParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: StatefulSet\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: StatefulSet\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: StatefulSet\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: StatefulSet\n",
 		},
 		{
 			name: "one_daemonset_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: DaemonSet"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: DaemonSet"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newDaemonSetParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: DaemonSet\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: DaemonSet\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: DaemonSet\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: DaemonSet\n",
 		},
 		{
 			name: "one_project_one_empty_object",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Project\n---\n"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Project\n---\n"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newProjectParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Project\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Project\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Project\n",
 		},
 		{
 			name: "two_project_objects",
 			args: args{
 				file:     "test-descriptor.yaml",
-				fullData: []byte("---\napi_version: \"1.1\"\nkind: Project\n---\napi_version: \"1.1\"\nkind: Project"),
+				fullData: []byte("---\napi_version: \"2.0\"\nkind: Project\n---\napi_version: \"2.0\"\nkind: Project"),
 			},
 			setExpectedBackends: func(t *testing.T) {
 				newProjectParser = func(descriptorFile string, values map[string]interface{}) descriptor.Parser {
 					return testParser{
 						expected:     true,
-						expectedData: []byte("api_version: \"1.1\"\nkind: Project\n"),
+						expectedData: []byte("api_version: \"2.0\"\nkind: Project\n"),
 						t:            t,
 					}
 				}
 			},
-			wantStdout: "---\napi_version: \"1.1\"\nkind: Project\n---\napi_version: \"1.1\"\nkind: Project\n",
+			wantStdout: "---\napi_version: \"2.0\"\nkind: Project\n---\napi_version: \"2.0\"\nkind: Project\n",
 		},
 	}
 	for _, tt := range tests {

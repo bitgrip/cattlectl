@@ -18,18 +18,27 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/semver"
+	"github.com/sirupsen/logrus"
 )
 
+var minAPIVersion = "2.0"
+
 // Version is the current build version
-var Version = "v1.3.0-local"
+var Version = "v2.0.0-local"
 
 func isSupportedAPIVersion(apiVersion string) bool {
 	v, err := semver.NewVersion(Version)
 	if err != nil {
 		return false
 	}
-	c, err := semver.NewConstraint(fmt.Sprintf("<= %v.%v", v.Major(), v.Minor()))
+	minConstraint, err := semver.NewConstraint(fmt.Sprintf(">= %s", minAPIVersion))
 	if err != nil {
+		logrus.WithField("error", err).Error("Can not build minimum constraint")
+		return false
+	}
+	maxConstraint, err := semver.NewConstraint(fmt.Sprintf("<= %v.%v", v.Major(), v.Minor()))
+	if err != nil {
+		logrus.WithField("error", err).Error("Can not build maximum constraint")
 		return false
 	}
 
@@ -37,5 +46,5 @@ func isSupportedAPIVersion(apiVersion string) bool {
 	if err != nil {
 		return false
 	}
-	return c.Check(av)
+	return minConstraint.Check(av) && maxConstraint.Check(av)
 }
