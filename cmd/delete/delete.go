@@ -70,9 +70,9 @@ func delete(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	deleteCmd.Flags().String("project-name", "", "The name of the project to list resouces from")
+	deleteCmd.Flags().String("project-name", "", "The name of the project to delete resouces from")
 	viper.BindPFlag("delete_cmd.project_name", deleteCmd.Flags().Lookup("project-name"))
 
-	deleteCmd.Flags().String("namespace", "", "The namespace of the project to list resouces from")
+	deleteCmd.Flags().String("namespace", "", "The namespace of the project to delete resouces from")
 	viper.BindPFlag("delete_cmd.namespace", deleteCmd.Flags().Lookup("namespace"))
 }
