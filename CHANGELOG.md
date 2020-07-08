@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Fixed
+
+## [2.0.0]
+
+### Added
+
 * Add Ansible binary modules
   * cattlectl_apply
   * cattlectl_list
@@ -153,7 +163,8 @@ All notable changes to this project will be documented in this file.
 
 * Initial release
 
-[Unreleased]: https://github.com/bitgrip/cattlectl/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/bitgrip/cattlectl/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/bitgrip/cattlectl/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/bitgrip/cattlectl/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bitgrip/cattlectl/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/bitgrip/cattlectl/compare/v1.1.0...v1.1.1
