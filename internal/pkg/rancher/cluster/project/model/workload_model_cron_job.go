@@ -30,7 +30,7 @@ type CronJobDescriptor struct {
 type CronJob struct {
 	baseWorkload            `yaml:"baseWorkload,inline"`
 	CronJobConfig           *CronJobConfig `json:"cronJobConfig,omitempty" yaml:"cronJobConfig,omitempty"`
-	TTLSecondsAfterFinished *int64         `yaml:"TTLSecondsAfterFinished,omitempty"`
+	TTLSecondsAfterFinished *int64         `yaml:"ttlSecondsAfterFinished,omitempty"`
 }
 
 type CronJobConfig struct {
