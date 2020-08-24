@@ -31,7 +31,7 @@ type JobDescriptor struct {
 type Job struct {
 	baseWorkload            `yaml:"baseWorkload,inline"`
 	JobConfig               *JobConfig `json:"jobConfig,omitempty" yaml:"jobConfig,omitempty"`
-	TTLSecondsAfterFinished *int64     `yaml:"TTLSecondsAfterFinished,omitempty"`
+	TTLSecondsAfterFinished *int64     `yaml:"ttlSecondsAfterFinished,omitempty"`
 }
 
 type JobConfig struct {
